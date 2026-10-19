@@ -1,162 +1,128 @@
-# BeamNG.Earth
+# BeamNG.Earth Europe Preview
 
-A 1:1 scale, streamed Earth for [BeamNG.drive](https://www.beamng.com/): drive anywhere on the
-planet on real elevation data and satellite imagery, with distance-based level of detail and the
-real curvature of the Earth.
+Drive real roads in BeamNG.drive, with improved European traffic, narrow
+streets and world geometry.
 
-Status: beta (see VERSION). Tested on BeamNG.drive 0.39.4 on Linux (Vulkan). See
-[docs/ROADMAP.md](docs/ROADMAP.md) for what is coming (high-speed streaming, real view distance,
-roads, water, navigation, traffic, cities).
+An experimental fork maintained by [hashk014](https://github.com/hashk014),
+based on [TecnaGamer's BeamNG.Earth](https://github.com/TecnaGamer/BeamNG.Earth).
 
-## Features (working today)
-**The world**
-- The whole planet at 1:1 scale on real elevation: national lidar where it exists (Mapterhorn: much of
-  Europe, the US and more), Copernicus 30 m elsewhere with buildings and small tree stands filtered out of it.
-- Aerial and satellite imagery on the ground: open state and national orthophotos (Maryland's 15 cm photos,
-  a dozen more US states, NAIP across the US, Switzerland, France, Spain, the Netherlands, Germany's states,
-  Austria, Japan, parts of Australia and Canada, and more), Sentinel-2 cloudless everywhere else; shadows and
-  colour seams taken out of the photos, the season's colours graded in, cliffs drawn as rock.
-- A real view distance out to the horizon, with the Earth's curvature.
-- Ground materials from land cover (grass, dirt, rock, sand, snow, mud, lawns, paved squares and parking
-  lots) with 3D grass and bushes.
-- Trees and forests from a canopy height model, regional species (conifers, broadleaf, palms, desert
-  shrubs), autumn colours in season.
-- Buildings from Overture / OpenStreetMap with regional styles (US siding and brick, Alpine chalets, Nordic
-  wood, Mediterranean stucco, East Asian and Latin American looks), real heights, roofs, windows, shopfronts,
-  porches, churches with steeples, glass towers, far-away buildings drawn as a skyline.
-- Roads as meshes with lane markings, sidewalks and curbs, curb ramps, storm drains, cobblestone streets,
-  bridges with decks, traffic islands; the ground graded under them; street lights, utility poles with
-  wires, traffic signals, stop signs and speed-limit signs (mph or km/h by country).
-- Water: the sea with real depth (cars sink), lakes, and rivers kept beside the roads.
-- Airports with graded, marked runways.
+**[Download Preview 1](https://github.com/hashk014/BeamNG.Earth/releases/tag/v1.5.1-europe-preview.1)**
+· [Before and after](docs/COMPARISON.md)
+· [Guide de test en français](docs/TESTER_LE_MONDE.md)
+· [Report a problem](https://github.com/hashk014/BeamNG.Earth/issues)
 
-**Time, weather and physics**
-- **Real time**: the sun, moon and stars are where they really are for the place, the date and the clock
-  (the real time zone); the clock runs in real time. Change the time in the pause menu and the mod hands it
-  over to you (switch back to Real any time).
-- **Real weather** at the player from Open-Meteo, updated as you travel: cloud cover and high cirrus, clouds
-  drifting with the wind aloft, fog from the real visibility, ground wind with gusts that pushes the cars,
-  rain and snow, the air temperature, and the sun dimming under overcast. It goes through the game's own
-  weather system, so the Time & Weather menu shows the real values; a manual mode leaves it to you.
-- **Seasons**: the photos' colours and the trees' leaves follow the time of year (autumn colours, bare
-  trees in winter where the photos were taken leaf-off).
-- **Real gravity**: the WGS84 gravity for your latitude and altitude plus the EGM2008 local anomalies, so
-  gravity really is weaker on a mountain or at the equator.
+## What this fork changes
 
-**Driving and traffic**
-- Drive anywhere: the physics ground follows the car at 100+ mph, the world origin moves with you
-  (floating origin), and the world streams ahead of you; you never fall out of the world.
-- Buildings, sidewalks, curbs and bridge decks are solid (lean collision meshes near the car keep the
-  physics' collision rebuilds cheap).
-- Fast teleports: right after a teleport, while you wait, the world server may borrow some of the game's
-  CPU cores (at idle priority) to build the world faster (Linux; `--load-boost off` turns it off).
-- **AI support**: the mod builds BeamNG's road graph (the AI's map) from the real roads around you, with
-  lanes, one-way streets, speed limits (mapped, or the country's defaults), the country's driving side and
-  road rules, and traffic signals at real junctions. The stock AI, traffic, police and the AI modes in the
-  vehicle menu work on it.
-- **Traffic**: stock BeamNG traffic and police can be switched on, and parked cars line the streets and fill
-  parking lots (stock BeamNG parking).
+| Area | Changes in Europe Preview |
+| --- | --- |
+| Roundabouts | Consistent one-way flow on detected rings, priority on the ring and give-way signs at incoming approaches |
+| Narrow streets | Reliable measured carriageways down to 3 m, adjusted sidewalks and matching terrain grading |
+| Curves and hairpins | Better preservation of mapped bends, fewer geometry shortcuts, lower target speeds and earlier braking |
+| Speed limits | Changes in mapped limits along a road are represented in the traffic graph |
+| Intersections | Concave asphalt patches follow their outline instead of filling missing corners |
+| Slopes | Short constant road grades keep their slope instead of flattening at the endpoints |
+| Buildings | Open courtyards, more complete multipart footprints, mapped roof height and orientation where supported |
+| Collision | Pitched roofs follow their visible shape; courtyard space stays open in both detailed and coarse meshes |
+| Foundations | Ground samples along walls catch dips and ridges missed by sampling corners alone |
+| Windows setup | DuckDB uses prebuilt packages, with a clear recovery path when no compatible package is available |
 
-**Map and navigation**
-- World map (**M**): pan and zoom the globe, satellite or street map (EOX) with a roads & labels overlay,
-  borders and place names (the **Layers** button), search for addresses and places as you type, teleport
-  anywhere.
-- GPS routes to any destination (OSRM on OpenStreetMap), with the stock route arrows on the road.
-- **Autodrive**: the car drives itself along the GPS route (in lane, legal speed, minding traffic).
-- Saved places and recent places.
+The original streamed Earth, satellite imagery, terrain, weather, navigation,
+vegetation and other features remain the foundation of this fork. See the
+[upstream project](https://github.com/TecnaGamer/BeamNG.Earth) and [credits](CREDITS.md).
 
-**Interface and tools**
-- A slim status bar (street, town, country, world loading), a connection banner when something is
-  wrong and the data credits on screen, as BeamNG UI apps in a ".Earth" app layout (based on Freeroam's;
-  move or resize them in the UI apps editor), and a one-time welcome page about the project.
-- Settings in the pause menu, keybinds, in-game reports (notes and performance recordings to share).
-- Easy setup: `install.py` installs everything, `start.py` keeps the mod in sync and starts the server.
-- Offline play from the download cache (with a size cap and "clear cache").
-- Update check: the mod tells you in game (and on its settings page, with a link) when a newer version is on
-  GitHub.
+## Before and after
 
-## How it works
-- A small **companion server** (`server/`, Python) downloads elevation and imagery, builds terrain
-  tiles in a local flat frame around a moving origin, and streams them to the game over a local
-  socket. The game's Lua cannot reach the internet, so the server is required.
-- The **mod** (`mod/beamng_earth/`) loads the tiles as meshes, keeps an invisible physics terrain
-  under the car, moves the world origin as you drive (floating origin), and blends level-of-detail
-  changes so nothing pops.
-- Design and measurements: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
-  [docs/V1_4_SPEC.md](docs/V1_4_SPEC.md), research notes in [docs/research/](docs/research/).
+These are **generator geometry comparisons**, not screenshots from BeamNG.
+Both sides use the same mapped footprint or road. The [comparison page](docs/COMPARISON.md)
+explains the data and method.
 
-## Install and play
-**You need:** BeamNG.drive (tested with 0.39.x) on Steam, free disk space for the map download cache (it grows
-as you visit places, up to 20 GB by default; settings page > "Download cache size" sets 5-50 GB), and an internet
-connection (the map is downloaded while you play).
+![The old grading plan cuts across a mapped bend; the preview retains its source vertices](docs/images/road-comparison.png)
 
-1. **Download** the file for your system from the [Releases](https://github.com/TecnaGamer/BeamNG.Earth/releases)
-   page:
-   - **Windows:** `BeamNG.Earth-<version>.exe`. Windows may warn about an unknown app: **More info > Run anyway**.
-   - **Linux:** `BeamNG.Earth-<version>-x86_64.AppImage`. Make it executable (right-click > Properties >
-     "Allow executing", or `chmod +x`).
-2. **Run it** (with Steam running). A console window opens (like BeamMP's launcher); it copies the mod into the
-   game, starts the world server and starts BeamNG.drive. Closing the game stops the server.
-   - **Linux, native game:** started with the grass patch (`tools/gcpatch`) already applied, no Steam launch
-     options needed.
-   - **Linux, Windows build under Proton:** the AppImage sees the Proton setting and starts that build through
-     Steam (the server runs natively). The `.exe` also works inside the game's Proton prefix (for example with
-     protontricks' launcher).
-   - **Linux, Steam as a Flatpak (or snap):** the mod goes into the game's folder inside the Flatpak
-     (`~/.var/app/com.valvesoftware.Steam/...`) and the game starts through Steam (without the grass patch).
-   - The Windows build shows BeamNG's launch options dialog (renderer, safe mode) as usual; `--gfx dx11` /
-     `--gfx vk` / `--gfx dx12` skip it with that renderer.
-3. **Play:** in the game, go to **Freeroam** and pick the **BeamNG.Earth** level. A welcome page explains the
-   basics the first time. Press **M** for the world map: search a place or an address, right-click to teleport,
-   left-click to set a GPS route, and **Autodrive** to let the car drive it.
+![The same mapped courtyard building before and after courtyard preservation](docs/images/courtyard-comparison.png)
 
-**From the source instead** (any system with [Python 3.10+](https://www.python.org/downloads/)): download this
-project (the green **Code** button > **Download ZIP**) and unzip it. Install once (and after each update):
-double-click `run_server.bat` (Windows) or run `python3 install.py` (Linux). Then start the server with
-`run_server.bat` / `./run_server.sh`, keep its window open, and start the game yourself. Or run
-`python3 launcher.py`, which also starts the game like the downloads do.
+## What has been checked
 
-**Updating:** the mod tells you in game when a newer version is on GitHub. Download the new file and run it (from
-the source: unzip it over the old folder and run the installer again).
+- **331 checks passed, one skipped** in the selected world-generation regression suite.
+- **2,099 buildings** generated from cached data across a French town and two mountain samples.
+- On **200 real road parts**, 171 source vertices were over 25 cm from the old grading plan,
+  with a maximum discrepancy of **1.41 m**. The preview retains those vertices.
+- Three native AI cars were observed driving for about 30 seconds with the updated traffic graph.
+- Windows release builds run a packaged server startup check before upload.
 
-**Uninstalling:** delete the `beamng_earth` folder in `<BeamNG user folder>/current/mods/unpacked/` and the
-downloaded file (or this folder); the map cache is `.cache/beamng-earth` in your home folder (`~/.cache/beamng-earth` on Linux,
-`C:\Users\<you>\.cache\beamng-earth` on Windows).
+The geometry work has been validated outside the game. The traffic test used a
+temporary graph in an existing world. Long drives in a fully regenerated world,
+complex roundabout interactions and dense-city performance still need testing.
+See [validation and limits](docs/WORLD_GENERATION.md).
 
-More detail (traffic, the status bar, reporting problems, troubleshooting): [docs/QUICKSTART.md](docs/QUICKSTART.md).
+**This is an experimental preview.** Source data still limits realism. Missing
+building tags require estimates, courtyard roofs currently use a flat fallback,
+and roundabout recognition uses geometry heuristics. No FPS improvement is claimed.
 
-### Developer setup
-`python3 install.py` also works from a checkout (mod copy, `.venv`, then `python3 start.py`); by hand:
-1. Python 3.10+ with the packages in `server/requirements.txt`.
-2. Copy (or sync) `mod/beamng_earth/` to
-   `<BeamNG user folder>/current/mods/unpacked/beamng_earth/`.
-3. Start the server: `python3 server/earthd.py`
-4. Start BeamNG.drive and load the **BeamNG.Earth** level. The mod connects to the server and
-   streams the world; the status bar at the top shows where you are and the loading, **M** opens the
-   world map (search, teleport, GPS routes, Autodrive).
+## Download and play
 
-Player downloads: `python3 tools/build_app.py` builds this system's AppImage / .exe (PyInstaller; see its
-docstring; for the .exe run `tools/build_bootloader.py` first: a bootloader built from source, fewer antivirus
-false positives); GitHub Actions (`.github/workflows/release.yml`) builds both and publishes the release `v<VERSION>`
-whenever `main` gets a `VERSION` without one. Release zip of the source: `python3 tools/package.py`.
+Use this fork's **[Preview 1 release](https://github.com/hashk014/BeamNG.Earth/releases/tag/v1.5.1-europe-preview.1)**.
+The original project's downloads contain its own server and do not include this fork's changes.
 
-Tests: `cd server && python3 -m unittest discover -s tests -p "test_*.py"` and
-`cd mod/tests && for f in test_*.lua; do luajit $f; done`.
+### Windows
 
-## Data sources and attribution
-The repository contains only code; all map data is downloaded at runtime and cached locally.
-- Imagery: state and national orthophoto services where they are open (Maryland, a dozen more US
-  states, Switzerland, France, Spain, the Netherlands, Germany's states, Japan, parts of Australia and
-  Canada, and more), USDA NAIP and USGS The National Map (public domain) in the US, and Sentinel-2
-  cloudless by EOX IT Services GmbH everywhere (https://s2maps.eu, contains modified Copernicus Sentinel
-  data; 2016 release CC BY 4.0, 2023 release CC BY-NC-SA 4.0, non-commercial).
-- Elevation: Mapterhorn (see https://mapterhorn.com/attribution), AWS Terrain Tiles / Mapzen.
-- Roads, buildings, water and places: Overture Maps / OpenStreetMap contributors; trees from a
-  canopy height model; airports from OurAirports.
-Each source's terms apply to the downloaded data; the in-game window shows the attribution line.
-The full list of data sources, services, libraries, tools and references, with licences and the
-credit each one asks for, is in [CREDITS.md](CREDITS.md).
+1. Download `BeamNG.Earth-1.5.1-europe-preview.1.exe` from the release assets.
+2. Close any other BeamNG.Earth companion server. Keep Steam running.
+3. Run the file. It installs the mod, starts the companion server and starts BeamNG.drive.
+4. In the game, choose **Freeroam > BeamNG.Earth**.
 
-## License
-Code: MIT, see [LICENSE](LICENSE). BeamNG.drive is a trademark of BeamNG GmbH; this is an unofficial
-fan project and contains no BeamNG assets.
+The standalone Windows download includes Python and the server dependencies.
+BeamNG.drive itself must already be installed. The executable is unsigned.
+
+### Source ZIP, Windows or Linux
+
+1. Download `BeamNG.Earth-1.5.1-europe-preview.1.zip` and extract it.
+2. Install **Python 3.10+**, with 64-bit Python 3.12 recommended on Windows.
+3. On Windows, double-click `run_server.bat`. On Linux, run `python3 install.py`, then `./run_server.sh`.
+4. Leave the server running, start BeamNG.drive and load **BeamNG.Earth**.
+
+First-time setup downloads dependencies. Map data downloads while you explore.
+This preview's geometry checks ran on Windows; Linux gameplay has not been
+retested for the fork. A Linux standalone binary is not included in Preview 1.
+
+More help: [quick start](docs/QUICKSTART.md) and [French test guide](docs/TESTER_LE_MONDE.md).
+
+### From Git
+
+```sh
+git clone https://github.com/hashk014/BeamNG.Earth.git
+cd BeamNG.Earth
+python install.py
+python start.py
+```
+
+The default branch is `preview`. `main` keeps the upstream baseline.
+Update notices and report links in this fork point to this repository.
+
+## Help test the preview
+
+Try a familiar town, a narrow street, a roundabout and a road with hairpins.
+Start without traffic, then add three AI cars. Watch for gaps, abrupt bumps,
+floating walls, blocked lanes and cars driving against the expected flow.
+
+- **Ctrl+Shift+E** captures a report with a screenshot and the exact location.
+- **Ctrl+Shift+Y** records a 30-second performance profile.
+- Include the report folder, vehicle, speed, direction and whether traffic was enabled.
+
+Reports stay on your computer until you choose to share them. Submit fork
+problems to [this repository's issues](https://github.com/hashk014/BeamNG.Earth/issues).
+
+## Development and attribution
+
+[Fork changelog](docs/FORK_CHANGELOG.md) · [World generation](docs/WORLD_GENERATION.md)
+· [Traffic changes](docs/TRAFFIC_IMPROVEMENTS.md) · [Architecture](docs/ARCHITECTURE.md)
+
+The release is based on upstream **1.5.1-beta**, with additional changes by
+hashk014. Contributions already proposed upstream are linked in the fork changelog.
+
+Original code by **TecnaGamer**, under the [MIT license](LICENSE). Data sources
+include Overture Maps, OpenStreetMap contributors, Mapterhorn, national imagery
+providers and others listed in [CREDITS.md](CREDITS.md). Their terms apply to
+downloaded data. The game shows source attribution.
+
+BeamNG.drive is a trademark of BeamNG GmbH. This is an unofficial fan project
+and does not distribute the game or its assets.

@@ -1,4 +1,4 @@
-# BeamNG.Earth: quick start
+# BeamNG.Earth Europe Preview: quick start
 
 Drive anywhere on the real Earth in BeamNG.drive. This page gets you from the download to driving
 in a few minutes. No programming needed.
@@ -70,7 +70,7 @@ of frame times, then opens the same window.
 Each report is a folder (the window shows where) with `issue.md`, a ready-to-post GitHub issue you
 can edit first. To post it, run `python3 tools/reports.py issue` (the newest report; `python3
 tools/reports.py` lists them all): it opens issue.md in your editor, then the new-issue page on
-<https://github.com/TecnaGamer/BeamNG.Earth/issues> with your text, and the report folder, so you
+<https://github.com/hashk014/BeamNG.Earth/issues> with your text, and the report folder, so you
 can drag `screenshot.jpg` into the issue. The "Open GitHub issue page" button in the game does the
 same without the edit step.
 
@@ -81,7 +81,7 @@ same without the edit step.
   backup name (for example `.venv-backup`). Then open a terminal in the project folder and run
   `py -3.12 install.py`. Installing another Python and rerunning the installer alone does not
   change the interpreter in an existing `.venv`. Alternatively, use the standalone Windows
-  `.exe` from the [Releases page](https://github.com/TecnaGamer/BeamNG.Earth/releases), which
+  `.exe` from the [Releases page](https://github.com/hashk014/BeamNG.Earth/releases), which
   includes Python and the server's packages.
 - **"Looking for the world server" / "server not connected" banner** in the game: the server is not
   running. Start `run_server.bat` / `./run_server.sh` and wait a few seconds; the game reconnects

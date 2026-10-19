@@ -15,9 +15,13 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 FILES = ["install.py", "start.py", "launcher.py", "run_server.bat", "run_server.sh", "README.md", "LICENSE", "CREDITS.md",
-         "VERSION", "docs/QUICKSTART.md"]
+         "VERSION", "docs/QUICKSTART.md", "docs/TESTER_LE_MONDE.md", "docs/WORLD_GENERATION.md",
+         "docs/TRAFFIC_IMPROVEMENTS.md", "docs/FORK_CHANGELOG.md", "docs/COMPARISON.md",
+         "docs/images/road-comparison.png", "docs/images/courtyard-comparison.png",
+         "docs/research/world-generation-validation.json", "docs/research/fork-comparison.json",
+         "docs/ARCHITECTURE.md"]
 TREES = ["mod/beamng_earth", "server"]
-TOOLS = ["tools/reports.py"]                # user-facing helpers from tools/ (the in-game reports -> GitHub issues)
+TOOLS = ["tools/reports.py", "tools/render_comparison.py"]
 SKIP_DIRS = {"__pycache__", "tests", ".git", "backups", "probes", "research", ".venv", "dist"}
 SKIP_EXT = {".pyc", ".pyo", ".log", ".swp"}
 EXECUTABLE = {"run_server.sh", "install.py", "start.py"}

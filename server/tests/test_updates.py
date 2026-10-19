@@ -1,6 +1,7 @@
 """updates: the GitHub version check."""
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -54,10 +55,13 @@ class OpenPageTest(unittest.TestCase):
 
     def test_only_the_projects_pages(self):
         calls = []
-        ok = updates.open_page("https://github.com/TecnaGamer/BeamNG.Earth/releases", popen=lambda *a, **k: calls.append(a))
-        if updates.sys.platform != "win32":
+        with mock.patch.object(updates.os, "startfile", create=True) as startfile:
+            ok = updates.open_page(updates.PAGE_URL, popen=lambda *a, **k: calls.append(a))
             self.assertTrue(ok)
-            self.assertEqual(calls[0][0][1], "https://github.com/TecnaGamer/BeamNG.Earth/releases")
+            if updates.sys.platform == "win32":
+                startfile.assert_called_once_with(updates.PAGE_URL)
+            else:
+                self.assertEqual(calls[0][0][1], updates.PAGE_URL)
         for bad in ("https://evil.example/x", "https://github.com/someone/else", None, 5,
-                    "https://github.com/TecnaGamer/BeamNG.Earth/releases\" && rm -rf ~"):
+                    updates.PAGE_URL + '\" && rm -rf ~'):
             self.assertFalse(updates.open_page(bad, popen=lambda *a, **k: calls.append(a)), bad)

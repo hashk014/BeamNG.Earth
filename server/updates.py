@@ -13,8 +13,8 @@ import sys
 
 import netfetch
 
-REPO = "TecnaGamer/BeamNG.Earth"
-VERSION_URL = f"https://raw.githubusercontent.com/{REPO}/main/VERSION"
+REPO = "hashk014/BeamNG.Earth"
+VERSION_URL = f"https://raw.githubusercontent.com/{REPO}/preview/VERSION"
 PAGE_URL = f"https://github.com/{REPO}/releases"      # the downloads (.exe / AppImage)
 # the folder with VERSION: above server/, or the packaged app's bundle (launcher.py frozen by PyInstaller, where
 # every module sits at the bundle's top)

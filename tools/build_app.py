@@ -64,10 +64,10 @@ def version_files(work, ver):
     (asInvoker, the supported Windows versions, long paths; it adds Common Controls) with the app's identity."""
     v4 = win_version(ver)
     dotted = ".".join(map(str, v4))
-    strings = {"CompanyName": "TecnaGamer", "FileDescription": "BeamNG.Earth launcher and world server",
+    strings = {"CompanyName": "hashk014", "FileDescription": "BeamNG.Earth Europe Preview launcher and world server",
                "FileVersion": ver, "InternalName": NAME, "LegalCopyright": "Copyright (c) 2026 TecnaGamer, MIT License",
                "OriginalFilename": f"{NAME}-{ver}.exe", "ProductName": NAME, "ProductVersion": ver,
-               "Comments": "Drive the real world in BeamNG.drive. https://github.com/TecnaGamer/BeamNG.Earth"}
+               "Comments": "Experimental fork by hashk014. Original project by TecnaGamer. https://github.com/hashk014/BeamNG.Earth"}
     vf = os.path.join(work, "version_info.txt")
     with open(vf, "w", encoding="utf-8") as f:
         f.write("VSVersionInfo(\n"

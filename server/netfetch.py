@@ -45,6 +45,7 @@ import json
 import logging
 import os
 import random
+import sys
 import threading
 import time
 from collections import deque
@@ -54,8 +55,13 @@ from urllib.parse import urlsplit
 
 log = logging.getLogger("earthd.net")
 
-SERVER_VERSION = "0.4.0"
-PROJECT_URL = "https://github.com/TecnaGamer/BeamNG.Earth"
+_VERSION_ROOT = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:
+    with open(os.path.join(_VERSION_ROOT, "VERSION"), encoding="utf-8") as _version_file:
+        SERVER_VERSION = _version_file.read().strip()
+except OSError:
+    SERVER_VERSION = "unknown"
+PROJECT_URL = "https://github.com/hashk014/BeamNG.Earth"
 USER_AGENT = f"BeamNG.Earth/{SERVER_VERSION} (+{PROJECT_URL})"
 KINDS = ("demand", "prefetch", "background", "predownload")
 PREFETCH_RESERVE = 0.5          # prefetch takes a token only while the bucket holds more than this x burst
