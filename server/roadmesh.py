@@ -42,7 +42,9 @@ def _resample(pts, step):
     if s[-1] <= 1e-6:
         return pts[:1, :2], s[:1], pts[:1, 2]
     n = max(1, int(np.ceil(s[-1] / step)))
-    t = np.linspace(0.0, s[-1], n + 1)
+    # Retain survey vertices as well as drape samples. Uniform samples alone cut
+    # across short bends and move asphalt away from the mapped carriageway.
+    t = np.unique(np.r_[np.linspace(0.0, s[-1], n + 1), s])
     return (np.stack([np.interp(t, s, pts[:, 0]), np.interp(t, s, pts[:, 1])], axis=1), t,
             np.interp(t, s, pts[:, 2]))
 
@@ -62,6 +64,12 @@ def _normals(xy):
         m = m / ml[:, None]
         cos = np.clip((m * ns[1:]).sum(1), 0.5, 1.0)
         n[1:-1] = m / cos[:, None]
+    if len(xy) > 3 and np.linalg.norm(xy[0] - xy[-1]) < 1e-7:
+        joint = ns[-1] + ns[0]
+        length = np.linalg.norm(joint)
+        if length > 1e-9:
+            joint /= length
+            n[0] = n[-1] = joint / np.clip(joint @ ns[0], 0.5, 1.0)
     return n
 
 
@@ -127,7 +135,7 @@ def build(frame, chunks, elev, origin, lift=0.0):
         T.append(tri[keep])
         M.append(np.full(int(keep.sum()), mi))
         nverts += 2 * k
-    for c in polys:                             # filled polygons (corner asphalt): a fan from vertex 0
+    for c in polys:
         q = np.asarray(c["poly"], np.float64)
         k = len(q)
         z = u[k0:k0 + k] + LIFT[layer_of(c)] + lift
@@ -136,7 +144,11 @@ def build(frame, chunks, elev, origin, lift=0.0):
             mats.append(c["m"])
         P.append(np.c_[q[:, :2], z])
         UV.append(np.c_[q[:, 0] / 8.0, q[:, 1] / float(c.get("tl") or 10.0)])
-        fan = np.array([(nverts, nverts + a, nverts + a + 1) for a in range(1, k - 1)])
+        # Corner patches can be concave. A fan fills the notch with asphalt and
+        # can cross a sidewalk. Ear clipping follows the actual outline.
+        from buildings import triangulate, _area2
+        order = np.arange(k) if _area2(q[:, :2]) >= 0 else np.arange(k)[::-1]
+        fan = nverts + order[triangulate(q[order, :2])]
         pts = np.c_[q[:, :2], z]
         nrm = np.cross(pts[fan[:, 1] - nverts] - pts[fan[:, 0] - nverts], pts[fan[:, 2] - nverts] - pts[fan[:, 0] - nverts])
         flip = nrm[:, 2] < 0

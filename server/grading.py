@@ -31,7 +31,7 @@ import roads as roadsmod
 
 log = logging.getLogger("earthd.grading")
 
-VERSION = 2
+VERSION = 3
 PROFILE_STEP = 2.0          # m between profile samples
 SIGMA_M = 12.0              # m, profile smoothing of built roads
 DIRT_SIGMA_M = 5.0          # m, profile smoothing of gravel / dirt roads
@@ -63,19 +63,26 @@ WALL_AHEAD_M = 2.5          # ... only beside a segment or this little past its 
 RETRY_S = 60.0              # s before a cell whose road data failed is asked for again
 
 
-def smooth_profile(z, step, sigma):
-    """Gaussian smoothing of a profile sampled every `step` m (reflected at the ends). Pure."""
+def smooth_profile(z, step, sigma, preserve_grade=False):
+    """Gaussian smoothing, optionally of residuals from the end-to-end grade. Pure.
+
+    Reflecting raw heights flattens every short uphill segment at its ends.
+    Removing the linear grade first preserves a constant slope, including the
+    endpoints, with both the native kernel and the numpy fallback.
+    """
     z = np.asarray(z, np.float64)
-    import fast
-    if fast.AVAILABLE:          # the Rust loop (~7000 roads a 9-tile set; equal to ~1e-12 m)
-        return fast._ef.smooth_profile(np.ascontiguousarray(z), float(step), float(sigma))
     if len(z) < 3 or sigma <= 0:
         return z.copy()
+    trend = np.linspace(z[0], z[-1], len(z)) if preserve_grade else np.zeros(len(z))
+    residual = z - trend
+    import fast
+    if fast.AVAILABLE:          # the Rust loop (~7000 roads a 9-tile set; equal to ~1e-12 m)
+        return trend + fast._ef.smooth_profile(np.ascontiguousarray(residual), float(step), float(sigma))
     r = int(math.ceil(3 * sigma / step))
     k = np.exp(-0.5 * (np.arange(-r, r + 1) * step / sigma) ** 2)
     k /= k.sum()
-    pad = np.pad(z, r, mode="reflect") if len(z) > r else np.pad(z, r, mode="edge")
-    return np.convolve(pad, k, mode="valid")
+    pad = np.pad(residual, r, mode="reflect") if len(z) > r else np.pad(residual, r, mode="edge")
+    return trend + np.convolve(pad, k, mode="valid")
 
 
 def resample(xy, step):
@@ -112,12 +119,15 @@ def plan_roads(frame, parts, elev):
         return []
     ll = np.concatenate([lonlat for lonlat, _ in parts])
     E, N, _ = frame.geodetic_to_enu(ll[:, 1], ll[:, 0], 0.0)
-    prof, k = [], 0
+    prof, paths, distances, k = [], [], [], 0
     for lonlat, spec in parts:
         m = len(lonlat)
-        xy, _ = resample(np.stack([E[k:k + m], N[k:k + m]], axis=1), PROFILE_STEP)
+        path = np.stack([E[k:k + m], N[k:k + m]], axis=1)
+        xy, distance = resample(path, PROFILE_STEP)
         k += m
         prof.append(xy if len(xy) >= 2 else None)
+        paths.append(path)
+        distances.append(distance)
     pts = [xy for xy in prof if xy is not None]
     if not pts:
         return [None] * len(parts)
@@ -125,25 +135,34 @@ def plan_roads(frame, parts, elev):
     la, lo, _ = frame.enu_to_geodetic(allxy[:, 0], allxy[:, 1], 0.0)
     zall = np.asarray(elev(la, lo), np.float64)
     out, k = [], 0
-    for (lonlat, spec), xy in zip(parts, prof):
+    for (lonlat, spec), xy, path, distance in zip(parts, prof, paths, distances):
         if xy is None:
             out.append(None)
             continue
         z = zall[k:k + len(xy)]
         k += len(xy)
-        out.append(_plan(xy, z, spec))
+        out.append(_plan(xy, z, spec, path, distance))
     return out
 
 
-def _plan(xy, z, spec):
+def _plan(xy, z, spec, path=None, distance=None):
     built = spec.kind in roadsmod.BUILT
-    zs = smooth_profile(z, PROFILE_STEP, SIGMA_M if built else DIRT_SIGMA_M)
+    zs = smooth_profile(z, PROFILE_STEP, SIGMA_M if built else DIRT_SIGMA_M, preserve_grade=True)
     # thin to VERTEX_STEP (the profile stays smooth between: linear in the grading pass)
     every = max(1, int(round(VERTEX_STEP / PROFILE_STEP)))
     keep = np.r_[np.arange(0, len(xy) - 1, every), len(xy) - 1]
     # the carriageway as a city street would have it (never from the land cover), or the measured one
-    width = max(spec.width, roadsmod.carriageway(spec.cls, spec.kind, True, None, spec.oneway)) if built else spec.width
-    return Plan(xy[keep], zs[keep], width / 2 + shoulder(spec))
+    width = spec.width
+    # Keep every source corner in the physical road as well as in its skin.
+    # Heights still come from the uniformly sampled, smoothed profile.
+    if path is not None:
+        source_s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
+        target_s = np.unique(np.r_[distance[keep], source_s])
+        xy_out = np.column_stack([np.interp(target_s, source_s, path[:, j]) for j in (0, 1)])
+        z_out = np.interp(target_s, distance, zs)
+    else:
+        xy_out, z_out = xy[keep], zs[keep]
+    return Plan(xy_out, z_out, width / 2 + shoulder(spec))
 
 
 def shoulder(spec):
@@ -155,6 +174,15 @@ def shoulder(spec):
                                                                           or roadsmod._arterial(spec))):
         return spec.walk + SIDEWALK_MARGIN_M
     return SHOULDER_M
+
+
+def _urban_core(lat, lon):
+    """Unknown widths retain room for urban parking; mapped/measured widths win.
+
+    A stable function keeps road_specs' memoization independent of tile order
+    and avoids a land-cover lookup in the terrain worker.
+    """
+    return np.ones(np.broadcast(lat, lon).shape, bool)
 
 
 class Grader:
@@ -196,7 +224,7 @@ class Grader:
             return []
         plans = []
         if feats is not None and len(feats):
-            specs = roadsmod.road_specs(feats, None, self.widths)
+            specs = roadsmod.road_specs(feats, _urban_core, self.widths)
             parts, ids = [], []
             for i in range(len(feats)):
                 if specs[i] is None:

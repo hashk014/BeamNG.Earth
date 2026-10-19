@@ -1518,7 +1518,8 @@ def simplify(pts, tol=SIMPLIFY_M):
         if L < 1e-9:
             d = np.hypot(seg[:, 0] - a[0], seg[:, 1] - a[1])
         else:
-            d = np.abs(ab[0] * (seg[:, 1] - a[1]) - ab[1] * (seg[:, 0] - a[0])) / L
+            t = np.clip((seg - a) @ ab / (L * L), 0.0, 1.0)
+            d = np.linalg.norm(seg - a - t[:, None] * ab, axis=1)
         k = int(np.argmax(d))
         if d[k] > tol:
             m = i + 1 + k

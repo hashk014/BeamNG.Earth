@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-19",
+  "baseline_commit": "d082bc9c05b9f78bb3e797df7f7d1d3e402c3b57",
+  "overture_release": "2026-09-23.1",
+  "tiles_per_place": 9,
+  "offline_only": true,
+  "in_game_validation": false,
+  "timing_note": "Single runs, not a controlled benchmark or FPS measurement.",
+  "before": {
+    "places": [
+      {
+        "place": "Les Sables-d Olonne",
+        "lat": 46.502598,
+        "lon": -1.780002,
+        "buildings": 2097,
+        "courtyards": 0,
+        "visual_triangles": 347900,
+        "collision_triangles": 31470,
+        "road_triangles": 50795,
+        "ground_min": 2.580107827016903,
+        "ground_max": 12.087303061607287,
+        "elapsed_s": 4.214
+      },
+      {
+        "place": "Fuji region",
+        "lat": 35.398006,
+        "lon": 138.724365,
+        "buildings": 1,
+        "courtyards": 0,
+        "visual_triangles": 66,
+        "collision_triangles": 10,
+        "road_triangles": 0,
+        "ground_min": 2062.566408513885,
+        "ground_max": 2065.5947701890964,
+        "elapsed_s": 0.051
+      },
+      {
+        "place": "Mount Whitney",
+        "lat": 36.5785,
+        "lon": -118.2923,
+        "buildings": 1,
+        "courtyards": 0,
+        "visual_triangles": 18,
+        "collision_triangles": 10,
+        "road_triangles": 0,
+        "ground_min": 4415.272865367902,
+        "ground_max": 4416.460860032733,
+        "elapsed_s": 0.017
+      }
+    ],
+    "dem_stats": {
+      "mapterhorn:disk": 21
+    },
+    "dem_missing_tiles": 0
+  },
+  "after": {
+    "places": [
+      {
+        "place": "Les Sables-d Olonne",
+        "lat": 46.502598,
+        "lon": -1.780002,
+        "buildings": 2097,
+        "courtyards": 4,
+        "visual_triangles": 343046,
+        "collision_triangles": 34426,
+        "road_triangles": 58736,
+        "ground_min": 2.5588024619046763,
+        "ground_max": 12.144187212812795,
+        "elapsed_s": 3.873
+      },
+      {
+        "place": "Fuji region",
+        "lat": 35.398006,
+        "lon": 138.724365,
+        "buildings": 1,
+        "courtyards": 0,
+        "visual_triangles": 94,
+        "collision_triangles": 10,
+        "road_triangles": 0,
+        "ground_min": 2062.5622444102983,
+        "ground_max": 2065.5947701890964,
+        "elapsed_s": 0.053
+      },
+      {
+        "place": "Mount Whitney",
+        "lat": 36.5785,
+        "lon": -118.2923,
+        "buildings": 1,
+        "courtyards": 0,
+        "visual_triangles": 18,
+        "collision_triangles": 10,
+        "road_triangles": 0,
+        "ground_min": 4415.272865367902,
+        "ground_max": 4416.460860032733,
+        "elapsed_s": 0.022
+      }
+    ],
+    "dem_stats": {
+      "mapterhorn:disk": 21
+    },
+    "dem_missing_tiles": 0
+  },
+  "unit_tests": {
+    "modules": [
+      "test_world_fidelity",
+      "test_buildings",
+      "test_grading",
+      "test_roadmesh",
+      "test_roads",
+      "test_sidewalk_collision",
+      "test_islands",
+      "test_furniture",
+      "test_european_traffic",
+      "test_navgraph",
+      "test_roadwidth",
+      "test_surface",
+      "test_parking",
+      "test_plazas",
+      "test_outer_centres",
+      "test_polygon",
+      "test_tunnels",
+      "test_fast",
+      "test_blockworker",
+      "test_heightmap",
+      "test_mesh",
+      "test_cdae"
+    ],
+    "run": 332,
+    "passed": 331,
+    "failures": 0,
+    "errors": 0,
+    "skipped": [
+      {
+        "test": "test_uv2_convention_matches_engine (test_mesh.TexturedShapeTest.test_uv2_convention_matches_engine)",
+        "reason": "BeamNG.drive not installed"
+      }
+    ]
+  },
+  "road_corner_audit": {
+    "curved_road_parts": 200,
+    "metrics": {
+      "before": {
+        "source_vertices": 1344,
+        "vertices_over_25cm_from_plan": 171,
+        "maximum_corner_error_m": 1.410687
+      },
+      "after": {
+        "source_vertices": 1344,
+        "vertices_over_25cm_from_plan": 0,
+        "maximum_corner_error_m": 0.0
+      }
+    }
+  }
+}

@@ -75,3 +75,37 @@ class Path:
 
     def contains_points(self, pts):
         return contains_points(self.vertices, pts)
+
+
+def roof_cells(outer, holes=()):
+    """Convex cells covering a polygon with holes, using an even-odd sweep.
+
+    Each band lies between consecutive vertex heights. Boundary edges are
+    linear within a band, so paired crossings form exact trapezoids. This
+    preserves courtyards without a new triangulation dependency or bridges
+    across the holes. Input rings must be simple and non-intersecting.
+    """
+    rings = [np.asarray(r, np.float64)[:, :2] for r in (outer, *holes) if len(r) >= 3]
+    if not rings:
+        return []
+    a = np.concatenate(rings)
+    b = np.concatenate([np.roll(r, -1, axis=0) for r in rings])
+    ys = np.unique(a[:, 1])
+    out = []
+    for low, high in zip(ys[:-1], ys[1:]):
+        if high - low <= 1e-9:
+            continue
+        mid = (low + high) / 2
+        active = (np.minimum(a[:, 1], b[:, 1]) < mid) & (np.maximum(a[:, 1], b[:, 1]) > mid)
+        p, q = a[active], b[active]
+        slope = (q[:, 0] - p[:, 0]) / (q[:, 1] - p[:, 1])
+        order = np.argsort(p[:, 0] + (mid - p[:, 1]) * slope, kind="stable")
+        x0 = p[:, 0] + (low - p[:, 1]) * slope
+        x1 = p[:, 0] + (high - p[:, 1]) * slope
+        for left, right in zip(order[::2], order[1::2]):
+            cell = np.array([(x0[left], low), (x0[right], low),
+                             (x1[right], high), (x1[left], high)])
+            keep = np.linalg.norm(cell - np.roll(cell, 1, axis=0), axis=1) > 1e-9
+            if keep.sum() >= 3:
+                out.append(cell[keep])
+    return out
