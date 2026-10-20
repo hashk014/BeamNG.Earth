@@ -48,7 +48,7 @@ files were not replaced.
 
 ## Evidence
 
-- 242 generator tests pass, including 19 new regressions in
+- 243 generator tests pass, including 20 new regressions in
   `server/tests/test_urban_frontages.py`.
 - 51 focused maintenance tests pass.
 - The two real source-data sectors rebuild 292 building items, 149 concrete

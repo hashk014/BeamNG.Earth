@@ -47,7 +47,7 @@ All 59 issues in the snapshot have individual assessments; 48 were open upstream
 
 ## Verification and release boundaries
 
-- Current local checks: 51 focused Python tests, 242 generator tests and 4,703 checks
+- Current local checks: 51 focused Python tests, 243 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
   [The validated source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39461712951)

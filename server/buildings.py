@@ -2082,7 +2082,8 @@ def street_passages(items, lines):
     from polygon import subtract_cells
     out = []
     for spec, gmin, gmax in items:
-        if ((spec.min_h or 0) > 0.5 or spec.height <= OVER_ROAD_CLEAR_M + 1 or
+        if ((spec.min_h or 0) > 0.5 or spec.cls.startswith('bridge') or spec.portal or spec.deck or
+                spec.height <= OVER_ROAD_CLEAR_M + 1 or
                 road_through(spec.ring, lines, holes=spec.holes or (), inset=STREET_PASSAGE_W / 2) < ROAD_THROUGH_M):
             out.append((spec, gmin, gmax))
             continue
@@ -2723,7 +2724,7 @@ def pave_frontages(items, walks, x0, y0):
     unit = direction / np.maximum(length[:, None], 1e-9)
     for spec, _, gmax in items:
         spec.aprons = []
-        if (spec.min_h or 0) > 0.5 or spec.cls in BRIDGE_CLASSES or spec.base_part:
+        if (spec.min_h or 0) > 0.5 or spec.cls.startswith('bridge') or spec.base_part:
             continue
         ring = drawn_ring(spec)
         for i, (a, b) in enumerate(zip(ring, np.roll(ring, -1, axis=0))):

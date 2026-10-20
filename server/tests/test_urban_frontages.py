@@ -109,6 +109,12 @@ class PartsAndFootprintsTest(unittest.TestCase):
         road = np.array([[-10, 1], [70, 1]], float)
         self.assertIs(bld.street_passages(items, [road])[0][0], spec)
 
+    def test_explicit_bridge_structure_keeps_its_existing_passage_generation(self):
+        spec = bld.plan(rect(0, 0, 60, 40), {'class': 'bridge_structure', 'height': 60})
+        items = [(spec, 0, 0)]
+        road = np.array([[-10, 20], [70, 20]], float)
+        self.assertIs(bld.street_passages(items, [road])[0][0], spec)
+
 
 class SidewalkContinuityTest(unittest.TestCase):
     def test_reversed_middle_run_keeps_a_joined_chain_in_order(self):
