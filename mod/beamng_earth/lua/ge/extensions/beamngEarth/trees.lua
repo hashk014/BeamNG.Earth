@@ -516,10 +516,10 @@ function M.update(anchorId, player)
     ::continue::
   end
   table.sort(order, function(a, b) return a[2] < b[2] end)
-  local nearMade = false
+  local collisionChanged = false
   local rowsScanned = 0
   local function finish()
-    if nearMade then
+    if collisionChanged then
       local ok, roads = pcall(require, 'beamngEarth/roads')
       if ok and roads.requestCollision then roads.requestCollision() end
     end
@@ -553,16 +553,20 @@ function M.update(anchorId, player)
           local sh, sc = shapeOf(t, i, row)
           if budget <= 0 then t.pending = true; finish(); return end
           if allow(sh) then
-            if t.made[i] then removeItem(data(), t.made[i], t.madeShape[i]); budget = budget - 1 end  -- solid <-> not
+            if t.made[i] then
+              if t.solid[i] then collisionChanged = true end
+              removeItem(data(), t.made[i], t.madeShape[i]); budget = budget - 1
+            end  -- solid <-> not
             t.made[i] = makeItem(data(), row, sh, sc, solid)
             t.solid[i] = (t.made[i] and solid) or nil      -- true or nil
             t.madeShape[i] = t.made[i] and sh or nil
-            if solid then nearMade = true end
+            if solid then collisionChanged = true end
             budget = budget - 1
           else t.pending = true end                -- another frame (this one's shapes are full)
         elseif r >= want and t.made[i] then
           if budget <= 0 then t.pending = true; finish(); return end
           if allow(t.madeShape[i] or '') then
+            if t.solid[i] then collisionChanged = true end
             removeItem(data(), t.made[i], t.madeShape[i])
             t.made[i], t.solid[i], t.madeShape[i] = nil, nil, nil
             budget = budget - 1

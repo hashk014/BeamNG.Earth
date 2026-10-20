@@ -35,7 +35,7 @@ All 59 issues in the snapshot have individual assessments; 48 were open upstream
 
 ## Verification and release boundaries
 
-- Current local checks: 47 focused Python tests, 223 generator tests and 4,702 checks
+- Current local checks: 47 focused Python tests, 223 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
   Review its latest run before claiming the current branch has passed CI.

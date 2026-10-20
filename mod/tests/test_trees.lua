@@ -192,6 +192,9 @@ T.check(reused, 'a pooled Forest is reset to no transform when reused')
 trees.clear()
 -- Saved group preferences also update items that are already visible, with deterministic subsets.
 trees.EVERY_N, trees.PER_FRAME, trees.SHAPE_ITEMS_PER_FRAME = 1, 10000, 1000000
+local roads = require('beamngEarth/roads')
+local requestCollision, collisionRequests = roads.requestCollision, 0
+roads.requestCollision = function() collisionRequests = collisionRequests + 1 end
 local groups = { 'rock', 'desert_rock', 'deciduous', 'door', 'bench', 'stop' }
 local mixed = {}
 for g = 0, #groups - 1 do
@@ -204,8 +207,10 @@ T.check(count() == 600, 'default preferences preserve all groups')
 T.check(trees.setRockDensity('low'), 'low rocks accepted')
 settle()
 T.check(count() == 450, 'low keeps a stable quarter of both rock groups')
+local requestsBeforeOff = collisionRequests
 trees.setRockDensity('off'); settle()
 T.check(count() == 400, 'off removes existing rocks, keeps trees and props')
+T.check(collisionRequests > requestsBeforeOff, 'removing solid rocks requests a collision refresh')
 trees.setDecorativeProps(false); settle()
 T.check(count() == 200, 'decorations off removes doors and benches but keeps trees and traffic signs')
 trees.setRockDensity('normal'); settle()
@@ -215,4 +220,5 @@ T.check(count() == 600, 'decorations return without reloading the tile')
 T.check(not trees.setRockDensity('invalid') and not trees.setDecorativeProps('false'), 'invalid preferences rejected')
 T.check(trees.status().rockDensity == 'normal' and trees.status().decorativeProps, 'status exposes preferences')
 trees.clear()
+roads.requestCollision = requestCollision
 T.done('test_trees')
