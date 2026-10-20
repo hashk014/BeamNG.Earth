@@ -2,6 +2,79 @@
 
 What changed in each release of BeamNG.Earth, newest first.
 
+## 1.5.3 beta (2026-10-19)
+
+Works with BeamNG.drive 0.40.
+
+### High-speed driving
+- **Reduced the chance of driving onto bridges and into buildings before they have collision at high speed.** Their
+  collision is now made solid as soon as the car is a few seconds away instead of waiting for the next periodic
+  rebuild. In testing at about 185 mph, collision was ready at least 480 m ahead of the car (before: as little as
+  32 m).
+- **Road surfaces should keep up better at high speed.** Above about 55 mph the world server builds the road tiles
+  along your path, up to 14 seconds of driving ahead, in the order you will reach them. Things beside and behind you
+  come later.
+- **The ground under the car now comes first.** The terrain is built ahead of road tiles and far-away scenery when the
+  server is busy.
+- **Reduced the chance of falling off the edge of the loaded ground.** If the ground ahead is ever late (a slow first
+  visit, a busy computer), the game now pauses at the edge with "Waiting for collision to load here" instead of letting
+  the car drive off, and carries on by itself once it has loaded.
+
+### Teleporting (drop the car at the camera)
+- **Reduced the chance of falling through bridges and buildings after a teleport.** The pause now also waits for the
+  bridges, tunnels, sidewalks and buildings around the car to have collision, then sets the car down on them.
+- **Teleports to places that are already partly loaded pause too** if their bridges and buildings are not ready yet.
+- **Dropping the car under a bridge** now lands it on the road below instead of on the bridge deck.
+
+### Traffic and streets (thanks to hashk014, PR #35)
+- **Roundabouts:** traffic now drives one way round in the right direction (the mapped one, else your country's
+  driving side), cars on the roundabout have priority, and entries get give-way signs.
+- **Traffic slows down for tight bends and hairpins**, braking in time, and follows speed limits that change partway
+  along a road. Straight roads keep their posted limit.
+- **Narrow old-town streets** between close buildings are drawn as narrow as 3 m wide with narrower sidewalks,
+  instead of a wider default that ran into the buildings. Traffic takes narrow two-way streets more slowly.
+
+### BeamNG.drive 0.40
+- **Shingle roofs and runway markings should show their textures again.** 0.40 moved some of the game textures
+  BeamNG.Earth uses.
+
+### Installing from source (thanks to hashk014, PR #34)
+- **Clearer help on Windows when a Python package cannot be installed.** With a Python too new for DuckDB's
+  ready-made package, the installer now stops at once and explains how to use 64-bit Python 3.12 or the standalone
+  .exe instead of failing after a long build and suggesting a network problem. Only affects installing from the source
+  code; the .exe is unchanged.
+
+### Other fixes
+- **Grass should come back after starting the BeamNG.Earth map again in the same game session** (for example after
+  going back to the main menu).
+
+### Known issues
+- Bridges are not perfect yet, and long sessions get more stuttery until you restart the game.
+- A very fast drive through a dense city on a first visit can still outrun the road surfaces.
+
+## 1.5.2 beta (2026-10-19)
+
+Works with BeamNG.drive 0.40. Tested on 0.40.0: loading the world, driving in Baltimore, the Golden Gate, and terrain
+blocks loading while you drive.
+
+### BeamNG.drive 0.40
+- **The map, welcome and feedback screens now open the way 0.40 expects.** 0.40 changed how mods switch UI
+  screens; BeamNG.Earth uses the new way and falls back to the old one.
+- **Parked cars follow 0.40's renamed parked-traffic setting.** 0.40 renamed the option that sets how many parked
+  cars there are; BeamNG.Earth reads the new name first.
+- **The Linux grass patch (gcpatch) now works on 0.40.** It finds its place in the new game version on its own, so
+  grass should stay when terrain blocks move.
+
+### Tips after updating the game to 0.40
+- **0.40 turns all mods off after the update.** Turn mods back on from the main menu, then check that BeamNG.Earth
+  is on under Mods > Manage.
+- **0.40 may reset your units.** If the speedometer shows km/h, switch it back to mph in the game's options.
+
+### Known issues
+- Same as 1.5.0: bridges are not perfect yet, high-speed driving still stutters while the world loads, and long
+  sessions get more stuttery until you restart the game.
+- 0.40's new weather has not been tested together with BeamNG.Earth's real weather yet.
+
 ## 1.5.1 beta (2026-10-19)
 
 Works with BeamNG.drive 0.39.4.

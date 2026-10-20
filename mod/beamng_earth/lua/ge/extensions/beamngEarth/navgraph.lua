@@ -34,7 +34,9 @@ M.STUCK_S = 45
 M.STUCK_MS = 0.5
 M.STUCK_FAR_M = 40
 M.RESPAWN_M = { 60, 300 }   -- a respawned car goes this far (min, max) behind the camera
-M.EXTENSIONS = { 'core_multiSpawn', 'gameplay_traffic' }
+-- (gameplay_walk: 0.40's traffic.lua calls gameplay_walk.addVehicleToBlacklist when it activates its cars, and this
+-- level had none loaded: the cars spawned and never drove, 2026-10-19)
+M.EXTENSIONS = { 'core_multiSpawn', 'gameplay_traffic', 'gameplay_walk' }
 
 local graph = nil       -- the server's last graph {anchor, nodes, edges}
 local applied = nil     -- {anchor, serial, box} of the graph in the game's map now
@@ -297,7 +299,7 @@ local function applySignals(nodes)
 end
 
 local function trafficSystem()
-  if not (gameplay_traffic and core_multiSpawn) and extensions and extensions.load then
+  if not (gameplay_traffic and core_multiSpawn and gameplay_walk) and extensions and extensions.load then
     pcall(extensions.load, unpack(M.EXTENSIONS))
   end
   return gameplay_traffic
@@ -379,7 +381,8 @@ function M.takeChoice(o)
   end
   M.choice = { traffic = o.trafficMode == 'enabled', parked = o.trafficParked == 'enabled',
                police = o.trafficPolice == 'enabled', trafficAmount = tonumber(o.trafficAmount) or -1,
-               parkedAmount = tonumber(o.trafficParkedAmount) or -1 }
+               -- (0.40 renamed trafficParkedAmount to trafficParkingAmount)
+               parkedAmount = tonumber(o.trafficParkingAmount or o.trafficParkedAmount) or -1 }
   if log then
     log('I', 'beamngEarth', string.format('traffic choice: traffic %s, parked %s, police %s (freeroam %s / %s)',
       tostring(M.choice.traffic), tostring(M.choice.parked), tostring(M.choice.police), tostring(o.trafficMode),
