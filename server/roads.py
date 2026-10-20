@@ -65,6 +65,9 @@ PAVED = {"paved", "asphalt", "concrete", "concrete:plates", "concrete:lanes", "c
 COBBLE = {"paving_stones", "sett", "cobblestone", "cobblestone:flattened", "unhewn_cobblestone", "bricks", "grass_paver"}
 GRAVEL = {"gravel", "fine_gravel", "compacted", "pebblestone", "crushed_stone"}
 DIRT = {"unpaved", "dirt", "earth", "ground", "sand", "mud", "grass", "clay", "soil", "snow", "ice", "salt", "woodchips"}
+SURFACE_KINDS = {value: kind for kind, values in (("dirt", DIRT), ("gravel", GRAVEL),
+                                               ("cobble", COBBLE), ("paved", PAVED)) for value in values}
+SURFACE_PRIORITY = {"dirt": 0, "gravel": 1, "cobble": 2, "paved": 3}
 # kinds with a hard, built surface: carriageway extras (parking, strips, sidewalks) apply
 BUILT = {"paved", "cobble"}
 # surface kind -> DecalRoad look (stock materials, loaded by the mod from the official levels)
@@ -322,12 +325,16 @@ def tunnel_parts(feats, i):
 def surface_kind(cls, surface):
     """'paved', 'cobble', 'gravel' or 'dirt' from the class and the surface rule value (None if unknown)."""
     if isinstance(surface, (str, np.str_)):
-        values = {s.strip().casefold() for s in surface.split(";")}
+        value = surface.strip().casefold()
+        kind = SURFACE_KINDS.get(value)
+        if kind is not None:
+            return kind
         # Composite tags have no geometry for their individual surfaces. Preserve an explicit
         # loose surface rather than silently giving a mixed road the grip of asphalt.
-        for kind, known in (("dirt", DIRT), ("gravel", GRAVEL), ("cobble", COBBLE), ("paved", PAVED)):
-            if values & known:
-                return kind
+        if ";" in value:
+            kinds = [SURFACE_KINDS[part.strip()] for part in value.split(";") if part.strip() in SURFACE_KINDS]
+            if kinds:
+                return min(kinds, key=SURFACE_PRIORITY.__getitem__)
     # An unknown/empty tag is missing information, not evidence of an unpaved road.
     return "paved" if STYLE.get(cls, STYLE["unknown"])[1] else "dirt"
 

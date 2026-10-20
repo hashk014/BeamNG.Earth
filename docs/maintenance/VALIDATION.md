@@ -40,6 +40,25 @@ legacy suite passes: historical Windows deletion timing failures and Linux-only
 launcher fixture assumptions are documented in the earlier research reports.
 The full slow server suite was not rerun after every change in this batch.
 
+## Surface-classifier microbenchmark
+
+The classifier now uses a precomputed tag lookup. Ordinary single tags avoid
+allocating a set and intersecting several material sets for every road feature.
+Composite tags preserve the same loose-surface priority.
+
+On local Python 3.12.10, a fixed workload of eight metadata cases, 100,000
+iterations and the median of five repeats measured 0.31337 s before versus
+0.15799 s with the lookup, a 1.98x speedup for this function. Outputs matched
+on the workload and the material regression suites pass. This is neither an
+end-to-end generation benchmark nor a game/FPS measurement.
+
+```sh
+python tools/benchmark_road_surfaces.py --baseline 6d143e6
+```
+
+The historical function is evaluated using the current shared surface-tag
+constants; those constants are unchanged between these two measurements.
+
 ## Runtime handoff
 
 The maintenance batch still needs actual BeamNG checks for saved UI settings,
