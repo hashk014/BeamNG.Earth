@@ -18,6 +18,10 @@ local files = {}
 readFile = function(p) return files[p] end
 jsonDecode = function(s) return assert(load('return ' .. s))() end   -- the test writes Lua table text
 
+-- Deterministic elapsed time: Windows os.clock can stay at zero throughout these stub frames,
+-- so a zero-delay rebuild otherwise depends on the host clock's resolution.
+local clock = 0
+os.clock = function() clock = clock + 0.001; return clock end
 local roads = require('beamngEarth/roads')
 
 local gov = { tries = 0 }
