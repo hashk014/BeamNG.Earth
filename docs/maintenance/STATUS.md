@@ -4,8 +4,10 @@ Updated: 2026-10-20. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Current state
 
-- `preview` contains the previous Europe Preview work plus the merged Linux-runtime detection and session-file recovery fixes (fork PRs #1 and #2).
-- `codex/maintenance-october` contains the unreleased `1.5.3-europe-preview.2-dev` candidate.
+- `preview` contains the unreleased `1.5.3-europe-preview.2-dev` candidate, merged in
+  [fork PR #3](https://github.com/hashk014/BeamNG.Earth/pull/3), alongside the earlier
+  Linux-runtime and session-file recovery fixes (fork PRs #1 and #2).
+- `codex/maintenance-october` retains the batch's focused implementation history.
 - Git author is the existing human account `hashk014`. User-facing work must never carry a Codex signature or AI co-author trailer; see the root `AGENTS.md`.
 - The issue inventory is recorded in [ISSUES.md](ISSUES.md). It distinguishes upstream state, implementation, automated checks and remaining game validation.
 
@@ -38,7 +40,8 @@ All 59 issues in the snapshot have individual assessments; 48 were open upstream
 - Current local checks: 47 focused Python tests, 223 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
-  Review its latest run before claiming the current branch has passed CI.
+  [The validated source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39461712951)
+  passed on both platforms. Review the latest run for any later code changes.
 - Previous extended Windows server suite has three reproducible baseline timing failures, detailed in `docs/research/2026-10-20-session-file-recovery.md`.
 - No new standalone executable or public release has been produced for this maintenance batch.
 - Engine-stub tests and synthetic server tests do not establish gameplay, rendering, multiplayer behavior or FPS gains.
