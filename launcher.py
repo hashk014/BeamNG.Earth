@@ -17,6 +17,7 @@ terminal when started from a file manager (else it logs to ~/.cache/beamng-earth
 
     launcher.py                  everything
     launcher.py --no-game        only the server (start the game yourself)
+    launcher.py --quick-play     start directly on the BeamNG.Earth level
     launcher.py --no-gcpatch     the game without the grass patch
     launcher.py --proton / --native   Linux: which build of the game to start (default: found)
     launcher.py -- --verbose     anything after -- goes to the server
@@ -455,9 +456,10 @@ def windows_game_dir():
     return None
 
 
-def start_game(use_gcpatch, build="native", gfx=""):
+def start_game(use_gcpatch, build="native", gfx="", level=""):
     """Start the game; returns a Popen when this process started it directly, else None (through Steam)."""
-    win_args = ["-gfx", gfx] if gfx else []
+    level_args = ["-level", level] if level else []
+    win_args = (["-gfx", gfx] if gfx else []) + level_args
     if IS_WIN:
         # as BeamMP's launcher: the game's own launcher (BeamNG.drive.exe) in its folder, waited on. Works under
         # Wine / Proton too (the .exe started with protontricks), where Steam's links do not reach Steam
@@ -484,7 +486,7 @@ def start_game(use_gcpatch, build="native", gfx=""):
             if lib:
                 env["LD_PRELOAD"] = lib + (":" + env["LD_PRELOAD"] if env.get("LD_PRELOAD") else "")
             row("Game", "starting" + ("  (with the grass patch)" if lib else ""))
-            proc = subprocess.Popen([exe], cwd=os.path.dirname(os.path.dirname(exe)), env=env,
+            proc = subprocess.Popen([exe] + level_args, cwd=os.path.dirname(os.path.dirname(exe)), env=env,
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
             t0 = time.time()
             while time.time() - t0 < DIRECT_FAIL_S:
@@ -497,7 +499,7 @@ def start_game(use_gcpatch, build="native", gfx=""):
         elif exe:
             row("Game", "Steam is not running: starting through Steam (without the grass patch)")
     row("Game", "starting through Steam")
-    steam_launch(win_args if IS_WIN else ())
+    steam_launch(win_args if IS_WIN else level_args)
     return None
 
 
@@ -747,6 +749,7 @@ def main():
     ap = argparse.ArgumentParser(description="Start the BeamNG.Earth world server and BeamNG.drive.")
     storage.add_arguments(ap)
     ap.add_argument("--no-game", action="store_true", help="only the server (start the game yourself)")
+    ap.add_argument("--quick-play", action="store_true", help="load BeamNG.Earth directly when starting the game")
     ap.add_argument("--no-gcpatch", action="store_true", help="Linux: start the game without the grass patch")
     ap.add_argument("--keep-mod", action="store_true", help="leave the game's copy of the mod as it is")
     ap.add_argument("--user-dir", help="BeamNG.drive user folder (default: found)")
@@ -838,7 +841,8 @@ def run(args):
         else:
             if wine:
                 say("(under Wine / Proton: on Linux the AppImage runs the server natively, faster)")
-            proc = start_game(not args.no_gcpatch, build, args.gfx)
+            proc = start_game(not args.no_gcpatch, build, args.gfx,
+                              "beamng_earth" if args.quick_play else "")
         say()
         say("In the game: Freeroam > BeamNG.Earth.  Closing the game stops the server.")
         say()

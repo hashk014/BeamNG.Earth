@@ -95,5 +95,53 @@ class SteamCompatibilityTest(unittest.TestCase):
         self.assertEqual(launcher.linux_build("native"), ("native", self.native))
 
 
+class QuickPlayTest(unittest.TestCase):
+    def test_windows_direct_and_steam_fallback_keep_level_and_renderer(self):
+        for fails in (False, True):
+            with self.subTest(fallback=fails), \
+                 mock.patch.object(launcher, "IS_WIN", True), \
+                 mock.patch.object(launcher, "windows_game_dir", return_value="game folder"), \
+                 mock.patch.object(launcher.subprocess, "Popen") as popen, \
+                 mock.patch.object(launcher, "steam_launch") as steam:
+                if fails:
+                    popen.side_effect = OSError("cannot start directly")
+                launcher.start_game(False, gfx="dx11", level="beamng_earth")
+                self.assertEqual(popen.call_args.args[0], [
+                    os.path.join("game folder", "BeamNG.drive.exe"), "-gfx", "dx11", "-level", "beamng_earth"])
+                if fails:
+                    steam.assert_called_once_with(["-gfx", "dx11", "-level", "beamng_earth"])
+                else:
+                    steam.assert_not_called()
+
+    def test_linux_steam_and_proton_receive_level(self):
+        for build in ("native", "proton"):
+            with self.subTest(build=build), \
+                 mock.patch.object(launcher, "IS_WIN", False), \
+                 mock.patch.object(launcher, "linux_game_exe", return_value=None), \
+                 mock.patch.object(launcher, "steam_launch") as steam:
+                launcher.start_game(False, build=build, level="beamng_earth")
+                steam.assert_called_once_with(["-level", "beamng_earth"])
+
+    def test_default_start_does_not_select_a_level(self):
+        with mock.patch.object(launcher, "IS_WIN", True), \
+             mock.patch.object(launcher, "windows_game_dir", return_value="game folder"), \
+             mock.patch.object(launcher.subprocess, "Popen") as popen:
+            launcher.start_game(False)
+            self.assertEqual(popen.call_args.args[0], [os.path.join("game folder", "BeamNG.drive.exe")])
+
+    def test_linux_native_direct_start_keeps_level(self):
+        with mock.patch.object(launcher, "IS_WIN", False), \
+             mock.patch.object(launcher, "linux_game_exe", return_value="/game/BinLinux/BeamNG.drive.x64"), \
+             mock.patch.object(launcher, "sandboxed_game", return_value=False), \
+             mock.patch.object(launcher, "steam_running", return_value=True), \
+             mock.patch.object(launcher, "clean_env", return_value={}), \
+             mock.patch.object(launcher.time, "time", side_effect=[0, 100]), \
+             mock.patch.object(launcher.subprocess, "Popen") as popen:
+            popen.return_value.poll.return_value = None
+            launcher.start_game(False, level="beamng_earth")
+            self.assertEqual(popen.call_args.args[0], [
+                "/game/BinLinux/BeamNG.drive.x64", "-level", "beamng_earth"])
+
+
 if __name__ == "__main__":
     unittest.main()

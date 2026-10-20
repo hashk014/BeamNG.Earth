@@ -6,6 +6,11 @@ serveur : pour tester notre code, il faut démarrer celui de ce dossier.
 
 ## Démarrer
 
+Sur le PC préparé le 20 octobre 2026, utiliser le raccourci **Tester BeamNG Earth**
+sur le Bureau : serveur et carte démarrent ensemble. Les lieux de test sont déjà
+dans les favoris. Voir le [parcours rapide et les sauvegardes](maintenance/INGAME_READY.md).
+Les étapes ci-dessous restent disponibles pour un lancement manuel depuis les sources.
+
 1. Ferme le lanceur officiel BeamNG.Earth et son serveur s'ils tournent.
 2. Double-clique sur `run_server.bat` à la racine de ce projet. Laisse la fenêtre
    ouverte. L'environnement Python est déjà préparé sur cette machine.

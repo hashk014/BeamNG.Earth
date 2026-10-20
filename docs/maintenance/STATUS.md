@@ -30,6 +30,10 @@ All 59 issues in the snapshot have individual assessments; 48 were open upstream
 
 ## Next priorities
 
+- A frozen local in-game test kit, desktop shortcut and cached test locations are
+  ready on the development PC. See [the French handoff](INGAME_READY.md).
+  Native kernels and a real server handshake pass; gameplay still awaits the user.
+
 - Reproduce GPS/autodrive oscillation (#21/#38) and coarse/fine terrain overlap (#46).
 - Capture building, bridge and sidewalk data reproductions before changing their geometry.
 - Validate this candidate in BeamNG 0.40: water boundaries, UI persistence, material physics,
@@ -37,7 +41,7 @@ All 59 issues in the snapshot have individual assessments; 48 were open upstream
 
 ## Verification and release boundaries
 
-- Current local checks: 47 focused Python tests, 223 generator tests and 4,703 checks
+- Current local checks: 51 focused Python tests, 223 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
   [The validated source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39461712951)
