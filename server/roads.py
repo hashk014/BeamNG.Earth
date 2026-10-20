@@ -61,9 +61,10 @@ STYLE = {
     "tertiary": (6.5, True), "residential": (6.0, True), "living_street": (5.0, True),
     "unclassified": (5.5, True), "service": (4.0, True), "track": (3.5, False), "unknown": (5.0, True),
 }
-PAVED = {"paved", "asphalt", "concrete", "metal", "wood"}
-COBBLE = {"paving_stones", "sett", "cobblestone", "unhewn_cobblestone", "bricks"}   # Overture: "paving_stones"
-GRAVEL = {"gravel", "fine_gravel", "compacted", "pebblestone"}
+PAVED = {"paved", "asphalt", "concrete", "concrete:plates", "concrete:lanes", "chipseal", "metal", "wood"}
+COBBLE = {"paving_stones", "sett", "cobblestone", "cobblestone:flattened", "unhewn_cobblestone", "bricks", "grass_paver"}
+GRAVEL = {"gravel", "fine_gravel", "compacted", "pebblestone", "crushed_stone"}
+DIRT = {"unpaved", "dirt", "earth", "ground", "sand", "mud", "grass", "clay", "soil", "snow", "ice", "salt", "woodchips"}
 # kinds with a hard, built surface: carriageway extras (parking, strips, sidewalks) apply
 BUILT = {"paved", "cobble"}
 # surface kind -> DecalRoad look (stock materials, loaded by the mod from the official levels)
@@ -320,15 +321,14 @@ def tunnel_parts(feats, i):
 
 def surface_kind(cls, surface):
     """'paved', 'cobble', 'gravel' or 'dirt' from the class and the surface rule value (None if unknown)."""
-    if surface is not None:
-        s = str(surface).lower()
-        if s in PAVED:
-            return "paved"
-        if s in COBBLE:
-            return "cobble"
-        if s in GRAVEL:
-            return "gravel"
-        return "dirt"
+    if isinstance(surface, (str, np.str_)):
+        values = {s.strip().casefold() for s in surface.split(";")}
+        # Composite tags have no geometry for their individual surfaces. Preserve an explicit
+        # loose surface rather than silently giving a mixed road the grip of asphalt.
+        for kind, known in (("dirt", DIRT), ("gravel", GRAVEL), ("cobble", COBBLE), ("paved", PAVED)):
+            if values & known:
+                return kind
+    # An unknown/empty tag is missing information, not evidence of an unpaved road.
     return "paved" if STYLE.get(cls, STYLE["unknown"])[1] else "dirt"
 
 
