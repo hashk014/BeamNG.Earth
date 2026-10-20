@@ -2851,7 +2851,8 @@ class Connection:
                 def plan():
                     # with the cells at hand (the others are built in the background and used by the
                     # next plan, SEA_CHECK_S later): water appears at once at a new place
-                    tiles = (seatilesmod.plan(frame, x, y, lambda la, lo, size: sea.sea_at(dem, la, lo, size, False))
+                    tiles = (seatilesmod.plan(frame, x, y, lambda la, lo, size: sea.sea_at(dem, la, lo, size, False),
+                                             dry_at=lambda la, lo, size: sea.dry_at(dem, la, lo, size))
                              + seatilesmod.plan_lakes(frame, x, y, lambda la, lo: sea.lake_at(la, lo, False),
                                                       lake_ground))
                     def carved(la, lo):     # the river beds' level (seacarve), NaN elsewhere

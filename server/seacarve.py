@@ -798,6 +798,26 @@ class SeaCarver:
         d, lv = self.water(la, lo)
         return bool(((d > 0) & (np.abs(lv - SEA_E) < 0.01)).any())
 
+    def dry_at(self, dem, lat, lon, size):
+        """Known dry land below sea level, for bounded coastal WaterBlock refinement.
+
+        Unknown map cells are not classified as dry. Water polygons stay water, even where their
+        level is below the ocean. This does not raise land or alter the elevation cache.
+        """
+        import dem as demmod
+        lat, lon = np.asarray(lat, np.float64), np.asarray(lon, np.float64)
+        dry = np.zeros(lat.shape, bool)
+        if lat.size == 0:
+            return dry
+        depth, level, known = self.water(lat, lon, wait=False)
+        candidate = known & ~((depth > 0) & np.isfinite(level))
+        if candidate.any():
+            zoom = min(demmod.MAX_ZOOM, max(getattr(demmod, "MIN_ZOOM", 0),
+                                           demmod.zoom_for(float(lat.mean()), size / 64)))
+            ground = np.asarray(dem.sample(lat[candidate], lon[candidate], zoom), np.float64)
+            dry[candidate] = np.isfinite(ground) & (ground < SEA_E - 0.25)
+        return dry
+
     def sea_at(self, dem, lat, lon, size, wait=True):
         """Which points of a water tile of `size` m are sea (seatiles.plan): the polygons for the tiles near
         the player, the DEM band for larger tiles (wait=False: also for the cells not at hand yet, which
