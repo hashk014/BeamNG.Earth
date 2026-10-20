@@ -44,6 +44,11 @@ legacy suite passes: historical Windows deletion timing failures and Linux-only
 launcher fixture assumptions are documented in the earlier research reports.
 The full slow server suite was not rerun after every change in this batch.
 
+The maintenance workflow uses fixed Ubuntu 24.04 and Windows 2025 images. Its
+checkout/setup/upload actions are pinned to the verified Node 24 release commits,
+replacing the Node 20 deprecation warnings observed during the first green run.
+Upgrade these pins separately and re-run the matrix when the toolchain changes.
+
 ## Surface-classifier microbenchmark
 
 The classifier now uses a precomputed tag lookup. Ordinary single tags avoid
