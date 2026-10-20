@@ -1,5 +1,11 @@
 # BeamNG.Earth Europe Preview
 
+> **Source development:** the maintenance candidate is based on upstream 1.5.3
+> and adds saved cache locations, rock/prop controls, safer road-surface defaults,
+> coastal water protection and area downloads. The published Preview 1 executable
+> predates these changes. See [maintenance status](docs/maintenance/STATUS.md),
+> [all reviewed issues](docs/maintenance/ISSUES.md) and [validation](docs/maintenance/VALIDATION.md).
+
 Drive real roads in BeamNG.drive, with improved European traffic, narrow
 streets and world geometry.
 

@@ -44,6 +44,15 @@ SIMPLIFY_M = 0.25       # RDP tolerance (Road Spline's layerMgr)
 MAX_NODES = 100         # nodes per DecalRoad (Road Spline's chunk size)
 MAX_SPACING = 12.0      # m between nodes at most (official maps: median 11-12 m)
 BUILD_PER_POSE = 4      # tiles started per pose at most
+# At speed the tiles reach along the car's path (the user, 2026-10-19: "Going high speeds the road texture can struggle
+# to keep up ... even if we have to sacrifice some things further away from the car"): above FAST_MS the tiles within
+# CORRIDOR_M of the path ahead are wanted too, up to LEAD_S of driving (LEAD_MAX_M at most), and every wanted tile is
+# built in the order the car reaches it (path_key): the corridor first, the ones beside and behind the car last.
+FAST_MS = 25.0          # m/s (56 mph)
+LEAD_S = 14.0           # s of driving ahead
+LEAD_MAX_M = 2000.0
+CORRIDOR_M = 160.0      # m either side of the path
+SIDE_PENALTY = 4.0      # a tile off the path counts this many times its sideways distance (path_key)
 
 # class -> (width m, paved by default). Classes not here (footway, path, steps, cycleway, ...) are
 # left out for now.
@@ -52,9 +61,13 @@ STYLE = {
     "tertiary": (6.5, True), "residential": (6.0, True), "living_street": (5.0, True),
     "unclassified": (5.5, True), "service": (4.0, True), "track": (3.5, False), "unknown": (5.0, True),
 }
-PAVED = {"paved", "asphalt", "concrete", "metal", "wood"}
-COBBLE = {"paving_stones", "sett", "cobblestone", "unhewn_cobblestone", "bricks"}   # Overture: "paving_stones"
-GRAVEL = {"gravel", "fine_gravel", "compacted", "pebblestone"}
+PAVED = {"paved", "asphalt", "concrete", "concrete:plates", "concrete:lanes", "chipseal", "metal", "wood"}
+COBBLE = {"paving_stones", "sett", "cobblestone", "cobblestone:flattened", "unhewn_cobblestone", "bricks", "grass_paver"}
+GRAVEL = {"gravel", "fine_gravel", "compacted", "pebblestone", "crushed_stone"}
+DIRT = {"unpaved", "dirt", "earth", "ground", "sand", "mud", "grass", "clay", "soil", "snow", "ice", "salt", "woodchips"}
+SURFACE_KINDS = {value: kind for kind, values in (("dirt", DIRT), ("gravel", GRAVEL),
+                                               ("cobble", COBBLE), ("paved", PAVED)) for value in values}
+SURFACE_PRIORITY = {"dirt": 0, "gravel": 1, "cobble": 2, "paved": 3}
 # kinds with a hard, built surface: carriageway extras (parking, strips, sidewalks) apply
 BUILT = {"paved", "cobble"}
 # surface kind -> DecalRoad look (stock materials, loaded by the mod from the official levels)
@@ -311,15 +324,18 @@ def tunnel_parts(feats, i):
 
 def surface_kind(cls, surface):
     """'paved', 'cobble', 'gravel' or 'dirt' from the class and the surface rule value (None if unknown)."""
-    if surface is not None:
-        s = str(surface).lower()
-        if s in PAVED:
-            return "paved"
-        if s in COBBLE:
-            return "cobble"
-        if s in GRAVEL:
-            return "gravel"
-        return "dirt"
+    if isinstance(surface, (str, np.str_)):
+        value = surface.strip().casefold()
+        kind = SURFACE_KINDS.get(value)
+        if kind is not None:
+            return kind
+        # Composite tags have no geometry for their individual surfaces. Preserve an explicit
+        # loose surface rather than silently giving a mixed road the grip of asphalt.
+        if ";" in value:
+            kinds = [SURFACE_KINDS[part.strip()] for part in value.split(";") if part.strip() in SURFACE_KINDS]
+            if kinds:
+                return min(kinds, key=SURFACE_PRIORITY.__getitem__)
+    # An unknown/empty tag is missing information, not evidence of an unpaved road.
     return "paved" if STYLE.get(cls, STYLE["unknown"])[1] else "dirt"
 
 
@@ -1569,6 +1585,41 @@ def tiles_near(x, y, radius):
 def tile_distance(tx, ty, x, y):
     x0, y0, x1, y1 = tile_bbox(tx, ty)
     return max(x0 - x, x - x1, y0 - y, y - y1, 0.0)
+
+
+def wanted_tiles(x, y, vx=0.0, vy=0.0):
+    """The tile keys the mod should have around (x, y): those within SEND_M, and moving at FAST_MS or more also those
+    within CORRIDOR_M of the path ahead, up to LEAD_S of driving (LEAD_MAX_M at most)."""
+    want = set(tiles_near(x, y, SEND_M))
+    s = math.hypot(vx, vy)
+    lead = min(LEAD_MAX_M, s * LEAD_S)
+    if s < FAST_MS or lead <= SEND_M:
+        return want
+    ux, uy = vx / s, vy / s
+    d = 0.0
+    while d <= lead:
+        want.update(tiles_near(x + ux * d, y + uy * d, CORRIDOR_M))
+        d += TILE / 2
+    return want
+
+
+def path_key(x, y, vx, vy):
+    """The build order at speed: by how far along the path ahead the tile is, its sideways distance from the path
+    counting SIDE_PENALTY times, a tile behind the car by its distance times SIDE_PENALTY (after those ahead)."""
+    s = math.hypot(vx, vy)
+    ux, uy = vx / s, vy / s
+
+    def key(k):
+        d = tile_distance(k[0], k[1], x, y)
+        if d <= 0:
+            return 0.0
+        x0, y0, x1, y1 = tile_bbox(k[0], k[1])
+        dx, dy = (x0 + x1) / 2 - x, (y0 + y1) / 2 - y
+        along, side = dx * ux + dy * uy, abs(dy * ux - dx * uy)
+        if along < -TILE / 2:
+            return d * SIDE_PENALTY + LEAD_MAX_M
+        return max(0.0, along) + SIDE_PENALTY * max(0.0, side - TILE / 2)
+    return key
 
 
 def view_key(conn, aid, x, y):
@@ -2962,9 +3013,11 @@ class Tracker:
         if self.pool is not None:
             self.pool.shutdown(wait=False, cancel_futures=True)
 
-    def on_pose(self, conn, aid, x, y, loop, build):
-        """Called with the player's position in the active anchor's frame. build(aid, tx, ty) runs in a
-        worker and returns the tile's (path, n) or None; its result is announced with conn.send."""
+    def on_pose(self, conn, aid, x, y, loop, build, vel=(0.0, 0.0), ground_busy=False):
+        """Called with the player's position (and velocity, m/s) in the active anchor's frame. build(aid, tx, ty) runs
+        in a worker and returns the tile's (path, n) or None; its result is announced with conn.send. ground_busy: a
+        terrain block the mod asked for is being built: no tile beyond SEND_M starts meanwhile (the ground first; at
+        180 mph the block ahead waited 7.5 s among them, 2026-10-19)."""
         if aid != self.aid:
             for f in self.futs.values():
                 f.cancel()
@@ -2972,13 +3025,17 @@ class Tracker:
         if self.pool is None:
             from concurrent.futures import ThreadPoolExecutor
             self.pool = ThreadPoolExecutor(BUILD_PER_POSE, thread_name_prefix="roads-tile")
-        want = [k for k in tiles_near(x, y, SEND_M) if k not in self.sent and k not in self.building]
-        want.sort(key=view_key(conn, aid, x, y))
+        vx, vy = (float(vel[0]), float(vel[1])) if vel else (0.0, 0.0)
+        fast = math.hypot(vx, vy) >= FAST_MS
+        wanted = wanted_tiles(x, y, vx, vy)
+        start = set(tiles_near(x, y, SEND_M)) if ground_busy else wanted
+        want = [k for k in start if k not in self.sent and k not in self.building]
+        want.sort(key=path_key(x, y, vx, vy) if fast else view_key(conn, aid, x, y))
         for tx, ty in want[:max(0, BUILD_PER_POSE - len(self.building))]:   # in flight at most (vegetation.Tracker)
             self.building.add((tx, ty))
             fut = self.futs[(tx, ty)] = loop.run_in_executor(self.pool, build, aid, tx, ty)
             fut.add_done_callback(lambda f, k=(tx, ty), a=aid: self._built(conn, a, k, f))
-        drop = [k for k in self.sent if tile_distance(k[0], k[1], x, y) > DROP_M]
+        drop = [k for k in self.sent if k not in wanted and tile_distance(k[0], k[1], x, y) > DROP_M]
         for k in drop:
             self.sent.discard(k)
             conn.send({"type": "roads_drop", "anchorId": aid, "key": f"{k[0]}_{k[1]}"})

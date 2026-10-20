@@ -384,4 +384,16 @@ do
   T.check(st.HIDDEN.updateDismissed, 'updateDismissed: not on the settings page')
 end
 
+do
+  settings.set('rockDensity', 'off')
+  settings.set('decorativeProps', false)
+  settings.load()
+  settings.apply()
+  local trees = require('beamngEarth/trees')
+  T.check(settings.get('rockDensity') == 'off' and trees.status().rockDensity == 'off', 'rock preference saved and applied')
+  T.check(settings.get('decorativeProps') == false and not trees.status().decorativeProps, 'decoration preference saved and applied')
+  T.check(settings.validate('rockDensity', 'all') == nil, 'unknown rock density refused')
+  settings.set('rockDensity', 'normal')
+  settings.set('decorativeProps', true)
+end
 T.done('test_settings')

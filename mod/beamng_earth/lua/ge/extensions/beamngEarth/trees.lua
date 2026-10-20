@@ -166,6 +166,24 @@ local MATERIALS = {
 
 local stopwatch = require('beamngEarth/stopwatch')
 local tiles = {}        -- key "a:tx_ty" -> { anchor, cx, cy, rows, made = { i -> item }, shown = rank }
+local rockDensity, decorativeProps = 'normal', true
+local ROCK_DENSITIES = { off = 0, low = 0.25, normal = 1 }
+
+local function refreshVisibility()
+  for _, t in pairs(tiles) do t.pending = true end
+end
+
+function M.setRockDensity(value)
+  if ROCK_DENSITIES[value] == nil then return false end
+  if rockDensity ~= value then rockDensity = value; refreshVisibility() end
+  return true
+end
+
+function M.setDecorativeProps(value)
+  if type(value) ~= 'boolean' then return false end
+  if decorativeProps ~= value then decorativeProps = value; refreshVisibility() end
+  return true
+end
 local ghostSince = nil               -- since the last rebase that left ghost tiles (M.transform)
 local types = {}        -- "shape" / "shape#n" (not solid) -> TSForestItemData
 local pop = {}          -- shape -> its items in the level
@@ -498,10 +516,10 @@ function M.update(anchorId, player)
     ::continue::
   end
   table.sort(order, function(a, b) return a[2] < b[2] end)
-  local nearMade = false
+  local collisionChanged = false
   local rowsScanned = 0
   local function finish()
-    if nearMade then
+    if collisionChanged then
       local ok, roads = pcall(require, 'beamngEarth/roads')
       if ok and roads.requestCollision then roads.requestCollision() end
     end
@@ -520,6 +538,12 @@ function M.update(anchorId, player)
       for i, row in ipairs(t.rows) do
         local r = row[8] or 0
         local g = (t.groups or GROUPS)[(row[1] or 0) + 1]
+        if g == 'rock' or g == 'desert_rock' then
+          local density = ROCK_DENSITIES[rockDensity]
+          r = density > 0 and r / density or 2
+        elseif not decorativeProps and (g == 'door' or g == 'bench') then
+          r = 2
+        end
         local cap = g and M.GROUP_MAX_M[g]
         if cap and o[2] > cap then r = 2 end     -- this group is not shown this far out
         -- an item something else stands in for (navgraph.lua's switchable signal heads)
@@ -529,16 +553,20 @@ function M.update(anchorId, player)
           local sh, sc = shapeOf(t, i, row)
           if budget <= 0 then t.pending = true; finish(); return end
           if allow(sh) then
-            if t.made[i] then removeItem(data(), t.made[i], t.madeShape[i]); budget = budget - 1 end  -- solid <-> not
+            if t.made[i] then
+              if t.solid[i] then collisionChanged = true end
+              removeItem(data(), t.made[i], t.madeShape[i]); budget = budget - 1
+            end  -- solid <-> not
             t.made[i] = makeItem(data(), row, sh, sc, solid)
             t.solid[i] = (t.made[i] and solid) or nil      -- true or nil
             t.madeShape[i] = t.made[i] and sh or nil
-            if solid then nearMade = true end
+            if solid then collisionChanged = true end
             budget = budget - 1
           else t.pending = true end                -- another frame (this one's shapes are full)
         elseif r >= want and t.made[i] then
           if budget <= 0 then t.pending = true; finish(); return end
           if allow(t.madeShape[i] or '') then
+            if t.solid[i] then collisionChanged = true end
             removeItem(data(), t.made[i], t.madeShape[i])
             t.made[i], t.solid[i], t.madeShape[i] = nil, nil, nil
             budget = budget - 1
@@ -576,7 +604,8 @@ function M.status()
     if t.pending or t.shown == 0 then pending = pending + 1 end
     for _ in pairs(t.made) do items = items + 1 end
   end
-  return { tiles = n, items = items, pending = pending, made = M.made, removed = M.removed, errors = M.errors }
+  return { tiles = n, items = items, pending = pending, made = M.made, removed = M.removed, errors = M.errors,
+    rockDensity = rockDensity, decorativeProps = decorativeProps }
 end
 
 return M

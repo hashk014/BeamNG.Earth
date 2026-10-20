@@ -190,4 +190,35 @@ trees.update(7, { x = 50, y = 50 })
 for _, o in pairs(S.objects) do if o.class == 'Forest' and o.pos and o.pos.y == 0 and o.rot then reused = true end end
 T.check(reused, 'a pooled Forest is reset to no transform when reused')
 trees.clear()
+-- Saved group preferences also update items that are already visible, with deterministic subsets.
+trees.EVERY_N, trees.PER_FRAME, trees.SHAPE_ITEMS_PER_FRAME = 1, 10000, 1000000
+local roads = require('beamngEarth/roads')
+local requestCollision, collisionRequests = roads.requestCollision, 0
+roads.requestCollision = function() collisionRequests = collisionRequests + 1 end
+local groups = { 'rock', 'desert_rock', 'deciduous', 'door', 'bench', 'stop' }
+local mixed = {}
+for g = 0, #groups - 1 do
+  for i = 0, 99 do mixed[#mixed + 1] = { g, 50, 50, 5, 0, 1, g == 2 and 12 or 1, i / 100 } end
+end
+trees.onRows(8, '0_0', mixed, groups)
+local function settle() for _ = 1, 10 do trees.update(8, { x = 50, y = 50 }) end end
+settle()
+T.check(count() == 600, 'default preferences preserve all groups')
+T.check(trees.setRockDensity('low'), 'low rocks accepted')
+settle()
+T.check(count() == 450, 'low keeps a stable quarter of both rock groups')
+local requestsBeforeOff = collisionRequests
+trees.setRockDensity('off'); settle()
+T.check(count() == 400, 'off removes existing rocks, keeps trees and props')
+T.check(collisionRequests > requestsBeforeOff, 'removing solid rocks requests a collision refresh')
+trees.setDecorativeProps(false); settle()
+T.check(count() == 200, 'decorations off removes doors and benches but keeps trees and traffic signs')
+trees.setRockDensity('normal'); settle()
+T.check(count() == 400, 'rocks return without reloading the tile')
+trees.setDecorativeProps(true); settle()
+T.check(count() == 600, 'decorations return without reloading the tile')
+T.check(not trees.setRockDensity('invalid') and not trees.setDecorativeProps('false'), 'invalid preferences rejected')
+T.check(trees.status().rockDensity == 'normal' and trees.status().decorativeProps, 'status exposes preferences')
+trees.clear()
+roads.requestCollision = requestCollision
 T.done('test_trees')

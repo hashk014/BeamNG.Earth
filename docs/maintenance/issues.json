@@ -1,0 +1,910 @@
+{
+  "repository": "TecnaGamer/BeamNG.Earth",
+  "refreshedAt": "2026-10-20T16:30:10.883719+00:00",
+  "issues": [
+    {
+      "labels": [],
+      "number": 1,
+      "state": "OPEN",
+      "title": "Real-time sky changes the time of day on other levels too (sky.lua onUpdate has no level check)",
+      "updatedAt": "2026-10-17T07:30:42Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/1",
+      "review": {
+        "status": "fixed-in-base",
+        "priority": "P2",
+        "notes": "Sky already checks the current level.",
+        "validation": "Sky stub suite passes; other-level gameplay not retested."
+      }
+    },
+    {
+      "labels": [],
+      "number": 2,
+      "state": "OPEN",
+      "title": "[Map issue] Houses floating above the road",
+      "updatedAt": "2026-10-17T10:40:38Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/2",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Fork wall/foundation sampling is improved; floating buildings and footprints over roads remain distinct cases.",
+        "validation": "Compare cached footprints and DEM, then regenerate the reported location."
+      }
+    },
+    {
+      "labels": [
+        "enhancement",
+        "planned"
+      ],
+      "number": 3,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] street lights glowing up",
+      "updatedAt": "2026-10-20T02:04:54Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/3",
+      "review": {
+        "status": "planned",
+        "priority": "P2",
+        "notes": "Night lighting needs bounded lamp emission/light rendering.",
+        "validation": "Engine appearance and performance tests required; no patch this batch."
+      }
+    },
+    {
+      "labels": [
+        "enhancement",
+        "planned"
+      ],
+      "number": 4,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] BeamMP support",
+      "updatedAt": "2026-10-20T15:25:17Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/4",
+      "review": {
+        "status": "planned",
+        "priority": "P2",
+        "notes": "Multiplayer requires shared origins, sessions and streaming synchronization.",
+        "validation": "Two-player test required; nearby-spawn anecdotes do not prove support."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 5,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Less rocks in the desert",
+      "updatedAt": "2026-10-18T15:51:29Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/5",
+      "review": {
+        "status": "implemented-this-batch",
+        "priority": "P1",
+        "notes": "Saved Off/Low/Normal control for both rock groups; updates existing items.",
+        "validation": "Tree/settings stub tests pass; gameplay check remains."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 6,
+      "state": "CLOSED",
+      "title": ".",
+      "updatedAt": "2026-10-18T17:13:28Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/6",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P3",
+        "notes": "Empty closed report.",
+        "validation": "No actionable content."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 7,
+      "state": "OPEN",
+      "title": "Connection to world server is not working.",
+      "updatedAt": "2026-10-18T20:59:16Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/7",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Connection/material reports lack enough logs for one code diagnosis.",
+        "validation": "Capture launcher, server handshake and game logs; check mod activation."
+      }
+    },
+    {
+      "labels": [],
+      "number": 8,
+      "state": "OPEN",
+      "title": "[Map issue] Netherlands below-sea-level terrain is flooded by the sea plane",
+      "updatedAt": "2026-10-18T18:06:15Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/8",
+      "review": {
+        "status": "partial-this-batch",
+        "priority": "P1",
+        "notes": "Bounded coastal refinement and confined physics protect sampled known dry low land.",
+        "validation": "Synthetic and Lua tests pass. Netherlands gameplay, inland water and source gaps remain; see WATER.md."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 9,
+      "state": "CLOSED",
+      "title": "[Idea / suggestion] Make a C/C++ version",
+      "updatedAt": "2026-10-20T02:12:04Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/9",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P3",
+        "notes": "Existing Rust kernels are retained; no full rewrite planned.",
+        "validation": "Profile actual bottlenecks before more native ports."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 10,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Preload/download map sections",
+      "updatedAt": "2026-10-20T08:09:57Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/10",
+      "review": {
+        "status": "partial-this-batch",
+        "priority": "P1",
+        "notes": "Bounded resumable area downloads with offline cache verification.",
+        "validation": "Small real DEM/map/imagery samples pass offline reads. No city-size offline drive, UI selection or standalone map; see PREFETCH.md."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 11,
+      "state": "CLOSED",
+      "title": "[Bug] \"failed building wheel for duckdb\"",
+      "updatedAt": "2026-10-20T01:48:06Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/11",
+      "review": {
+        "status": "fixed-in-base",
+        "priority": "P2",
+        "notes": "Windows binary-wheel DuckDB installer fix already merged upstream.",
+        "validation": "Preserve installer regression coverage and binary-wheel requirement."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 12,
+      "state": "OPEN",
+      "title": "[Bug] world is empty",
+      "updatedAt": "2026-10-18T19:49:24Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/12",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Connection/material reports lack enough logs for one code diagnosis.",
+        "validation": "Capture launcher, server handshake and game logs; check mod activation."
+      }
+    },
+    {
+      "labels": [],
+      "number": 13,
+      "state": "CLOSED",
+      "title": "is this mod  malicious?",
+      "updatedAt": "2026-10-20T02:15:40Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/13",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Historical antivirus reports require exact release hashes and build provenance.",
+        "validation": "No blanket safety, signing or antivirus guarantee."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 14,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] I think there is no need to generate doors.",
+      "updatedAt": "2026-10-18T21:15:51Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/14",
+      "review": {
+        "status": "implemented-this-batch",
+        "priority": "P2",
+        "notes": "Saved decorative doors/benches toggle preserves traffic signs and trees.",
+        "validation": "Existing items remove/return in stub tests; source orientation remains separate."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 15,
+      "state": "CLOSED",
+      "title": "[Bug] Buildings are all floating above the ground",
+      "updatedAt": "2026-10-20T01:49:00Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/15",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Older floating-building issue was closed; see ongoing #2/#48/#60.",
+        "validation": "No universal building fix claimed."
+      }
+    },
+    {
+      "labels": [
+        "enhancement",
+        "planned"
+      ],
+      "number": 16,
+      "state": "OPEN",
+      "title": "train track generation",
+      "updatedAt": "2026-10-20T13:03:42Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/16",
+      "review": {
+        "status": "planned",
+        "priority": "P3",
+        "notes": "Rail geometry, junctions and collision need their own pipeline.",
+        "validation": "Source/engine feasibility study required."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 17,
+      "state": "OPEN",
+      "title": "Specified network name is unavailable",
+      "updatedAt": "2026-10-18T22:25:33Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/17",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "A socket message alone does not explain a native game crash.",
+        "validation": "Correlate full crash dump/game log with server connection."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 18,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Street View",
+      "updatedAt": "2026-10-19T15:16:45Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/18",
+      "review": {
+        "status": "research",
+        "priority": "P3",
+        "notes": "Street-view imagery is not directly reusable geometry.",
+        "validation": "Choose a suitable data source and establish a conversion pipeline."
+      }
+    },
+    {
+      "labels": [],
+      "number": 19,
+      "state": "OPEN",
+      "title": "[Map issue] This not counting as a solid road",
+      "updatedAt": "2026-10-18T22:53:01Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/19",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Road solidity needs exact generated terrain/mesh files and rays.",
+        "validation": "Material classification does not prove collision is fixed."
+      }
+    },
+    {
+      "labels": [
+        "enhancement",
+        "planned"
+      ],
+      "number": 20,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Gas stations",
+      "updatedAt": "2026-10-20T02:05:41Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/20",
+      "review": {
+        "status": "planned",
+        "priority": "P2",
+        "notes": "Fuel stations require POIs and engine fueling hooks.",
+        "validation": "No simulated gameplay or refueling claim."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 21,
+      "state": "OPEN",
+      "title": "[Bug] Autodrive is broken and keeps slamming on the brakes and turing around",
+      "updatedAt": "2026-10-18T23:04:51Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/21",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Route oscillation needs route-progress, direction and anchor-transition traces.",
+        "validation": "Existing traffic improvements preserved; GPS/autodrive oscillation not claimed fixed."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 22,
+      "state": "CLOSED",
+      "title": "Is this mod Malicious?",
+      "updatedAt": "2026-10-20T01:56:55Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/22",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Historical antivirus reports require exact release hashes and build provenance.",
+        "validation": "No blanket safety, signing or antivirus guarantee."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 23,
+      "state": "OPEN",
+      "title": "[Bug] World server degraded - never connects to downloads.sourceforge.net",
+      "updatedAt": "2026-10-19T01:27:42Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/23",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "SourceForge unavailability is a data-source problem, distinct from world-server connection.",
+        "validation": "Verify exact layer, fallback and degraded-status recovery."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 24,
+      "state": "OPEN",
+      "title": "[Bug] Sidewalks generate wrong, too much, or too little",
+      "updatedAt": "2026-10-19T07:00:28Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/24",
+      "review": {
+        "status": "planned",
+        "priority": "P1",
+        "notes": "Sidewalk height sampling and junction continuity need reported road profiles.",
+        "validation": "Existing corner/grade tests remain; no universal sidewalk fix."
+      }
+    },
+    {
+      "labels": [],
+      "number": 25,
+      "state": "OPEN",
+      "title": "[Map issue] God awful bridges",
+      "updatedAt": "2026-10-20T11:40:51Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/25",
+      "review": {
+        "status": "planned",
+        "priority": "P1",
+        "notes": "Bridge clearance/approaches need generalized constraints and actual elevation data.",
+        "validation": "Evaluate upstream bridge work and actual geometry; avoid coordinate-specific fixes."
+      }
+    },
+    {
+      "labels": [],
+      "number": 26,
+      "state": "OPEN",
+      "title": "How to enable imagery de-shadowing and colour seams?",
+      "updatedAt": "2026-10-20T07:24:48Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/26",
+      "review": {
+        "status": "documented-workaround",
+        "priority": "P2",
+        "notes": "Use source starter options: -- --deshadow full --colormatch s2. These are still server-controlled.",
+        "validation": "Help confirms flags; changing these live from the UI remains future work."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 27,
+      "state": "OPEN",
+      "title": "[Bug] Error",
+      "updatedAt": "2026-10-20T10:40:42Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/27",
+      "review": {
+        "status": "merged-in-preview",
+        "priority": "P1",
+        "notes": "Session-file recovery (#27) and native Linux runtime detection (#56) merged into the fork.",
+        "validation": "Prior Windows/Linux CI passed; upstream issues remain independent."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 28,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Add a preload feature",
+      "updatedAt": "2026-10-19T10:10:21Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/28",
+      "review": {
+        "status": "partial-this-batch",
+        "priority": "P1",
+        "notes": "Bounded resumable area downloads with offline cache verification.",
+        "validation": "Small real DEM/map/imagery samples pass offline reads. No city-size offline drive, UI selection or standalone map; see PREFETCH.md."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 29,
+      "state": "OPEN",
+      "title": "[Bug] Sidewalks in Australia (maybe elsewhere havent checked yet)",
+      "updatedAt": "2026-10-19T10:02:02Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/29",
+      "review": {
+        "status": "planned",
+        "priority": "P1",
+        "notes": "Sidewalk height sampling and junction continuity need reported road profiles.",
+        "validation": "Existing corner/grade tests remain; no universal sidewalk fix."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 30,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Preload/Faster load",
+      "updatedAt": "2026-10-19T10:31:39Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/30",
+      "review": {
+        "status": "partial-this-batch",
+        "priority": "P1",
+        "notes": "Bounded resumable area downloads with offline cache verification.",
+        "validation": "Small real DEM/map/imagery samples pass offline reads. No city-size offline drive, UI selection or standalone map; see PREFETCH.md."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 31,
+      "state": "OPEN",
+      "title": "Improve Road Surface Materials and Asphalt Detection",
+      "updatedAt": "2026-10-19T10:54:09Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/31",
+      "review": {
+        "status": "implemented-this-batch",
+        "priority": "P1",
+        "notes": "Unknown/empty surface tags use road-class defaults; explicit materials and mixed loose-surface tags are retained.",
+        "validation": "Road, material and focused metadata tests pass; actual driving/visual fidelity still needs checks."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 32,
+      "state": "CLOSED",
+      "title": "[Bug] Map is not opened both using \"M\" hot key or from panel",
+      "updatedAt": "2026-10-20T02:01:03Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/32",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Upstream 1.5.3 compatibility and mod-disabled handling integrated.",
+        "validation": "Offline tests cover source behavior; actual BeamNG 0.40 session not retested."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 33,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Prioritize Road and Bridge Loading",
+      "updatedAt": "2026-10-19T16:21:13Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/33",
+      "review": {
+        "status": "partial-in-base",
+        "priority": "P1",
+        "notes": "Upstream urgent collision handling and existing road warmup are retained.",
+        "validation": "Road-priority toggle and high-speed comparative drives remain open."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 36,
+      "state": "CLOSED",
+      "title": "[Bug] No map available",
+      "updatedAt": "2026-10-20T02:03:30Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/36",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Upstream 1.5.3 compatibility and mod-disabled handling integrated.",
+        "validation": "Offline tests cover source behavior; actual BeamNG 0.40 session not retested."
+      }
+    },
+    {
+      "labels": [],
+      "number": 37,
+      "state": "CLOSED",
+      "title": "[Map issue] Map does not generate nor teleport in new version",
+      "updatedAt": "2026-10-20T02:04:25Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/37",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Upstream 1.5.3 compatibility and mod-disabled handling integrated.",
+        "validation": "Offline tests cover source behavior; actual BeamNG 0.40 session not retested."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 38,
+      "state": "OPEN",
+      "title": "[Bug]  waypoints lead you nowhere",
+      "updatedAt": "2026-10-19T17:33:42Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/38",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Route oscillation needs route-progress, direction and anchor-transition traces.",
+        "validation": "Existing traffic improvements preserved; GPS/autodrive oscillation not claimed fixed."
+      }
+    },
+    {
+      "labels": [],
+      "number": 39,
+      "state": "OPEN",
+      "title": "[Performance issue]",
+      "updatedAt": "2026-10-19T18:05:53Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/39",
+      "review": {
+        "status": "needs-profile",
+        "priority": "P1",
+        "notes": "Microstutters need frame-time captures using the reported settings and vehicle.",
+        "validation": "No FPS gain claimed from generator or stub tests."
+      }
+    },
+    {
+      "labels": [],
+      "number": 40,
+      "state": "OPEN",
+      "title": "[Map issue] horrible generation...",
+      "updatedAt": "2026-10-20T13:21:25Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/40",
+      "review": {
+        "status": "partly-addressed",
+        "priority": "P1",
+        "notes": "Rock/prop controls and surface fallback addressed; lane, building, sidewalk and orientation defects remain.",
+        "validation": "Split remaining cases into precise locations/data reproductions."
+      }
+    },
+    {
+      "labels": [],
+      "number": 42,
+      "state": "OPEN",
+      "title": "[Map issue]",
+      "updatedAt": "2026-10-19T21:56:45Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/42",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Underwater tunnels need tunnel-volume/approach validation.",
+        "validation": "Coastal surface refinement does not make underwater tunnels dry."
+      }
+    },
+    {
+      "labels": [],
+      "number": 43,
+      "state": "OPEN",
+      "title": "[Map issue] Incorrect lane counts for most roads/highways",
+      "updatedAt": "2026-10-20T00:57:18Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/43",
+      "review": {
+        "status": "planned",
+        "priority": "P1",
+        "notes": "Lane counts and medians require explicit mapped dimensions and transition/collision geometry.",
+        "validation": "Class defaults do not prove actual lane counts."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 44,
+      "state": "OPEN",
+      "title": "[Idea / adding satelite map into car screens",
+      "updatedAt": "2026-10-20T01:18:46Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/44",
+      "review": {
+        "status": "research",
+        "priority": "P3",
+        "notes": "In-car maps need a supported dashboard/render-texture integration.",
+        "validation": "No engine prototype claimed."
+      }
+    },
+    {
+      "labels": [],
+      "number": 45,
+      "state": "OPEN",
+      "title": "[Map issue]",
+      "updatedAt": "2026-10-20T01:37:37Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/45",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Harbor holes need water-polygon, bathymetry and DEM comparison.",
+        "validation": "Coastal volume protection does not change bathymetry."
+      }
+    },
+    {
+      "labels": [],
+      "number": 46,
+      "state": "OPEN",
+      "title": "[Map issue] Low poly AND High poly terrain rendering over each other",
+      "updatedAt": "2026-10-20T16:07:41Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/46",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Coarse/fine overlay needs a render/swap timeline at the reported speed.",
+        "validation": "Far-field stub tests pass; no rendering fix claimed."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 47,
+      "state": "OPEN",
+      "title": "[Bug]",
+      "updatedAt": "2026-10-20T01:51:11Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/47",
+      "review": {
+        "status": "research",
+        "priority": "P2",
+        "notes": "Landmark/pyramid and mountain shape require suitable source geometry/DEM detail.",
+        "validation": "Avoid hard-coded coordinates; no landmark fidelity claim."
+      }
+    },
+    {
+      "labels": [],
+      "number": 48,
+      "state": "OPEN",
+      "title": "[Map issue]",
+      "updatedAt": "2026-10-20T02:37:07Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/48",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Fork wall/foundation sampling is improved; floating buildings and footprints over roads remain distinct cases.",
+        "validation": "Compare cached footprints and DEM, then regenerate the reported location."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 49,
+      "state": "OPEN",
+      "title": "[Map Issue] Cerro Torre",
+      "updatedAt": "2026-10-20T05:00:54Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/49",
+      "review": {
+        "status": "research",
+        "priority": "P2",
+        "notes": "Landmark/pyramid and mountain shape require suitable source geometry/DEM detail.",
+        "validation": "Avoid hard-coded coordinates; no landmark fidelity claim."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 50,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Prioritising loading",
+      "updatedAt": "2026-10-20T10:07:57Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/50",
+      "review": {
+        "status": "partial-in-base",
+        "priority": "P2",
+        "notes": "Directional download-ahead already exists and area prefetch complements it.",
+        "validation": "Road-following lookahead and measured throughput gains remain future work."
+      }
+    },
+    {
+      "labels": [],
+      "number": 51,
+      "state": "OPEN",
+      "title": "[Map issue] Bruce highway overpasses way too low.",
+      "updatedAt": "2026-10-20T10:07:15Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/51",
+      "review": {
+        "status": "planned",
+        "priority": "P1",
+        "notes": "Bridge clearance/approaches need generalized constraints and actual elevation data.",
+        "validation": "Evaluate upstream bridge work and actual geometry; avoid coordinate-specific fixes."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 52,
+      "state": "CLOSED",
+      "title": "[Idea / suggestion] PLEASE FIGURE OUT A WAY TO ADD BEAMMP SUPPORT",
+      "updatedAt": "2026-10-20T13:22:23Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/52",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P3",
+        "notes": "Duplicate multiplayer request; tracked under #4.",
+        "validation": "Two-player synchronization validation remains."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 53,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] water in the Netherlands.",
+      "updatedAt": "2026-10-20T14:21:28Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/53",
+      "review": {
+        "status": "partial-this-batch",
+        "priority": "P1",
+        "notes": "Bounded coastal refinement and confined physics protect sampled known dry low land.",
+        "validation": "Synthetic and Lua tests pass. Netherlands gameplay, inland water and source gaps remain; see WATER.md."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 54,
+      "state": "OPEN",
+      "title": "[Bug]",
+      "updatedAt": "2026-10-20T13:47:04Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/54",
+      "review": {
+        "status": "monitor",
+        "priority": "P2",
+        "notes": "Reporter says restart resolved the symptom.",
+        "validation": "Investigate again with reproducible logs."
+      }
+    },
+    {
+      "labels": [],
+      "number": 55,
+      "state": "OPEN",
+      "title": "[Map issue]",
+      "updatedAt": "2026-10-20T16:06:00Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/55",
+      "review": {
+        "status": "planned",
+        "priority": "P1",
+        "notes": "Lane counts and medians require explicit mapped dimensions and transition/collision geometry.",
+        "validation": "Class defaults do not prove actual lane counts."
+      }
+    },
+    {
+      "labels": [],
+      "number": 56,
+      "state": "OPEN",
+      "title": "Launcher takes a non-Proton compat tool (steamlinuxruntime_4) for Proton and installs the mod into a stale Windows user folder",
+      "updatedAt": "2026-10-20T15:00:15Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/56",
+      "review": {
+        "status": "merged-in-preview",
+        "priority": "P1",
+        "notes": "Session-file recovery (#27) and native Linux runtime detection (#56) merged into the fork.",
+        "validation": "Prior Windows/Linux CI passed; upstream issues remain independent."
+      }
+    },
+    {
+      "labels": [],
+      "number": 57,
+      "state": "CLOSED",
+      "title": "[Map issue] Missing data near Aegean",
+      "updatedAt": "2026-10-20T16:08:59Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/57",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "Aegean data report was closed upstream in the snapshot.",
+        "validation": "Do not assume every source gap has been corrected."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 58,
+      "state": "OPEN",
+      "title": "Save location customisation",
+      "updatedAt": "2026-10-20T15:54:55Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/58",
+      "review": {
+        "status": "implemented-this-batch",
+        "priority": "P1",
+        "notes": "Persistent shared download-cache path, reset and environment override.",
+        "validation": "11 storage tests and real subprocess checks pass; physical-volume and rebuilt-binary checks remain; see STORAGE.md."
+      }
+    },
+    {
+      "labels": [],
+      "number": 59,
+      "state": "OPEN",
+      "title": "[Bug] Lighting suddenly changed on the highway",
+      "updatedAt": "2026-10-20T16:00:24Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/59",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Location-dependent manual daylight change is not reproduced.",
+        "validation": "Sky tests pass; trace TimeOfDay/environment hooks across the reported area."
+      }
+    },
+    {
+      "labels": [],
+      "number": 60,
+      "state": "OPEN",
+      "title": "[Map issue] Building is Floating",
+      "updatedAt": "2026-10-20T16:13:39Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/60",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Fork wall/foundation sampling is improved; floating buildings and footprints over roads remain distinct cases.",
+        "validation": "Compare cached footprints and DEM, then regenerate the reported location."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 61,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Changing the .cache beamng-earth folder location",
+      "updatedAt": "2026-10-20T16:15:27Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/61",
+      "review": {
+        "status": "implemented-this-batch",
+        "priority": "P1",
+        "notes": "Persistent shared download-cache path, reset and environment override.",
+        "validation": "11 storage tests and real subprocess checks pass; physical-volume and rebuilt-binary checks remain; see STORAGE.md."
+      }
+    },
+    {
+      "labels": [],
+      "number": 62,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Add lighting in cities or along highway",
+      "updatedAt": "2026-10-20T16:19:19Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/62",
+      "review": {
+        "status": "planned",
+        "priority": "P2",
+        "notes": "Night lighting needs bounded lamp emission/light rendering.",
+        "validation": "Engine appearance and performance tests required; no patch this batch."
+      }
+    }
+  ]
+}

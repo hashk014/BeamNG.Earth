@@ -159,4 +159,17 @@ sea.onMessage({ type = 'sea', anchorId = 5, tiles = { tile('b', 0, 0, 0, 512) } 
 sea.update(5, p4); sea.update(5, p4)
 T.check(blocks()[sea.PREFIX .. 'a'] == nil and blocks()[sea.PREFIX .. 'b'] ~= nil, 'the server\'s new set replaces it')
 
+-- Refined coastal tiles do not extend their visible or hidden water volume into a dry polder.
+sea.onMessage({ type = 'sea', anchorId = 6, tiles = { tile('C32_0_0', 16, 16, 0, 32) } })
+local coastPlayer = { x = 31, y = 2, z = -2, vx = 0, vy = 0, vz = 0 }
+sea.update(6, coastPlayer); sea.update(6, coastPlayer)
+local coastal, cp = blocks()[sea.PREFIX .. 'C32_0_0'], physBlock()
+T.check(coastal.scale.x == 32 and coastal.scale.y == 32, 'coastal tile has no overlap onto dry land')
+T.check(cp.scale.x == 32 and cp.pos.x == 16 and cp.pos.y == 16, 'coastal physics fits the tile')
+coastPlayer.x = -1
+sea.update(6, coastPlayer)
+T.check(physBlock() == nil, 'dry land beside the coastal tile has no water physics')
+local box = sea.physicsBox({ x = 0, y = 0, z = 0, size = 512, coastal = true }, { x = 250, y = -250 })
+T.check(box.x + box.size / 2 <= 256 and box.y - box.size / 2 >= -256, 'larger coastal physics stays inside its water tile')
+sea.clear()
 T.done('test_sea')

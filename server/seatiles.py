@@ -11,6 +11,7 @@ local vertical there, so its surface is at most (size/2)^2 / 2R off the true sea
 of 2048 m tiles, 1.3 m at the corners of 8192 m ones (which are >= 6 km away).
 """
 import math
+import heapq
 from dataclasses import dataclass
 
 import numpy as np
@@ -22,6 +23,9 @@ SPLIT_K = 0.75              # a square closer to the player than SPLIT_K * its s
 RADIUS_M = 8192.0           # tiles within this of the player; beyond, the far tiles' photo
 SAMPLES = 64                # sea_at is asked on a SAMPLES x SAMPLES grid per tile (32-128 m apart)
 EARTH_R = 6371000.0
+COAST_TILE_MIN = 32.0       # mixed tiles over mapped dry, low land refine to this, then stay dry
+COAST_MAX_NODES = 256      # a bounded amount of extra shoreline work per plan
+COAST_MAX_TILES = 96       # bounded extra WaterBlocks; omit unresolved mixed tiles conservatively
 
 
 @dataclass(frozen=True)
@@ -80,14 +84,24 @@ def squares(x, y, radius=None):
     return out
 
 
-def plan(frame, x, y, sea_at, radius=None):
+def plan(frame, x, y, sea_at, radius=None, dry_at=None):
     """The sea tiles around (x, y) in `frame` (a geodesy.EnuFrame). sea_at(lat, lon, size) -> bool array:
-    which sample points of a tile of that size are sea."""
+    which sample points of a tile of that size are sea. Optional dry_at(lat, lon, size) identifies
+    mapped dry land below sea level: a mixed tile must not flood it (issues #8 and #53)."""
     leaves = squares(x, y, radius)
     if not leaves:
         return []
     f = (np.arange(SAMPLES) + 0.5) / SAMPLES
     out = []
+    risky = []
+
+    def tile(x0, y0, s, coastal=False):
+        cx, cy = x0 + s / 2, y0 + s / 2
+        la, lo, _ = frame.enu_to_geodetic(cx, cy, 0.0)
+        z = float(np.asarray(frame.geodetic_to_enu(la, lo, 0.0)[2]))
+        prefix = "C" if coastal else ""
+        return Tile(f"{prefix}{int(s)}_{int(x0 // s)}_{int(y0 // s)}", cx, cy, z, s,
+                    cx / EARTH_R, cy / EARTH_R)
     by_size = {}
     for x0, y0, s in leaves:
         by_size.setdefault(s, []).append((x0, y0))
@@ -98,16 +112,39 @@ def plan(frame, x, y, sea_at, radius=None):
         E = np.repeat(gx[:, None, :], SAMPLES, axis=1)     # [n, j, i]
         N = np.repeat(gy[:, :, None], SAMPLES, axis=2)
         lat, lon, _ = frame.enu_to_geodetic(E.ravel(), N.ravel(), 0.0)
-        sea = np.asarray(sea_at(lat, lon, s), bool).reshape(len(c), -1).any(axis=1)
-        for (x0, y0), keep in zip(corners, sea):
-            if not keep:
+        sea = np.asarray(sea_at(lat, lon, s), bool).reshape(len(c), -1)
+        lat, lon = lat.reshape(len(c), -1), lon.reshape(len(c), -1)
+        for (x0, y0), wet, la, lo in zip(corners, sea, lat, lon):
+            if not wet.any():
                 continue
-            cx, cy = x0 + s / 2, y0 + s / 2
-            la, lo, _ = frame.enu_to_geodetic(cx, cy, 0.0)
-            z = float(np.asarray(frame.geodetic_to_enu(la, lo, 0.0)[2]))
-            # the local vertical at (cx, cy): the sphere's normal, the frame's up tilted by the offset
-            nx, ny = cx / EARTH_R, cy / EARTH_R
-            out.append(Tile(f"{int(s)}_{int(x0 // s)}_{int(y0 // s)}", cx, cy, z, s, nx, ny))
+            if dry_at is not None and not wet.all() and np.asarray(dry_at(la[~wet], lo[~wet], s), bool).any():
+                h = s / 2
+                for a in (0, 1):
+                    for b in (0, 1):
+                        xx, yy = x0 + a * h, y0 + b * h
+                        heapq.heappush(risky, (_dist(x, y, xx, yy, h), xx, yy, h))
+            else:
+                out.append(tile(x0, y0, s))
+    visited, added = 0, 0
+    while risky and visited < COAST_MAX_NODES and added < COAST_MAX_TILES:
+        _, x0, y0, s = heapq.heappop(risky)
+        E, N = np.meshgrid(x0 + f * s, y0 + f * s)
+        la, lo, _ = frame.enu_to_geodetic(E.ravel(), N.ravel(), 0.0)
+        wet = np.asarray(sea_at(la, lo, s), bool)
+        visited += 1
+        if not wet.any():
+            continue
+        flood = not wet.all() and np.asarray(dry_at(la[~wet], lo[~wet], s), bool).any()
+        if not flood:
+            out.append(tile(x0, y0, s, coastal=True))
+            added += 1
+        elif s > COAST_TILE_MIN:
+            h = s / 2
+            for a in (0, 1):
+                for b in (0, 1):
+                    xx, yy = x0 + a * h, y0 + b * h
+                    heapq.heappush(risky, (_dist(x, y, xx, yy, h), xx, yy, h))
+        # At the floor or budget limit, leave unresolved mixed squares dry, never a coarse fallback.
     return out
 
 

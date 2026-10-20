@@ -68,13 +68,13 @@ local function riverSpeeds(flow)
   return { flow / 4, flow / 10 / 2, flow / 40 / 5 }
 end
 
-local TEXTURES = {      -- field, East Coast's file, the core fallback
-  { 'rippleTex', '/levels/east_coast_usa/art/water/ripple3.dds', '/core/art/water/ripple_nm.normal.dds' },
+local TEXTURES = {      -- field, East Coast's file, the stock fallback (0.40 moved them from /core/art/water to /assets)
+  { 'rippleTex', '/levels/east_coast_usa/art/water/ripple3.dds', '/assets/materials/tileable/water/water_effects/ripple_nm.normal.dds' },
   -- (2026-10-15: the ramp is a .png in East Coast USA, and neither fallback existed: ~1000 "texture missing" log
   -- errors per session that filled the log's 15000 lines before the end of a drive)
   { 'depthGradientTex', '/levels/east_coast_usa/art/water/depthcolor_ramp.png',
-    '/core/art/water/river_depthcolor_ramp_b.png' },
-  { 'foamTex', '/levels/east_coast_usa/art/water/foam.dds', '/core/art/water/foam_b.color.dds' },
+    '/assets/materials/tileable/water/depthcolor_ramp/river_depthcolor_ramp_b.png' },
+  { 'foamTex', '/levels/east_coast_usa/art/water/foam.dds', '/assets/materials/tileable/water/water_effects/foam_b.color.dds' },
 }
 
 local want = nil         -- { anchorId, tiles = { key -> tile }, rivers = { key -> river } } from the server
@@ -171,19 +171,32 @@ local function setGridSize(o, size)
   o:setField('gridSize', 0, tostring(math.max(1, math.floor(math.min(100, size)))))
 end
 
-local function makePhys(p, z)
+-- Coastal refinement tiles must keep their physics volume inside the approved water square.
+-- A player-centred 256 m box would otherwise flood adjacent dry polders again.
+function M.physicsBox(t, p)
+  local size = t.coastal and math.min(M.PHYS_SIZE, t.size) or M.PHYS_SIZE
+  local x, y = p.x, p.y
+  if t.coastal then
+    local margin = (t.size - size) / 2
+    x = math.max(t.x - margin, math.min(t.x + margin, x))
+    y = math.max(t.y - margin, math.min(t.y + margin, y))
+  end
+  return { x = x, y = y, z = t.z - (t.nx or 0) * (x - t.x) - (t.ny or 0) * (y - t.y), size = size }
+end
+
+local function makePhys(p)
   removePhys()
   local o = createObject('WaterBlock')
-  setGridSize(o, M.PHYS_SIZE)
+  setGridSize(o, p.size)
   for _, f in ipairs(FIELDS) do o:setField(f[1], f[2], f[3]) end
-  o:setField('gridElementSize', 0, tostring(M.PHYS_SIZE / 16))
-  o:setPosition(vec3(p.x, p.y, z))
-  o:setScale(vec3(M.PHYS_SIZE, M.PHYS_SIZE, M.DEPTH_M))
+  o:setField('gridElementSize', 0, tostring(p.size / 16))
+  o:setPosition(vec3(p.x, p.y, p.z))
+  o:setScale(vec3(p.size, p.size, M.DEPTH_M))
   o.canSave = false
   o:registerObject(M.PHYS_NAME)
   if scenetree.MissionGroup then scenetree.MissionGroup:addObject(o) end
   if o.setRenderEnabled then o:setRenderEnabled(false) end
-  phys = { id = o:getId(), x = p.x, y = p.y, z = z }
+  phys = { id = o:getId(), x = p.x, y = p.y, z = p.z, size = p.size }
   M.physMade = M.physMade + 1
 end
 
@@ -203,7 +216,8 @@ local function create(key, t)
   end
   o:setPosition(vec3(t.x, t.y, t.z))
   -- a little larger than its square: tilted neighbours meet without a hairline gap (2026-10-13)
-  o:setScale(vec3(t.size + M.TILE_OVERLAP_M, t.size + M.TILE_OVERLAP_M, M.DEPTH_M))
+  local overlap = t.coastal and 0 or M.TILE_OVERLAP_M
+  o:setScale(vec3(t.size + overlap, t.size + overlap, M.DEPTH_M))
   -- after the scale: the engine warns ("gridSize cannot be > scale", meaning this one) when it exceeds the scale, 100 m
   -- before setScale (an 8 km tile's 128 m, 2026-10-17)
   o:setField('gridElementSize', 0, tostring(math.max(4, t.size / 64)))
@@ -224,7 +238,7 @@ function M.onMessage(msg)
   for _, r in ipairs(type(msg.tiles) == 'table' and msg.tiles or {}) do
     if type(r) == 'table' and #r >= 7 then
       tiles[tostring(r[1])] = { x = tonumber(r[2]), y = tonumber(r[3]), z = tonumber(r[4]), size = tonumber(r[5]),
-        nx = tonumber(r[6]), ny = tonumber(r[7]) }
+        nx = tonumber(r[6]), ny = tonumber(r[7]), coastal = tostring(r[1]):sub(1, 1) == 'C' }
     end
   end
   local rivers = {}
@@ -281,9 +295,11 @@ function M.update(anchorId, player)
     else
       -- the tile's (tilted) surface under the player: a river falls across its tile
       local z = t.z - (t.nx or 0) * (player.x - t.x) - (t.ny or 0) * (player.y - t.y)
-      if (physStale and n == 0) or not phys or math.abs(player.x - phys.x) > M.PHYS_SIZE / 2 - M.PHYS_MARGIN
-          or math.abs(player.y - phys.y) > M.PHYS_SIZE / 2 - M.PHYS_MARGIN or math.abs(z - phys.z) > 0.05 then
-        makePhys(player, z)
+      local box = M.physicsBox(t, player)
+      local margin = box.size / 2 - math.min(M.PHYS_MARGIN, box.size / 4)
+      if (physStale and n == 0) or not phys or phys.size ~= box.size or math.abs(box.x - phys.x) > margin
+          or math.abs(box.y - phys.y) > margin or math.abs(box.z - phys.z) > 0.05 then
+        makePhys(box)
         physStale = false
         if player.z < z + 1 then nudge = true end      -- in the water: its physics must take this one
       end

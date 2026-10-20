@@ -31,6 +31,7 @@ import subprocess
 import sys
 import threading
 import time
+from server import storage
 
 FROZEN = getattr(sys, "frozen", False)
 ROOT = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.abspath(__file__))
@@ -169,7 +170,7 @@ def run_server(argv):
 
 def start_server(user_dir, extra, log_path):
     cmd = [sys.executable] + ([] if FROZEN else [os.path.abspath(__file__)])
-    cmd += ["--server", "--user-dir", user_dir] + RECOMMENDED + extra
+    cmd += ["--server", "--user-dir", user_dir, "--cache-dir", storage.cache_dir()] + RECOMMENDED + extra
     env = dict(os.environ)
     env["BNGEARTH_PARENT"] = str(os.getpid())      # the server ends when this launcher does (watch_parent)
     kw = {"cwd": ROOT, "env": env}
@@ -744,6 +745,7 @@ def main():
         run_server(sys.argv[2:])
         return
     ap = argparse.ArgumentParser(description="Start the BeamNG.Earth world server and BeamNG.drive.")
+    storage.add_arguments(ap)
     ap.add_argument("--no-game", action="store_true", help="only the server (start the game yourself)")
     ap.add_argument("--no-gcpatch", action="store_true", help="Linux: start the game without the grass patch")
     ap.add_argument("--keep-mod", action="store_true", help="leave the game's copy of the mod as it is")
@@ -759,6 +761,8 @@ def main():
     ap.add_argument("--no-terminal", action="store_true", help="Linux: no terminal window (log to a file)")
     ap.add_argument("extra", nargs=argparse.REMAINDER, help="after --: more options for the server")
     args = ap.parse_args()
+    if storage.configure(args, ap):
+        return
     if IS_WIN:
         windows_console()
     elif not (sys.stdout and sys.stdout.isatty()):
@@ -793,6 +797,7 @@ def main():
 def run(args):
     import install
     title(f"BeamNG.Earth {install.version()}")
+    row("Download cache", storage.cache_dir())
     wine = under_wine()
     build = "native"
     if args.user_dir:

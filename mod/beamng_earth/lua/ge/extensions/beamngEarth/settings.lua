@@ -48,6 +48,8 @@ M.SCHEMA = {
   -- grass and shrubs on the surface layers (groundcover.lua; needs the server's --surface on)
   groundCover = { kind = 'bool', default = true, label = 'Grass and shrubs' },
   groundCoverDensity = { kind = 'enum', default = 'normal', values = { 'low', 'normal', 'high' }, label = 'Grass density' },
+  rockDensity = { kind = 'enum', default = 'normal', values = { 'off', 'low', 'normal' }, label = 'Rocks' },
+  decorativeProps = { kind = 'bool', default = true, label = 'Decorative doors and benches' },
   -- roads near the player (roads.lua; the server's --roads on)
   roads = { kind = 'bool', default = true, label = 'Roads' },
   hudVisible = { kind = 'bool', default = false, label = 'Status HUD at level start' },
@@ -70,7 +72,8 @@ M.SCHEMA = {
   updateDismissed = { kind = 'string', default = '', maxLen = 40, label = 'Update notice dismissed (version)' },
 }
 M.ORDER = { 'rebaseDistance', 'viewDistanceMode', 'viewDistanceKm', 'hazeStrength', 'skyMode', 'clouds',
-  'weatherMode', 'realGravity', 'groundCover', 'groundCoverDensity', 'roads', 'hudVisible', 'statusBar',
+  'weatherMode', 'realGravity', 'groundCover', 'groundCoverDensity', 'rockDensity', 'decorativeProps',
+  'roads', 'hudVisible', 'statusBar',
   'placeNamesOnline', 'creditsVisible',
   'creditsCorner', 'creditsSize', 'cacheCapGb', 'devOutlineKm', 'devMapKm' }
 
@@ -241,6 +244,8 @@ M.APPLY = {
   end,
   groundCover = function(v) require('beamngEarth/groundcover').setEnabled(v) end,
   groundCoverDensity = function(v) require('beamngEarth/groundcover').setDensity(v) end,
+  rockDensity = function(v) require('beamngEarth/trees').setRockDensity(v) end,
+  decorativeProps = function(v) require('beamngEarth/trees').setDecorativeProps(v) end,
   roads = function(v)
     local core = ext('beamngEarth_core')
     if core and core.setRoadsEnabled then core.setRoadsEnabled(v) else require('beamngEarth/roads').setEnabled(v) end
@@ -549,15 +554,27 @@ end
 function M.mapOpened(on) mapOpen = on and true or false end
 function M.isMapOpen() return mapOpen end
 
+-- Go to a UI screen (route): extensions.ui_router.navigate, BeamNG 0.40's way (its patch notes: "Use
+-- extensions.ui_router.navigate(routeName, params) instead of guihooks.trigger('ChangeState', ...)"; it exists in 0.39.4
+-- too); the old ChangeState only without it.
+function M.navigate(state)
+  local r = rawget(_G, 'ui_router')
+  if r and r.navigate then
+    local ok = pcall(r.navigate, state)
+    if ok then return true end
+  end
+  local gh = rawget(_G, 'guihooks')
+  if gh then gh.trigger('ChangeState', { state = state }) return true end
+  return false
+end
+
 -- The key binding (actions/beamngEarth.json; M and the pause menu Map via redirectBigMap): open the map, or close it back to driving.
 function M.toggleMap()
-  local gh = rawget(_G, 'guihooks')
-  if not gh then return end
   if mapOpen then
-    gh.trigger('ChangeState', { state = 'play' })
+    M.navigate('play')
     mapOpen = false
   else
-    gh.trigger('ChangeState', { state = M.MAP_ROUTE })
+    M.navigate(M.MAP_ROUTE)
   end
 end
 
@@ -597,8 +614,7 @@ M.WELCOME_DELAY_S = 2
 local welcomeAt = nil
 
 function M.showWelcome()
-  local gh = rawget(_G, 'guihooks')
-  if gh then gh.trigger('ChangeState', { state = M.WELCOME_ROUTE }) end
+  M.navigate(M.WELCOME_ROUTE)
 end
 
 -- EarthWelcome.vue's buttons: seen.
@@ -618,8 +634,7 @@ local feedbackQ = nil      -- { what, frames } waiting for the menu to go
 
 function M.feedback(what)
   if what ~= 'report' and what ~= 'profiler' then return { error = 'unknown' } end
-  local gh = rawget(_G, 'guihooks')
-  if gh then gh.trigger('ChangeState', { state = 'play' }) end
+  M.navigate('play')
   feedbackQ = { what = what, frames = M.FEEDBACK_FRAMES }
   return { ok = true }
 end
