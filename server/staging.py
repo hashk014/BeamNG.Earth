@@ -5,7 +5,7 @@ every loaded extension, and the engine's FileWatchers took up to ~1 s in a frame
 A write as "<path>.tmp" then os.replace() made two events per tile file (3,220 in a 3 km drive, 1,079 of them .tmp).
 tmp_for(path) puts the temporary file in "beamngEarth_staging" next to the user folder (the same disk: the rename stays
 atomic), so only the finished file shows up. Paths outside a user folder's "temp" (the download cache) keep
-"<path>.tmp". Pure but for creating that folder.
+"<path>.tmp". replace(tmp, path) publishes it and recovers a removed game temp folder once.
 """
 import itertools
 import os
@@ -45,19 +45,36 @@ def staging_dir(path):
 
 
 def tmp_for(path):
-    """A temporary path to write path's content to before os.replace(tmp, path)."""
+    """A temporary path to write path's content to before replace(tmp, path)."""
     d = staging_dir(path)
     if d is not None:
         with _lock:
             known = d in _made
-        if not known:
+        if not known or not os.path.isdir(d):
             try:
                 os.makedirs(d, exist_ok=True)
                 _sweep(d)
                 with _lock:
                     _made.add(d)
             except OSError:
+                # The fallback is inside the game's temp tree, which may have been cleaned too.
+                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
                 d = None
     if d is None:
         return path + ".tmp"
     return os.path.join(d, f"{os.getpid()}_{threading.get_ident()}_{next(_serial)}_{os.path.basename(path)}.tmp")
+
+
+def replace(tmp, path):
+    """Publish a complete staged file, recreating a missing game temp directory once.
+
+    The game may clean its temp tree after the server starts, even while a tile is being encoded
+    outside that tree. Missing sources, cache paths and other I/O errors retain os.replace's behavior.
+    """
+    try:
+        os.replace(tmp, path)
+    except FileNotFoundError:
+        if staging_dir(path) is None or not os.path.isfile(tmp):
+            raise
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        os.replace(tmp, path)
