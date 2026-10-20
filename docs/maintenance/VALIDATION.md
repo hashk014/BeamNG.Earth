@@ -75,8 +75,26 @@ new building/sidewalk regressions), 51 focused maintenance tests, and two real
 Les Sables sectors rebuilt with networking disabled. See
 [the scoped report](../research/2026-10-20-urban-ground-contact.md).
 The exact reported annex is still awaiting location confirmation; a diagnostic
-view of the main school showed a complete body. The new geometry is not yet
-claimed as validated by a player drive.
+view of the main school showed a complete body. After the test handoff the player
+reported that the corrected version looks better. This is limited visual feedback,
+without a location list or a complete driving/collision validation.
+
+## Upstream contribution
+
+[Upstream PR #69](https://github.com/TecnaGamer/BeamNG.Earth/pull/69) extracts the
+building/sidewalk work onto upstream `main` at `011d6b5`, including the related
+building-fidelity prerequisites. It excludes unrelated fork features and launchers.
+Local Windows Python 3.12.10 checks pass: 235 tests with native kernels explicitly
+disabled and 266 tests with native kernels enabled (including 31 equivalence tests),
+with no skips. Its [Windows/Linux CI run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39499801167)
+is separate from this fork's maintenance workflow.
+
+The fallback run exposed `any(bool)` in bridge-pier road-clearance testing.
+The existing `PierSitesTest.test_spacing_roads_and_low_decks` reproduces the
+`TypeError` on unchanged upstream `011d6b5` with native kernels disabled.
+Reusing `_seg_dist` fixes this existing fallback; the native pier path is unchanged.
+That fix is also backported to this fork. All 74 tests in `test_roads`,
+`test_roadmesh` and `test_urban_frontages` pass with `earthfast` disabled here.
 
 The maintenance batch still needs actual BeamNG checks for saved UI settings,
 coastline rendering, dry below-sea-level roads, material physics, long drives,

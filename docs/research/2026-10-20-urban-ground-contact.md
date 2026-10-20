@@ -73,6 +73,15 @@ without generated sidewalks and large setbacks are not covered wholesale.
 Other sidewalk gaps can remain when connecting them would cross a carriageway
 or source geometry is missing.
 
-The corrected sources and local test kit need a fresh server session. Confirm
-the exact reported annex, facade-to-sidewalk contact, roof equipment support and
-driving/collision behavior in the game. No upstream issue is closed by this pass.
+After relaunching through the prepared test handoff, the player reports that it
+looks better. No exact location list or collision test results were supplied.
+The original annex, facade-to-sidewalk contact, roof equipment support and
+driving/collision behavior still need specific game checks. No upstream issue
+is closed by this pass.
+
+The changes are merged in [fork PR #4](https://github.com/hashk014/BeamNG.Earth/pull/4).
+[Upstream PR #69](https://github.com/TecnaGamer/BeamNG.Earth/pull/69) proposes a focused
+extraction onto `main`, without the other fork features. That branch passes
+235 Python-fallback and 266 native tests locally and documents the overlap with
+the other contributor's open PR #64. The fallback run also found and fixed an
+existing pier-placement exception, reproduced on unchanged upstream and backported here.

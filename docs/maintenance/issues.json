@@ -1,6 +1,6 @@
 {
   "repository": "TecnaGamer/BeamNG.Earth",
-  "refreshedAt": "2026-10-20T16:30:10.883719+00:00",
+  "refreshedAt": "2026-10-20T21:23:00.404736+00:00",
   "issues": [
     {
       "labels": [],
@@ -27,7 +27,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The exact reported annex and original upstream locations still need gameplay reproduction; see 2026-10-20-urban-ground-contact.md."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified."
       }
     },
     {
@@ -374,10 +374,10 @@
       "updatedAt": "2026-10-19T07:00:28Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/24",
       "review": {
-        "status": "planned",
+        "status": "partial-this-batch",
         "priority": "P1",
-        "notes": "Sidewalk height sampling and junction continuity need reported road profiles.",
-        "validation": "Existing corner/grade tests remain; no universal sidewalk fix."
+        "notes": "Retain short sidewalk links and join coincident/small gaps with compatible heights; add bounded concrete frontages. Sidewalk placement and all terrain profiles are not solved.",
+        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction."
       }
     },
     {
@@ -450,10 +450,10 @@
       "updatedAt": "2026-10-19T10:02:02Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/29",
       "review": {
-        "status": "planned",
+        "status": "partial-this-batch",
         "priority": "P1",
-        "notes": "Sidewalk height sampling and junction continuity need reported road profiles.",
-        "validation": "Existing corner/grade tests remain; no universal sidewalk fix."
+        "notes": "Retain short sidewalk links and join coincident/small gaps with compatible heights; add bounded concrete frontages. Sidewalk placement and all terrain profiles are not solved.",
+        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction."
       }
     },
     {
@@ -693,7 +693,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The exact reported annex and original upstream locations still need gameplay reproduction; see 2026-10-20-urban-ground-contact.md."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified."
       }
     },
     {
@@ -873,7 +873,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The exact reported annex and original upstream locations still need gameplay reproduction; see 2026-10-20-urban-ground-contact.md."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified."
       }
     },
     {
@@ -904,6 +904,80 @@
         "priority": "P2",
         "notes": "Night lighting needs bounded lamp emission/light rendering.",
         "validation": "Engine appearance and performance tests required; no patch this batch."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 63,
+      "state": "CLOSED",
+      "title": "[Bug] Loading While Driving",
+      "updatedAt": "2026-10-20T18:07:52Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/63",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 65,
+      "state": "OPEN",
+      "title": "[Map issue]",
+      "updatedAt": "2026-10-20T18:04:33Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/65",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 66,
+      "state": "OPEN",
+      "title": "Really bad performance once I start moving",
+      "updatedAt": "2026-10-20T19:28:33Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/66",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 67,
+      "state": "OPEN",
+      "title": "[Bug] PermissionError (WinError 5) when saving terrain cache files",
+      "updatedAt": "2026-10-20T18:58:01Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/67",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 68,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] GSM Towers, chimneys and wind turbines",
+      "updatedAt": "2026-10-20T21:03:06Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/68",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
       }
     }
   ]

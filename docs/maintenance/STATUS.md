@@ -8,6 +8,10 @@ Updated: 2026-10-20. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
   [fork PR #3](https://github.com/hashk014/BeamNG.Earth/pull/3), alongside the earlier
   Linux-runtime and session-file recovery fixes (fork PRs #1 and #2).
 - `codex/maintenance-october` retains the batch's focused implementation history.
+- Building and sidewalk corrections are merged in [fork PR #4](https://github.com/hashk014/BeamNG.Earth/pull/4).
+  The focused upstream contribution is [PR #69](https://github.com/TecnaGamer/BeamNG.Earth/pull/69),
+  based directly on upstream `main`, with separate geometry tests and Windows/Linux CI.
+  It also fixes an existing Python-only pier-clearance exception, backported here.
 - Git author is the existing human account `hashk014`. User-facing work must never carry a Codex signature or AI co-author trailer; see the root `AGENTS.md`.
 - The issue inventory is recorded in [ISSUES.md](ISSUES.md). It distinguishes upstream state, implementation, automated checks and remaining game validation.
 
@@ -29,15 +33,17 @@ Updated: 2026-10-20. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
    repair short sidewalk links and add bounded concrete frontages. See the
    [urban geometry evidence and limits](../research/2026-10-20-urban-ground-contact.md).
 
-Five requests have implemented corrections/features and eight have partial implementations.
-All 59 issues in the snapshot have individual assessments; 48 were open upstream.
+Five requests have implemented corrections/features and ten have partial implementations,
+including the continuity subset of the sidewalk reports. The refreshed inventory contains
+64 issues, 52 open upstream; the four new open reports #65-#68 still await assessment.
 
 ## Next priorities
 
 - A frozen local in-game test kit, desktop shortcut and cached test locations are
   ready on the development PC. See [the French handoff](INGAME_READY.md).
-  Native kernels and a real server handshake pass. The updated urban geometry
-  needs a fresh server session and player verification.
+  Native kernels and a real server handshake pass. The player reports that the
+  corrected version looks better. Exact locations, collisions and driving behavior
+  have not been systematically checked.
 
 - Reproduce GPS/autodrive oscillation (#21/#38) and coarse/fine terrain overlap (#46).
 - Locate the exact annex with the player's floating-fragment report. The main
@@ -50,8 +56,11 @@ All 59 issues in the snapshot have individual assessments; 48 were open upstream
 - Current local checks: 51 focused Python tests, 243 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
-  [The validated source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39461712951)
+  [The validated urban source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39480170941)
   passed on both platforms. Review the latest run for any later code changes.
+- The extracted upstream branch passes 235 fallback tests and 266 native tests locally,
+  including 31 native equivalence checks. Its CI is [tracked separately](https://github.com/hashk014/BeamNG.Earth/actions/runs/39499801167).
+  On this fork, all 74 road, road-mesh and urban tests also pass with native kernels disabled.
 - Previous extended Windows server suite has three reproducible baseline timing failures, detailed in `docs/research/2026-10-20-session-file-recovery.md`.
 - No new standalone executable or public release has been produced for this maintenance batch.
 - Engine-stub tests and synthetic server tests do not establish gameplay, rendering, multiplayer behavior or FPS gains.
