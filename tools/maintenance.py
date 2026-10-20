@@ -10,7 +10,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 TRACKING = ROOT / "docs" / "maintenance"
 SUITES = {
-    "quick": ["test_storage", "test_launcher_compat", "test_staging", "test_session_output", "test_road_surfaces"],
+    "quick": ["test_storage", "test_launcher_compat", "test_staging", "test_session_output", "test_road_surfaces",
+              "test_coastal_water", "test_area_prefetch"],
     "generators": ["test_heightmap", "test_roads", "test_surface", "test_roadmesh", "test_buildings",
                    "test_navgraph", "test_vegetation", "test_seatiles", "test_seacarve", "test_world_fidelity",
                    "test_european_traffic"],
