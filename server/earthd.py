@@ -110,6 +110,7 @@ import riverlines as riverlinesmod  # noqa: E402
 import groundahead as groundaheadmod  # noqa: E402
 import heightmap  # noqa: E402
 import staging  # noqa: E402
+import storage as storagemod  # noqa: E402
 import imagery as imagerymod  # noqa: E402
 import matslots as matslotsmod  # noqa: E402
 import maptiles as maptilesmod  # noqa: E402
@@ -3435,7 +3436,7 @@ def main():
                                                      "current") if sys.platform == "win32"
                                         else os.path.join(home, ".local/share/BeamNG/BeamNG.drive/current")),
                     help="BeamNG user folder; output goes to <user-dir>/temp/beamngEarth/<sessionId>/")
-    ap.add_argument("--cache-dir", default=os.path.join(home, ".cache/beamng-earth"),
+    ap.add_argument("--cache-dir", default=storagemod.cache_dir(), type=storagemod.normalise,
                     help="download cache root (DEM tiles go to <cache-dir>/dem/)")
     ap.add_argument("--workers", type=int, default=3, help="far-tile worker threads (keep <= 3: the game needs the cores)")
     ap.add_argument("--far-format", choices=farfield.FORMATS, default="cdae",
