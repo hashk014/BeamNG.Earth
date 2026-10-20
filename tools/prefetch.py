@@ -85,7 +85,10 @@ def write_manifest(path, data):
 def execute(plan, backend, manifest, progress=print):
     signature = plan_id(plan, backend.cache_dir)
     path = Path(manifest)
-    state = {"schema": 1, "planId": signature, "plan": plan, "completed": [], "errors": {}}
+    # The ID covers every job; keep only the small plan metadata in checkpoints, rather than
+    # serializing the full job list again after every download.
+    metadata = {k: v for k, v in plan.items() if k != "jobs"}
+    state = {"schema": 1, "planId": signature, "plan": metadata, "completed": [], "errors": {}}
     if path.exists():
         old = json.loads(path.read_text(encoding="utf-8"))
         if old.get("planId") != signature:

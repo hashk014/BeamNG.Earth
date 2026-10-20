@@ -1,5 +1,24 @@
 # Fork changelog
 
+## 1.5.3-europe-preview.2-dev (unreleased source)
+
+- Integrates upstream 1.5.3 compatibility and high-speed collision changes,
+  preserving fork traffic, building geometry and the previous two maintenance fixes.
+- Saves a download-cache location across source, launcher and server entry paths
+  (#58, #61), with reset and environment overrides.
+- Adds saved Off/Low/Normal rocks and decorative doors/benches controls (#5, #14).
+- Uses road-class defaults for unknown surface metadata and respects normalized
+  explicit/mixed surface tags (#31).
+- Refines ocean squares over mapped dry low land and confines their hidden water
+  physics (#8, #53). Sampling/data limits and conservative gaps remain.
+- Adds bounded, resumable area downloads and cache verification with networking
+  disabled (#10, #28, #30). No standalone map export or in-game area selector.
+- Adds durable project instructions, an assessed inventory of all 59 issues in
+  the 2026-10-20 snapshot, shared test commands and Windows/Linux CI.
+
+See [maintenance status](maintenance/STATUS.md) and [validation](maintenance/VALIDATION.md).
+This source candidate has no new standalone build or gameplay/FPS certification.
+
 ## 1.5.1-europe-preview.1
 
 First experimental release of the hashk014 fork, based on TecnaGamer's
