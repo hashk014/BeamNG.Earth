@@ -256,7 +256,10 @@ const settingsSchema = [
       { id: "groundCover", type: "bool", default: true, name: "Grass and shrubs", desc: "3D grass where the land cover is grassland or forest floor, and scrub with sparse grass on shrubland, near the car (the game's own Hirochi Raceway and West Coast USA plants). Needs ground surfaces from the world server (on by default)." },
       { id: "groundCoverDensity", type: "select", default: "normal", name: "Grass density", desc: "How dense the grass and shrubs are. Without the optional grass patch (tools/gcpatch, Linux) the game regrows the grass in one slower frame each time the ground under the car moves (every ~130-190 m); higher density makes that frame longer.",
         options: [ { label: "Low", value: "low" }, { label: "Normal", value: "normal" }, { label: "High", value: "high" } ] },
-      { id: "roads", type: "bool", default: true, name: "Roads", desc: "Real roads from OpenStreetMap / Overture within about 600 m of the car: paved roads as asphalt, gravel and dirt roads and tracks as worn dirt tracks, and the same surfaces under the tyres. Bridges, tunnels, markings and junction shapes come later." },
+      { id: "rockDensity", type: "select", default: "normal", name: "Rocks", desc: "Choose the amount of rocks, including desert boulders. Low keeps a stable quarter of the usual rocks; Off removes them. Trees, shrubs and road signs are preserved. Applies to the current area and is saved for later visits.",
+        options: [ { label: "Off", value: "off" }, { label: "Low", value: "low" }, { label: "Normal", value: "normal" } ] },
+      { id: "decorativeProps", type: "bool", default: true, name: "Decorative doors and benches", desc: "Show generated decorative doors and benches. Turn this off when they do not match the real location. Traffic signs and other road furniture remain visible. Applies to the current area and is saved." },
+      { id: "roads", type: "bool", default: true, name: "Roads", desc: "Mapped roads, bridges, tunnels and markings near the car, with matching surfaces under the tyres. Their accuracy depends on the available map data." },
     ],
   },
   {

@@ -48,6 +48,8 @@ M.SCHEMA = {
   -- grass and shrubs on the surface layers (groundcover.lua; needs the server's --surface on)
   groundCover = { kind = 'bool', default = true, label = 'Grass and shrubs' },
   groundCoverDensity = { kind = 'enum', default = 'normal', values = { 'low', 'normal', 'high' }, label = 'Grass density' },
+  rockDensity = { kind = 'enum', default = 'normal', values = { 'off', 'low', 'normal' }, label = 'Rocks' },
+  decorativeProps = { kind = 'bool', default = true, label = 'Decorative doors and benches' },
   -- roads near the player (roads.lua; the server's --roads on)
   roads = { kind = 'bool', default = true, label = 'Roads' },
   hudVisible = { kind = 'bool', default = false, label = 'Status HUD at level start' },
@@ -70,7 +72,8 @@ M.SCHEMA = {
   updateDismissed = { kind = 'string', default = '', maxLen = 40, label = 'Update notice dismissed (version)' },
 }
 M.ORDER = { 'rebaseDistance', 'viewDistanceMode', 'viewDistanceKm', 'hazeStrength', 'skyMode', 'clouds',
-  'weatherMode', 'realGravity', 'groundCover', 'groundCoverDensity', 'roads', 'hudVisible', 'statusBar',
+  'weatherMode', 'realGravity', 'groundCover', 'groundCoverDensity', 'rockDensity', 'decorativeProps',
+  'roads', 'hudVisible', 'statusBar',
   'placeNamesOnline', 'creditsVisible',
   'creditsCorner', 'creditsSize', 'cacheCapGb', 'devOutlineKm', 'devMapKm' }
 
@@ -241,6 +244,8 @@ M.APPLY = {
   end,
   groundCover = function(v) require('beamngEarth/groundcover').setEnabled(v) end,
   groundCoverDensity = function(v) require('beamngEarth/groundcover').setDensity(v) end,
+  rockDensity = function(v) require('beamngEarth/trees').setRockDensity(v) end,
+  decorativeProps = function(v) require('beamngEarth/trees').setDecorativeProps(v) end,
   roads = function(v)
     local core = ext('beamngEarth_core')
     if core and core.setRoadsEnabled then core.setRoadsEnabled(v) else require('beamngEarth/roads').setEnabled(v) end

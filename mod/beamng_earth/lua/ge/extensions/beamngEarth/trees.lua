@@ -166,6 +166,24 @@ local MATERIALS = {
 
 local stopwatch = require('beamngEarth/stopwatch')
 local tiles = {}        -- key "a:tx_ty" -> { anchor, cx, cy, rows, made = { i -> item }, shown = rank }
+local rockDensity, decorativeProps = 'normal', true
+local ROCK_DENSITIES = { off = 0, low = 0.25, normal = 1 }
+
+local function refreshVisibility()
+  for _, t in pairs(tiles) do t.pending = true end
+end
+
+function M.setRockDensity(value)
+  if ROCK_DENSITIES[value] == nil then return false end
+  if rockDensity ~= value then rockDensity = value; refreshVisibility() end
+  return true
+end
+
+function M.setDecorativeProps(value)
+  if type(value) ~= 'boolean' then return false end
+  if decorativeProps ~= value then decorativeProps = value; refreshVisibility() end
+  return true
+end
 local ghostSince = nil               -- since the last rebase that left ghost tiles (M.transform)
 local types = {}        -- "shape" / "shape#n" (not solid) -> TSForestItemData
 local pop = {}          -- shape -> its items in the level
@@ -520,6 +538,12 @@ function M.update(anchorId, player)
       for i, row in ipairs(t.rows) do
         local r = row[8] or 0
         local g = (t.groups or GROUPS)[(row[1] or 0) + 1]
+        if g == 'rock' or g == 'desert_rock' then
+          local density = ROCK_DENSITIES[rockDensity]
+          r = density > 0 and r / density or 2
+        elseif not decorativeProps and (g == 'door' or g == 'bench') then
+          r = 2
+        end
         local cap = g and M.GROUP_MAX_M[g]
         if cap and o[2] > cap then r = 2 end     -- this group is not shown this far out
         -- an item something else stands in for (navgraph.lua's switchable signal heads)
@@ -576,7 +600,8 @@ function M.status()
     if t.pending or t.shown == 0 then pending = pending + 1 end
     for _ in pairs(t.made) do items = items + 1 end
   end
-  return { tiles = n, items = items, pending = pending, made = M.made, removed = M.removed, errors = M.errors }
+  return { tiles = n, items = items, pending = pending, made = M.made, removed = M.removed, errors = M.errors,
+    rockDensity = rockDensity, decorativeProps = decorativeProps }
 end
 
 return M
