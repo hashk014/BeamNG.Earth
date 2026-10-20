@@ -1,5 +1,16 @@
 # Fork changelog
 
+## Urban geometry follow-up, unreleased
+
+- Keeps grounded wings beside inferred road passages and retains the body of
+  buildings whose mapped parts cover only a roof or one wing.
+- Shares graded foundation heights between related building parts and keeps
+  mapped walls instead of expanding them into roof rectangles.
+- Removes unsupported roof equipment, retains short sidewalk links, joins tiny
+  end gaps and paves short gaps from existing sidewalks to facing facades.
+- Adds 20 geometry regressions and an offline rebuild of two real town sectors.
+  The player's exact floating annex and driving behavior still need a game check.
+
 ## 1.5.3-europe-preview.2-dev (unreleased source)
 
 - Integrates upstream 1.5.3 compatibility and high-speed collision changes,

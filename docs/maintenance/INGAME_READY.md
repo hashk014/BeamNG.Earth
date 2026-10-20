@@ -3,7 +3,13 @@
 Préparé le 20 octobre 2026 pour `1.5.3-europe-preview.2-dev`.
 Le raccourci **Tester BeamNG Earth** est sur le Bureau. Il ouvre
 `TESTER_EN_JEU.cmd`, puis une copie figée du serveur et du mod dans
-`dist/ingame-ready/runtime`. Le vieux Preview 1 n'intervient pas dans ce test.
+`dist/ingame-ready/runtime-urban`. Le vieux Preview 1 n'intervient pas dans ce test.
+
+La correction des bâtiments et trottoirs est préparée pour le prochain
+lancement. Fermer le jeu et l'ancienne fenêtre du serveur, puis utiliser le même
+raccourci. La copie initiale reste conservée dans `dist/ingame-ready/runtime`.
+Le [rapport de cette passe](../research/2026-10-20-urban-ground-contact.md)
+précise les corrections, leurs tests et le bâtiment restant à localiser.
 
 ## Démarrer
 

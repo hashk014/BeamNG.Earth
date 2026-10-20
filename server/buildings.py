@@ -302,7 +302,8 @@ def oriented_box(p):
 class Spec:
     """What is built for one footprint (decided by plan())."""
     __slots__ = ("ring", "floors", "floor_h", "height", "roof", "roof_mat", "facade", "band", "shop", "plain", "min_h", "wall", "door", "windows", "front", "steeple", "stoop",
-                 "sign", "porch", "cls", "seed", "deck", "pitch", "portal", "gring", "holes", "roof_axis", "roof_rise")
+                 "sign", "porch", "cls", "seed", "deck", "pitch", "portal", "gring", "holes", "roof_axis", "roof_rise",
+                 "base_part", "aprons", "datum_group", "datum")
 
     def __init__(self, **kw):
         for k in self.__slots__:
@@ -572,7 +573,7 @@ def plan(ring, attrs, neighbours=0, lat=None, lon=None, look=None, town=False, d
         else:
             roof = "flat"
     # pitched roofs only on near-rectangular footprints (a church's nave keeps its gable beside a tower or an apse)
-    if roof != "flat" and (box_fill < (0.6 if church else 0.8) or hw < 2.0
+    if roof != "flat" and (box_fill < 0.97 or hw < 2.0
                            or hw > (18.0 if barn else 20.0 if church else 14.0)):
         roof = "flat"
     holes = attrs.get("_holes") or []
@@ -1051,22 +1052,22 @@ def _portal_lift(frame, ring, x0, y0, tunnels_xy, elev):
 
 
 def base_z(spec, gmin, gmax):
-    """The ground a building's floors stand on: the footprint's highest, but the lowest for one over a tunnel's portal
+    """The ground a building's floors stand on: the parent's shared datum or the footprint's highest,
+    but the lowest for one over a tunnel's portal
     (the road at its mouth: from the hill over it, Wabash's portal house floated ~10 m over the portal and
     Eisenhower's portal building over its frames, 2026-10-17)."""
-    return gmin if spec.portal else gmax
+    if spec.portal:
+        return gmin
+    return spec.datum if spec.datum is not None else gmax
 
 
 def drawn_ring(spec):
-    """The footprint its walls are drawn on: a pitched roof's house is its oriented box (build); its door, steps and
-    porch go on these walls (on the map's outline they stood off a box wall at an angle, or inside it, only the
-    door's frame showing: Stelvio pass, the user's reports 2026-10-17)."""
-    ring = spec.ring
-    if spec.roof != "flat":
-        c, u, hl, hw = roof_box(spec)
-        v = np.array([-u[1], u[0]])
-        ring = np.array([c - u * hl - v * hw, c + u * hl - v * hw, c + u * hl + v * hw, c - u * hl + v * hw])
-    return ring
+    """The mapped wall footprint, shared by rendering, physics and door placement.
+
+    Replacing a slightly skewed house by its roof's rectangle expands its walls
+    into narrow streets. Only the roof may have an overhang.
+    """
+    return spec.ring
 
 
 def _porch(m, spec, base, mat_idx):
@@ -1177,7 +1178,7 @@ ROOF_CLUTTER_M2 = 250.0     # flat roofs this large get boxes: air-conditioning 
 
 def _clutter(m, spec, ring, z_eave, mat_idx):
     area = _area2(ring) / 2
-    if spec.roof != "flat" or spec.plain or area < ROOF_CLUTTER_M2 or spec.cls in CHURCH_CLASSES:
+    if spec.roof != "flat" or spec.plain or spec.base_part or area < ROOF_CLUTTER_M2 or spec.cls in CHURCH_CLASSES:
         return
     c, u, hl, hw = oriented_box(ring)
     v = np.array([-u[1], u[0]])
@@ -1191,6 +1192,13 @@ def _clutter(m, spec, ring, z_eave, mat_idx):
             continue
         big = _hash01(spec.seed, "cb", k) < 0.25
         hx, hy, h = (2.0, 1.6, 2.6) if big else (1.1, 0.7, 1.1)
+        # A centre on a narrow wing does not support the whole equipment box.
+        # Test its complete footprint, including concave notches and courtyards.
+        corners = np.array([p + u * sx * hx + v * sy * hy for sx, sy in
+                            ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+        from polygon import subtract_cells
+        if sum(abs(_area2(c)) / 2 for c in subtract_cells(corners, cutters=[ring])) > 1e-5:
+            continue
         _box(m, p, u, hx, hy, z_eave, z_eave + h, mat)
 
 
@@ -1567,7 +1575,7 @@ def build(specs_and_ground, lite=False):
             else:
                 m.poly([(p[0], p[1], z0) for p in ring[::-1]], [(0.002, 0.995)] * len(ring), mat_idx[spec.facade])
         _roof(m, spec, ring, z_eave, mat_idx)
-        if spec.roof == "flat" and not spec.plain and spec.floors <= 6 and not lite:
+        if spec.roof == "flat" and not spec.plain and not spec.base_part and spec.floors <= 6 and not lite:
             _cornice(m, spec, ring, z_eave, mat_idx)
         if not lite and not spec.holes:
             _clutter(m, spec, ring, z_eave, mat_idx)
@@ -1583,6 +1591,7 @@ def build(specs_and_ground, lite=False):
             else:
                 z_top = z_eave - (spec.floors - 1) * spec.floor_h if spec.floors > 1 else z_eave
             _signs(m, spec, ring, z_top, mat_idx)
+        _paving(m, spec, mat_idx["bne_precast"])
     if m.n == 0:
         return None
     P, UV, T, M, C = m.arrays()
@@ -1658,6 +1667,7 @@ def collision_mesh(specs_and_ground):
                 m.courtyard_surface(ring, spec.holes, z0, tok, up=False)
             else:
                 m.poly([(p[0], p[1], z0) for p in ring[::-1]], [zero] * len(ring), tok)
+        _paving(m, spec, tok)
     if m.n == 0:
         return None
     P, UV, T, M, C = m.arrays()
@@ -1716,9 +1726,9 @@ def _part_heights(a, i):
     return float(top) - mh, mh
 
 
-ROAD_THROUGH_M = 15.0       # a footprint that public roads run through this far is a structure over them
-OVER_ROAD_CLEAR_M = 5.5     # ... lifted this high (an expressway's or a station's slab over the streets: Baltimore's
-                            # 17,500 m2 one by I-83, the AI drove into its wall at 35 mph, 2026-10-14)
+ROAD_THROUGH_M = 15.0       # minimum mapped crossing for an inferred local street passage
+OVER_ROAD_CLEAR_M = 5.5     # passage headroom; the rest of the building keeps its grounded walls
+STREET_PASSAGE_W = 5.0
 THROUGH_CLASSES = {"motorway", "trunk", "primary", "secondary", "tertiary", "residential", "unclassified",
                    "living_street"}
 
@@ -2032,7 +2042,7 @@ def water_rings(frame, water_layers, x0, y0, margin=50.0, size=256.0):
     return out
 
 
-def road_through(ring, lines, step=2.0):
+def road_through(ring, lines, step=2.0, holes=(), inset=0.0):
     """Metres of the polylines lines (k, 2) inside ring (sampled every step m)."""
     lo, hi = ring.min(0), ring.max(0)
     total = 0.0
@@ -2043,9 +2053,71 @@ def road_through(ring, lines, step=2.0):
             L = float(np.hypot(*(q - p)))
             k = max(1, int(L / step))
             for t in (np.arange(k) + 0.5) / k:
-                if _inside(ring, p + (q - p) * t):
-                    total += L / k
+                probe = p + (q - p) * t
+                if not _inside(ring, probe) or any(_inside(h, probe) for h in holes):
+                    continue
+                if inset > 0:
+                    near_boundary = False
+                    for boundary in (ring, *holes):
+                        ab = np.roll(boundary, -1, axis=0) - boundary
+                        t_edge = np.clip(((probe - boundary) * ab).sum(1) /
+                                         np.maximum((ab * ab).sum(1), 1e-12), 0, 1)
+                        if np.linalg.norm(boundary + t_edge[:, None] * ab - probe, axis=1).min() < inset:
+                            near_boundary = True
+                            break
+                    if near_boundary:
+                        continue
+                total += L / k
     return total
+
+
+def street_passages(items, lines):
+    """Keep grounded wings beside a mapped through street, rather than lift the whole building.
+
+    An inferred passage needs a substantial road crossing and enough remaining
+    ground footprint. Explicit elevated parts and mapped courtyards are retained.
+    """
+    if not lines:
+        return items
+    from polygon import subtract_cells
+    out = []
+    for spec, gmin, gmax in items:
+        if ((spec.min_h or 0) > 0.5 or spec.cls.startswith('bridge') or spec.portal or spec.deck or
+                spec.height <= OVER_ROAD_CLEAR_M + 1 or
+                road_through(spec.ring, lines, holes=spec.holes or (), inset=STREET_PASSAGE_W / 2) < ROAD_THROUGH_M):
+            out.append((spec, gmin, gmax))
+            continue
+        corridors = []
+        for line in lines:
+            for a, b in zip(line[:-1], line[1:]):
+                direction = b - a
+                length = float(np.linalg.norm(direction))
+                if length < 1e-6:
+                    continue
+                normal = np.array([-direction[1], direction[0]]) / length * (STREET_PASSAGE_W / 2)
+                corridor = np.array([a - normal, b - normal, b + normal, a + normal])
+                if np.any(corridor.max(0) < spec.ring.min(0)) or np.any(corridor.min(0) > spec.ring.max(0)):
+                    continue
+                corridors.append(corridor)
+        cells = subtract_cells(spec.ring, corridors, spec.holes or ())
+        area = abs(_area2(spec.ring)) / 2 - sum(abs(_area2(h)) / 2 for h in spec.holes or ())
+        if sum(abs(_area2(c)) / 2 for c in cells) < area * 0.25:
+            out.append((spec, gmin, gmax))
+            continue                     # uncertain overlap: do not turn the whole house into a floating slab
+        values = {k: getattr(spec, k) for k in Spec.__slots__}
+        for cell in cells:
+            piece = Spec(**dict(values, ring=cell, height=OVER_ROAD_CLEAR_M, roof='flat', roof_axis=None,
+                                min_h=0.0, holes=[], base_part=True, door=None, porch=False, sign=None,
+                                stoop=None, steeple=False, deck=False, gring=None))
+            piece.floors = max(1, int(round(piece.height / FLOOR_M)))
+            piece.floor_h = piece.height / piece.floors
+            out.append((piece, gmin, gmax))
+        upper = Spec(**dict(values, min_h=OVER_ROAD_CLEAR_M, height=spec.height - OVER_ROAD_CLEAR_M,
+                            door=None, porch=False, sign=None, stoop=None, gring=None))
+        upper.floors = max(1, int(round(upper.height / FLOOR_M)))
+        upper.floor_h = upper.height / upper.floors
+        out.append((upper, gmin, gmax))
+    return out
 
 
 CENTRE_PREFILTER_M = 1.0       # m of slack for Features.outer_centres (cumulative sums: within ~1e-5 m of the exact mean)
@@ -2056,8 +2128,8 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
     """[(Spec, gmin, gmax)] of the buildings whose footprint centroid is in the tile [x0, x1) x [y0, y1)
     (anchor frame), rings relative to (x0, y0). layers: mapgeom.Features of buildings (one per map cell; a
     building in two cells is taken once, by id); elev(lat, lon) the physics ground. part_layers: the
-    building parts of the same cells: a building whose parts all have heights is drawn as its parts
-    (each from its bottom to its top, the building's look). garages_xy: garage_rings (a building one covers, or
+    building parts of the same cells: mapped parts keep their heights and one common foundation datum;
+    uncovered parent wings remain grounded. garages_xy: garage_rings (a building one covers, or
     covering one's centre, is a parking structure). supports: support_rings (a building or part on one is the
     bridge's painted steel). bridges_xy / water_xy (bridge_lines, water_rings): a machine-learned footprint (not
     OSM) on a road bridge or over water is a deck or a boat, left out (_ml_false)."""
@@ -2125,8 +2197,7 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
                 at["_seed"] = _hash01(str(key), "look")
             bparts = parts_of.get(str(key)) if key is not None else None
             if bparts and any(h is not None for _, h, _, _ in bparts):
-                if component > 0:
-                    continue            # building parts already replace the whole parent
+                at = dict(at, _parts_group=str(key))
                 # drawn as its parts, with the building's class and one look for all of them; a part
                 # without a height takes the building's (else its lowest known part's)
                 look = _hash01(str(key), "look")
@@ -2134,25 +2205,52 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
                 fill = float(bh) if bh is not None and np.isfinite(bh) and bh > 0 else \
                     min(h[0] + h[1] for _, h, _, _ in bparts if h is not None)
                 top = max([fill] + [h[0] + h[1] for _, h, _, _ in bparts if h is not None])
+                parent = clean_ring(np.column_stack([e - x0, n - y0]))
+                parent_holes = []
+                for raw in part[1:]:
+                    he, hn = mapgeom.enu_xy(f, frame, np.asarray(raw, np.float64))
+                    hole = clean_ring(np.column_stack([he - x0, hn - y0]))
+                    if hole is not None:
+                        parent_holes.append(hole)
+                grounded, voids, base_heights = [], list(parent_holes), [fill]
                 for pring, hh, pholes, roof_attrs in bparts:
                     ph, pmh = hh if hh is not None else (fill, 0.0)
                     r = clean_ring(pring - np.array([x0, y0]))
                     if r is None or _area2(r) / 2 < 4.0:
                         continue
                     holes = [clean_ring(h - np.array([x0, y0])) for h in pholes]
-                    rings.append(r)
-                    attrs.append({"class": at["class"], "height": ph, "num_floors": None,
-                                  "roof_shape": roof_attrs.get("roof_shape") or "flat",
-                                  "roof_height": roof_attrs.get("roof_height"),
-                                  "_holes": [h for h in holes if h is not None],
-                                  "building_height": top, "facade_material": at.get("facade_material"),
-                                  "bridge_part": _on_support(r, supports) if str(at.get("facade_material") or "")
-                                  .lower() in STEEL_MATERIALS else None,
-                                  "bridge_masonry": str(at.get("facade_material") or "").lower()
-                                  if _on_support(r, supports) is not None and str(at.get("facade_material") or "")
-                                  .lower() not in STEEL_MATERIALS else None})
-                    looks.append(look)
-                    mins.append(pmh)
+                    voids.extend(h for h in holes if h is not None)
+                    if pmh <= 0.5:
+                        grounded.append(r)
+                    base_heights.append(pmh if pmh > 0.5 else ph)
+                    if component == 0:
+                        rings.append(r)
+                        attrs.append({"class": at["class"], "height": ph, "num_floors": None,
+                                      "roof_shape": roof_attrs.get("roof_shape") or "flat",
+                                      "roof_height": roof_attrs.get("roof_height"),
+                                      "_holes": [h for h in holes if h is not None],
+                                      "_parts_group": str(key),
+                                      "building_height": top, "facade_material": at.get("facade_material"),
+                                      "bridge_part": _on_support(r, supports) if str(at.get("facade_material") or "")
+                                      .lower() in STEEL_MATERIALS else None,
+                                      "bridge_masonry": str(at.get("facade_material") or "").lower()
+                                      if _on_support(r, supports) is not None and str(at.get("facade_material") or "")
+                                      .lower() not in STEEL_MATERIALS else None})
+                        looks.append(look)
+                        mins.append(pmh)
+                # Parts can describe only roof machinery or one tower. Keep the
+                # uncovered parent body, up to the first mapped part's base/top.
+                # Explicit courtyards stay open, including those mapped on parts.
+                parent_min = at.get('min_height')
+                if parent is not None and not (parent_min is not None and np.isfinite(parent_min) and parent_min > 0.5):
+                    from polygon import subtract_cells
+                    for cell in subtract_cells(parent, grounded, voids):
+                        rings.append(cell)
+                        attrs.append(dict(at, height=min(base_heights), num_floors=None,
+                                          roof_shape="flat", _holes=[], _base_part=True,
+                                          building_height=top))
+                        looks.append(look)
+                        mins.append(0.0)
                 if key is not None:
                     seen.add(seen_key)
                 continue
@@ -2175,11 +2273,6 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
             rings.append(ring)
             mh = at.get("min_height")
             mh = float(mh) if mh is not None and np.isfinite(mh) and mh > 0 else 0.0
-            if mh <= 0.5 and roads_xy and road_through(ring, roads_xy) >= ROAD_THROUGH_M:
-                mh = OVER_ROAD_CLEAR_M
-                h = at.get("height")
-                if h is None or not np.isfinite(h) or h < mh + 3.0:
-                    at = dict(at, height=mh + 3.0)      # keeps its top; at least a slab's worth over the clearance
             if mh < OVER_TUNNEL_CLEAR_M and tunnels_xy and road_through(ring, tunnels_xy) >= TUNNEL_THROUGH_M:
                 # over a tunnel: its floor OVER_TUNNEL_CLEAR_M over the road at the mouth near it (the lowest ground
                 # along the tunnel's line round it), from its own lowest ground (base_z); none where its ground is
@@ -2226,6 +2319,8 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
             at = dict(at, height=max(2.5, float(at["height"]) - mh))     # a building's own height range
         spec = plan(ring, at, int(sh) if look is None else 0, clat, clon, look, town, dense, west_town, alpine)
         spec.min_h = mh
+        spec.base_part = bool(at.get('_base_part'))
+        spec.datum_group = at.get('_parts_group')
         spec.portal = bool(at.get("portal"))
         # Batch corners and intermediate boundary samples for the whole tile.
         # A long wall can pass over a dip or ridge missed by its two corners.
@@ -2257,7 +2352,16 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
             continue
         spec.gring = g[:len(spec.ring)]  # corner heights for doors; foundation includes the full boundary
         out.append((spec, float(g.min()), float(g.max())))
-    return out
+    # Part heights share the parent's reference ground. Sampling each roof
+    # fragment independently makes joined wings and towers step apart on a slope.
+    datums = {}
+    for spec, _, high in out:
+        if spec.datum_group and not spec.cls.startswith('bridge') and not spec.deck:
+            datums[spec.datum_group] = max(datums.get(spec.datum_group, -math.inf), high)
+    for spec, _, _ in out:
+        if spec.datum_group in datums and not spec.cls.startswith('bridge') and not spec.deck:
+            spec.datum = datums[spec.datum_group]
+    return street_passages(out, roads_xy)
 
 
 def collider_boxes(items, x0, y0):
@@ -2581,6 +2685,82 @@ def centres(items, tx, ty):
     import roads
     x0, y0, _, _ = roads.tile_bbox(tx, ty)
     return [(float(s.ring[:, 0].mean() + x0), float(s.ring[:, 1].mean() + y0)) for s, _, _ in items]
+
+
+FRONTAGE_GAP_M = 3.0   # only short street-front gaps, not entire gardens or yards
+
+
+def _paving(mesh, spec, material):
+    for ring in spec.aprons or ():
+        mesh.poly(ring, [(p[0] / 2.0, p[1] / 2.0) for p in ring], material)
+
+
+def pave_frontages(items, walks, x0, y0):
+    """Connect nearby facades to the backs of existing raised sidewalks.
+
+    Paving stays on the building's side of the sidewalk, follows its actual
+    width and height, and is shared by the building's render and collision mesh.
+    No sidewalks means no guessed paving of rural houses or gardens.
+    """
+    import sidewalks
+    segments = []
+    for walk in walks:
+        if 'corner' in walk or walk.get('median'):
+            continue
+        width = walk.get('w', 2.5)
+        curb, outward = sidewalks.run_geometry(walk['pts'], walk['side'], width)
+        back = curb.copy()
+        back[:, :2] += outward * width - np.array([x0, y0])
+        back[:, 2] += sidewalks.CURB_H + width * sidewalks.CROSS_SLOPE
+        segments.extend((a, b, (oa + ob) / 2) for a, b, oa, ob in
+                        zip(back[:-1], back[1:], outward[:-1], outward[1:]))
+    if not segments:
+        return
+    sa = np.array([s[0] for s in segments])
+    sb = np.array([s[1] for s in segments])
+    outward = np.array([s[2] for s in segments])
+    direction = sb[:, :2] - sa[:, :2]
+    length = np.linalg.norm(direction, axis=1)
+    unit = direction / np.maximum(length[:, None], 1e-9)
+    for spec, _, gmax in items:
+        spec.aprons = []
+        if (spec.min_h or 0) > 0.5 or spec.cls.startswith('bridge') or spec.base_part:
+            continue
+        ring = drawn_ring(spec)
+        for i, (a, b) in enumerate(zip(ring, np.roll(ring, -1, axis=0))):
+            edge = b - a
+            size = float(np.linalg.norm(edge))
+            if size < 0.1:
+                continue
+            tangent = edge / size
+            normal = np.array([tangent[1], -tangent[0]])
+            da = (sa[:, :2] - a) @ normal
+            db = (sb[:, :2] - a) @ normal
+            candidates = np.flatnonzero((np.abs(unit @ tangent) > 0.92) &
+                                        (outward @ normal < -0.7) & (length > 0.05) &
+                                        (np.minimum(da, db) >= -0.02) &
+                                        (np.maximum(da, db) <= FRONTAGE_GAP_M))
+            for j in candidates:
+                u0, u1 = (sa[j, :2] - a) @ tangent, (sb[j, :2] - a) @ tangent
+                lo, hi = max(0.0, min(u0, u1)), min(size, max(u0, u1))
+                if hi - lo < 0.05 or abs(u1 - u0) < 1e-6:
+                    continue
+                t = (np.array([lo, hi]) - u0) / (u1 - u0)
+                walk = sa[j] + t[:, None] * (sb[j] - sa[j])
+                wall = a + np.array([lo, hi])[:, None] * tangent
+                if spec.gring is not None:
+                    ground = np.interp([lo / size, hi / size], [0, 1],
+                                       [spec.gring[i], spec.gring[(i + 1) % len(ring)]])
+                else:
+                    ground = np.full(2, gmax)
+                if np.max(np.abs(ground - walk[:, 2])) > 0.75:
+                    continue                  # no steep concrete ramp up a hillside facade
+                wall = np.c_[wall, np.maximum(ground + 0.02, walk[:, 2])]
+                polygon = np.vstack([wall, walk[::-1]])
+                if _area2(polygon[:, :2]) < 0:
+                    polygon = polygon[::-1]
+                if abs(_area2(polygon[:, :2])) > 0.01:
+                    spec.aprons.append(polygon)
 
 
 def road_tile(frame, tx, ty, md, ground, lines=None, props=None, items=None):

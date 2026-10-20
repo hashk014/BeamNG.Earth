@@ -24,10 +24,10 @@
       "updatedAt": "2026-10-17T10:40:38Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/2",
       "review": {
-        "status": "needs-reproduction",
+        "status": "partial-this-batch",
         "priority": "P1",
-        "notes": "Fork wall/foundation sampling is improved; floating buildings and footprints over roads remain distinct cases.",
-        "validation": "Compare cached footprints and DEM, then regenerate the reported location."
+        "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The exact reported annex and original upstream locations still need gameplay reproduction; see 2026-10-20-urban-ground-contact.md."
       }
     },
     {
@@ -690,10 +690,10 @@
       "updatedAt": "2026-10-20T02:37:07Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/48",
       "review": {
-        "status": "needs-reproduction",
+        "status": "partial-this-batch",
         "priority": "P1",
-        "notes": "Fork wall/foundation sampling is improved; floating buildings and footprints over roads remain distinct cases.",
-        "validation": "Compare cached footprints and DEM, then regenerate the reported location."
+        "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The exact reported annex and original upstream locations still need gameplay reproduction; see 2026-10-20-urban-ground-contact.md."
       }
     },
     {
@@ -870,10 +870,10 @@
       "updatedAt": "2026-10-20T16:13:39Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/60",
       "review": {
-        "status": "needs-reproduction",
+        "status": "partial-this-batch",
         "priority": "P1",
-        "notes": "Fork wall/foundation sampling is improved; floating buildings and footprints over roads remain distinct cases.",
-        "validation": "Compare cached footprints and DEM, then regenerate the reported location."
+        "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The exact reported annex and original upstream locations still need gameplay reproduction; see 2026-10-20-urban-ground-contact.md."
       }
     },
     {
