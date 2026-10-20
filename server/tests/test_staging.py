@@ -16,6 +16,11 @@ from PIL import Image
 
 
 class StagingTest(unittest.TestCase):
+    def remove_owned(self, root, path):
+        target, root = Path(path).resolve(), Path(root).resolve()
+        self.assertTrue(target.is_relative_to(root) and target != root)
+        shutil.rmtree(target)
+
     def target(self, root):
         return os.path.join(root, "BeamNG.drive", "current", "temp", "beamngEarth", "s1", "hm_11_0_0.png")
 
@@ -55,7 +60,7 @@ class StagingTest(unittest.TestCase):
             target = self.target(root)
             os.makedirs(os.path.dirname(target))
             first = staging.tmp_for(target)
-            shutil.rmtree(os.path.dirname(first))
+            self.remove_owned(root, os.path.dirname(first))
             second = staging.tmp_for(target)
             with open(second, "wb") as f:
                 f.write(b"complete")
@@ -79,7 +84,7 @@ class StagingTest(unittest.TestCase):
 
             def clean_after_save(image, *args, **kwargs):
                 save(image, *args, **kwargs)
-                shutil.rmtree(os.path.dirname(target))
+                self.remove_owned(root, os.path.dirname(target))
 
             heights = np.arange(16, dtype=np.float64).reshape(4, 4)
             with mock.patch.object(Image.Image, "save", clean_after_save):
