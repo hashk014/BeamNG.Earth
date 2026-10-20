@@ -29,7 +29,7 @@ Updated: 2026-10-20. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
    repair short sidewalk links and add bounded concrete frontages. See the
    [urban geometry evidence and limits](../research/2026-10-20-urban-ground-contact.md).
 
-Five requests have implemented corrections/features and five have partial implementations.
+Five requests have implemented corrections/features and eight have partial implementations.
 All 59 issues in the snapshot have individual assessments; 48 were open upstream.
 
 ## Next priorities
