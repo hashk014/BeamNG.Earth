@@ -648,7 +648,7 @@ def under_wine():
 
 
 def steam_compat_tool():
-    """Linux: the compatibility tool Steam is set to use for the game (a Proton's name), "" for none, None when
+    """Linux: the selected Proton's name, "" for native (including Steam Linux Runtime), None when
     Steam's config does not say (it writes the setting when it exits)."""
     import install
     import re
@@ -662,7 +662,8 @@ def steam_compat_tool():
         if not m:
             continue
         e = re.search(r'"%s"\s*\{[^}]*?"name"\s*"([^"]*)"' % APP_ID, m.group(1))
-        return e.group(1) if e else ""
+        name = e.group(1) if e else ""
+        return name if "proton" in name.lower() else ""
     return None
 
 
@@ -703,7 +704,7 @@ def linux_build(force=None):
             mode = "proton"
         elif not proton_dirs:
             mode = "native"
-        elif tool is None or not os.path.isdir(native):
+        elif tool is None:
             # Steam has not saved the setting: the build that ran last
             mode = "proton" if max(map(last_written, proton_dirs)) > last_written(native) else "native"
         else:
