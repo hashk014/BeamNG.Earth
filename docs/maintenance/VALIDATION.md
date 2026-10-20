@@ -23,8 +23,8 @@ python -m unittest discover -s server/tests -p test_session_output.py -v
 
 | Check | Result on local Windows | Scope |
 | --- | --- | --- |
-| `python tools/maintenance.py test --suite quick` | 47 passed | Storage, launcher, filesystem recovery, synthetic teleports, surface metadata, coastal water, area prefetch |
-| `python tools/maintenance.py test --suite generators` | 223 passed | Terrain, roads, physics materials, buildings, traffic, water and vegetation |
+| `python tools/maintenance.py test --suite quick` | 51 passed | Storage, launcher, filesystem recovery, synthetic teleports, surface metadata, coastal water, area prefetch |
+| `python tools/maintenance.py test --suite generators` | 242 passed | Terrain, roads, physics materials, buildings, traffic, water and vegetation |
 | `python tools/run_lua_tests.py` | 44 files, 4,703 checks passed | LuaJIT with engine stubs; includes new rock/prop persistence and coastal physics |
 | `node mod/tests/test_mapmath.mjs` | Passed | UI map layers and credits math |
 | `node server/tests/test_mapmath.mjs` | Passed | Server map-layer math |
@@ -69,6 +69,14 @@ The historical function is evaluated using the current shared surface-tag
 constants; those constants are unchanged between these two measurements.
 
 ## Runtime handoff
+
+The subsequent urban-geometry pass has 242 passing generator tests (including 19
+new building/sidewalk regressions), 51 focused maintenance tests, and two real
+Les Sables sectors rebuilt with networking disabled. See
+[the scoped report](../research/2026-10-20-urban-ground-contact.md).
+The exact reported annex is still awaiting location confirmation; a diagnostic
+view of the main school showed a complete body. The new geometry is not yet
+claimed as validated by a player drive.
 
 The maintenance batch still needs actual BeamNG checks for saved UI settings,
 coastline rendering, dry below-sea-level roads, material physics, long drives,
