@@ -12,6 +12,13 @@ only, nothing redistributed. Licence notes marked *(verify)* must be re-checked 
 
 ## Map data (downloaded at runtime by the companion server and cached on the player's disk)
 
+Fork maintenance code: the road-over-underpass separation and fixed bridge/tunnel
+profile changes adapt Alex Schenker's (Alfao) contribution in
+[upstream PR #71](https://github.com/TecnaGamer/BeamNG.Earth/pull/71), commit
+`0df42a67b31b39f7d0f503b62bb39edf31d20f97`, under this repository's MIT licence.
+The fork adds protection against portal cuts through upper carriageways and
+regressions for the Decathlon crossing in Les Sables-d'Olonne.
+
 | Data | Provider | Used for | Licence / terms | Attribution | Status |
 |---|---|---|---|---|---|
 | Natural Earth v5.1.2: 1:50m country and state / province boundary lines, 1:110m country label points, 1:10m populated places (scalerank <= 8) | Natural Earth (naturalearthdata.com; GeoJSON from github.com/nvkelso/natural-earth-vector) | the world map's Layers: borders and place names (shipped with the mod, `ui/.../maplayers.js`, ~0.7 MB) | public domain | "Made with Natural Earth" (not required) | in use |

@@ -41,6 +41,7 @@ SEND_M = 640.0          # tiles whose square comes this close to the player (Che
 DROP_M = 960.0          # ... and dropped beyond this
 OVERLAP = 2.0           # m a road reaches past its tile's edge (no gap at tile seams)
 SIMPLIFY_M = 0.25       # RDP tolerance (Road Spline's layerMgr)
+FIXED_Z_TOL = 0.02      # m: keep bridge/tunnel collision profiles within 2 cm of their solved heights
 MAX_NODES = 100         # nodes per DecalRoad (Road Spline's chunk size)
 MAX_SPACING = 12.0      # m between nodes at most (official maps: median 11-12 m)
 BUILD_PER_POSE = 4      # tiles started per pose at most
@@ -1526,8 +1527,8 @@ def clip_polyline(pts, x0, y0, x1, y1):
     return pieces
 
 
-def simplify(pts, tol=SIMPLIFY_M):
-    """Ramer-Douglas-Peucker on the xy of a polyline (k, D). Pure."""
+def simplify(pts, tol=SIMPLIFY_M, z_tol=None):
+    """Ramer-Douglas-Peucker on xy; optional z_tol also preserves a fixed vertical profile. Pure."""
     if len(pts) < 3:
         return pts
     keep = np.zeros(len(pts), bool)
@@ -1546,8 +1547,13 @@ def simplify(pts, tol=SIMPLIFY_M):
         else:
             t = np.clip((seg - a) @ ab / (L * L), 0.0, 1.0)
             d = np.linalg.norm(seg - a - t[:, None] * ab, axis=1)
-        k = int(np.argmax(d))
-        if d[k] > tol:
+        error = d / tol
+        if z_tol is not None and pts.shape[1] >= 3:
+            t = np.clip(((seg - a) * ab).sum(1) / max(L * L, 1e-12), 0.0, 1.0)
+            dz = np.abs(pts[i + 1:j, 2] - (pts[i, 2] + t * (pts[j, 2] - pts[i, 2])))
+            error = np.maximum(error, dz / z_tol)
+        k = int(np.argmax(error))
+        if error[k] > 1.0:
             m = i + 1 + k
             keep[m] = True
             stack.append((i, m))
@@ -1747,14 +1753,16 @@ PIER_CHANNEL_CLEAR = 15.0   # no pier in water whose run wants this much clearan
 PIER_IN_WATER_M = 8.0   # m a pier in water reaches under its surface
 
 
-def pier_sites(xy, z, width, ground_fn, road_lines=(), wet_fn=None):
+def pier_sites(xy, z, width, ground_fn, road_lines=(), wet_fn=None, road_widths=None):
     """The piers under a bridge deck (xy (k, 2), deck top z (k,), width m): [(x, y, ux, uy, z_top, z_bottom, width)],
     (ux, uy) along the deck, z_top under its girders (roadmesh.DECK_DEPTH + GIRDER_D), z_bottom in the ground (or
     PIER_IN_WATER_M under water); evenly spaced inside the part (its ends are abutments or joints) at PIER_SPAN_M,
     longer under a higher deck; none where the deck is within PIER_MIN_CLEAR of the ground, moved along up to 40 % of
     a span off a road under it (PIER_ROAD_M) or left out; none in a ship channel. The official maps' bridges stand
     on piers (Italy's tapered walls, East Coast's) where ours floated (the user, 2026-10-17: "Bridges need a lot of
-    work in general"). Pure given ground_fn(xy) -> heights, wet_fn(xy) -> bool."""
+    work in general"). road_widths: carriageway widths corresponding to road_lines, where known;
+    piers keep clear of the whole carriageway and their own thickness, not just its centreline.
+    Pure given ground_fn(xy) -> heights, wet_fn(xy) -> bool."""
     import fast
     import roadmesh
     xy = np.asarray(xy, np.float64)
@@ -1769,9 +1777,20 @@ def pier_sites(xy, z, width, ground_fn, road_lines=(), wet_fn=None):
     if n < 2:
         return []
     under = roadmesh.DECK_DEPTH + roadmesh.GIRDER_D
-    segs = [np.asarray(ln, np.float64) for ln in road_lines if len(ln) >= 2]
+    road_lines = list(road_lines)
+    widths = [None] * len(road_lines) if road_widths is None else list(road_widths)
+    if len(widths) != len(road_lines):
+        raise ValueError("road_widths must match road_lines")
+    segs, radii = [], []
+    for ln, rw in zip(road_lines, widths):
+        if len(ln) < 2:
+            continue
+        segs.append(np.asarray(ln, np.float64))
+        road_half = float(rw) / 2 + 1.0 if rw is not None else PIER_ROAD_M
+        radii.append(np.full(len(ln) - 1, max(PIER_ROAD_M, road_half) + roadmesh.PIER_T / 2))
     A = np.concatenate([ln[:-1] for ln in segs]) if segs else np.zeros((0, 2))
     B = np.concatenate([ln[1:] for ln in segs]) if segs else np.zeros((0, 2))
+    R = np.concatenate(radii) if radii else np.zeros(0)
     wet_runs = None
     if wet_fn is not None:
         w = np.asarray(wet_fn(xy), bool)
@@ -1791,9 +1810,9 @@ def pier_sites(xy, z, width, ground_fn, road_lines=(), wet_fn=None):
             nrm = np.array([-t[1], t[0]])
             foot = np.array([p + nrm * pw / 2, p - nrm * pw / 2, p])
             if len(A):
-                hit = fast._ef.points_near_segments(foot, A, B, np.full(len(A), PIER_ROAD_M)) \
+                hit = fast._ef.points_near_segments(foot, A, B, R) \
                     if fast.AVAILABLE and hasattr(fast._ef, "points_near_segments") else \
-                    (_seg_dist(foot, A, B).min(axis=1) < PIER_ROAD_M)
+                    (_seg_dist(foot, A, B) < R).any(axis=1)
                 if np.asarray(hit).any():
                     continue
             zt = float(np.interp(sc, s, z)) - under
@@ -1903,7 +1922,7 @@ class BridgeProfiles:
                 ground[(fid, "g")] = []
                 for ring in ground_parts(feats, i):
                     e, n = mapgeom.enu_xy(feats, self.frame, ring)
-                    ground[(fid, "g")].append(np.stack([e, n], axis=1))
+                    ground[(fid, "g")].append((np.stack([e, n], axis=1), rs[i].width))
 
     def _resolve(self, start, pool, ground, loaded):
         """The chain of part `start` (keys), loading the cell at each loose end until closed."""
@@ -1957,7 +1976,7 @@ class BridgeProfiles:
     def _solve(self, comp, pool, ground):
         """Deck heights of the chain comp (keys of pool)."""
         lines = [pool[k][1] for k in comp]
-        gl = [g for v in ground.values() for g in v]
+        gl = [g for v in ground.values() for g, _width in v]
         cr = _crossings(lines, gl)
         road_z = self._ground(np.array([c[2] for c in cr])) if cr else []
         import bridgetypes
@@ -2032,10 +2051,12 @@ class BridgeProfiles:
     def _commit(self, k, ground=None):
         """Under self.lock: part k's solve was kept: its piers (pier_sites; TunnelProfiles keeps its sections)."""
         spec, xy, z, _lon = self.done[k]
-        lines = [ln for v in (ground or {}).values() for ln in v]
+        ground_roads = [r for v in (ground or {}).values() for r in v]
+        lines = [ln for ln, _width in ground_roads]
+        widths = [width for _ln, width in ground_roads]
         try:
             self.piers[k] = pier_sites(np.asarray(xy, np.float64), np.asarray(z, np.float64), spec.width,
-                                       self._ground, lines, self._wet_at)
+                                       self._ground, lines, self._wet_at, widths)
         except Exception as ex:             # no piers rather than no bridge
             log.debug("piers of %s: %s: %s", k, type(ex).__name__, ex)
             self.piers[k] = []
@@ -2104,12 +2125,59 @@ class BridgeProfiles:
         return key[0]
 
 
-def tunnel_sections(s, g, open_cover=None, full_cover=None, min_m=SECTION_MIN_M):
+def tunnel_crossing_roads(xy, ground_roads):
+    """Surface roads crossing the interior of a mapped tunnel, not its approaches."""
+    xy = np.asarray(xy, np.float64)[:, :2]
+    if len(xy) < 2:
+        return []
+    length = float(np.hypot(*np.diff(xy, axis=0).T).sum())
+    lo, hi = xy.min(0), xy.max(0)
+    out = []
+    for line, width in ground_roads:
+        line = np.asarray(line, np.float64)[:, :2]
+        if len(line) < 2 or (line.max(0) < lo).any() or (line.min(0) > hi).any():
+            continue
+        if any(1.0 < arc < length - 1.0 for _pi, arc, _q in _crossings([xy], [line])):
+            out.append((line, width))
+    return out
+
+
+def tunnel_crossing_mask(xy, ground_roads, margin=1.0, extend=True):
+    """Samples of a tagged tunnel beneath crossing surface roads [(xy, width)].
+
+    A shallow or coarse DEM does not establish that a tunnel is open: its mapped surface-road
+    crossing still has two levels. Parallel roads and a road meeting its portal do not count.
+    """
+    xy = np.asarray(xy, np.float64)[:, :2]
+    mask = np.zeros(len(xy), bool)
+    if len(xy) < 2:
+        return mask
+    for line, width in tunnel_crossing_roads(xy, ground_roads):
+        mask |= _seg_dist(xy, line[:-1], line[1:]).min(1) <= float(width) / 2 + margin
+    # Preserve the mapped portals when the road crossing ends within one short section of them.
+    # Cutting a few metres off a short underpass puts its new portal face in the upper road.
+    at = np.flatnonzero(mask)
+    if len(at) and extend:
+        s = np.r_[0.0, np.cumsum(np.hypot(*np.diff(xy, axis=0).T))]
+        if s[at[0]] <= SECTION_MIN_M:
+            mask[:at[0]] = True
+        if s[-1] - s[at[-1]] <= SECTION_MIN_M:
+            mask[at[-1] + 1:] = True
+        for a, b in zip(at[:-1], at[1:]):
+            if s[b] - s[a] <= SECTION_MIN_M:
+                mask[a:b + 1] = True
+    return mask
+
+
+def tunnel_sections(s, g, open_cover=None, full_cover=None, min_m=SECTION_MIN_M, covered=None, upper=None):
     """A tunnel's road level and its sections from the ground over it (g at arc lengths s): (floor, kinds). floor: the
     lower convex hull of (s, g), the road's level under the covered parts and the ground where it lies open; kinds per
     sample: 0 open road, 1 a low arch, 2 a full tunnel (a run with TUNNEL_OPEN_COVER over the floor, full where it
     reaches TUNNEL_COVER; runs and gaps shorter than min_m merged away). One long 'tunnel' in the map can be a sunken
     road with arches and a rock tunnel along it (Central Park's 79th Street Transverse, 683 m: one tube, 2026-10-17).
+    covered: mapped surface-road crossings which remain covered even when the DEM understates
+    their cover. upper: final graded upper-road heights on its physical footprint, NaN elsewhere;
+    forced coverage is rejected where the minimum vault and soil would obstruct that road.
     The Rust kernel (fast), else the same in numpy. Pure."""
     s = np.ascontiguousarray(s, np.float64)
     g = np.ascontiguousarray(g, np.float64)
@@ -2118,7 +2186,13 @@ def tunnel_sections(s, g, open_cover=None, full_cover=None, min_m=SECTION_MIN_M)
     step = float(np.median(np.diff(s))) if len(s) > 1 else 1.0
     min_n = max(1, int(math.ceil(min_m / max(step, 1e-6))))
     import fast
-    if fast.AVAILABLE and getattr(fast._ef, "VERSION", 0) >= 28:
+    forced = np.asarray(covered, bool) if covered is not None else np.zeros(len(s), bool)
+    if forced.shape != s.shape:
+        raise ValueError("covered must match tunnel profile samples")
+    upper = np.asarray(upper, np.float64) if upper is not None else None
+    if upper is not None and upper.shape != s.shape:
+        raise ValueError("upper must match tunnel profile samples")
+    if not forced.any() and fast.AVAILABLE and getattr(fast._ef, "VERSION", 0) >= 28:
         f, k = fast._ef.tunnel_sections(s, g, float(oc), float(fc), int(min_n))
         return np.asarray(f), np.asarray(k)
     n = len(s)
@@ -2136,7 +2210,25 @@ def tunnel_sections(s, g, open_cover=None, full_cover=None, min_m=SECTION_MIN_M)
                 break
         hull.append(i)
     floor = np.interp(s, s[hull], g[hull])
-    covered = g - floor >= oc
+    # Topology can rescue a narrow, usable cover peak rejected by the minimum-run filter (A3),
+    # but cannot supply missing vertical measurements. With no room for even the lowest vault
+    # and soil, forcing a tube would put its collision above the surface road and raise it.
+    rejected = np.zeros(len(s), bool)
+    if forced.any():
+        forced = forced.copy()
+        at = np.flatnonzero(forced)
+        for run in np.split(at, np.flatnonzero(np.diff(at) > 1) + 1):
+            usable = float(np.max((g - floor)[run])) >= TUNNEL_LOW_H + ARCH_SOIL_MIN
+            if upper is not None:
+                physical = run[np.isfinite(upper[run])]
+                # The DEM may resolve only the lower road. Its repaired upper-road
+                # profile supplies measured cover even without a raw terrain peak.
+                usable = bool(len(physical)) and \
+                    float(np.min((upper - floor)[physical])) >= TUNNEL_LOW_H + ARCH_SOIL_MIN
+            if not usable:
+                forced[run] = False
+                rejected[run] = True
+    covered = ((g - floor >= oc) | forced) & ~rejected
     runs, i = [], 0
     while i < n:
         if not covered[i]:
@@ -2145,12 +2237,12 @@ def tunnel_sections(s, g, open_cover=None, full_cover=None, min_m=SECTION_MIN_M)
         j = i
         while j + 1 < n and covered[j + 1]:
             j += 1
-        if j + 1 - i >= min_n:
+        if j + 1 - i >= min_n or forced[i:j + 1].any():
             runs.append([i, j, 2 if (g[i:j + 1] - floor[i:j + 1] >= fc).any() else 1])
         i = j + 1
     merged = []
     for r in runs:
-        if merged and r[0] - merged[-1][1] - 1 < min_n:
+        if merged and r[0] - merged[-1][1] - 1 < min_n and not rejected[merged[-1][1] + 1:r[0]].any():
             merged[-1][1] = r[1]
             merged[-1][2] = max(merged[-1][2], r[2])
         else:
@@ -2189,6 +2281,8 @@ class TunnelProfiles(BridgeProfiles):
         self.sections = {}          # part fid -> [(i0, i1, kind)] (inclusive sample ranges, sharing their ends)
         self.mouths = {}            # sub-part fid -> (its start is a portal, its end is one): not where a low arch
                                     # meets a full tunnel inside the hill (no hole, no portal face there)
+        self.surface_crossings = set()  # sub-parts under mapped roads: their terrain supplies the cover, no grass cap
+        self.upper_roads = {}           # sub-part -> crossing carriageways protected from portal cuts
         self._tls = threading.local()   # a thread's solved sections, kept with its parts (_commit) or dropped
 
     def _raw_ground(self, xy):
@@ -2208,7 +2302,7 @@ class TunnelProfiles(BridgeProfiles):
         pid = self._part_id(k)
         secs, subs = staged
         self.sections[pid] = secs
-        for n, (kind, th, ups, mouths) in subs.items():
+        for n, (kind, th, ups, mouths, crossed, upper_roads) in subs.items():
             sub = f"{pid}#{n}"
             if kind == 0:
                 self.open.add(sub)
@@ -2217,6 +2311,11 @@ class TunnelProfiles(BridgeProfiles):
                 self.heights[sub] = th
             self.ups[sub] = ups
             self.mouths[sub] = mouths
+            self.upper_roads[sub] = upper_roads
+            if crossed:
+                self.surface_crossings.add(sub)
+            else:
+                self.surface_crossings.discard(sub)
 
     def _ends_ground(self, xy):
         if self.ends is None:
@@ -2243,7 +2342,14 @@ class TunnelProfiles(BridgeProfiles):
             ge = np.asarray(self._ends_ground(xy[[0, -1]]), np.float64)
             g = g.copy()
             g[0], g[-1] = ge[0], ge[-1]
-            floor, kinds = tunnel_sections(s, g)
+            surface_roads = [r for parts in ground.values() for r in parts]
+            upper_roads = tunnel_crossing_roads(xy, surface_roads)
+            crossings = tunnel_crossing_mask(xy, surface_roads)
+            upper = None
+            if crossings.any():
+                physical = tunnel_crossing_mask(xy, surface_roads, margin=0.0, extend=False)
+                upper = np.where(physical, self._ground(xy), np.nan)
+            floor, kinds = tunnel_sections(s, g, covered=crossings, upper=upper)
             secs, i = [], 0
             while i < len(kinds):
                 j = i
@@ -2258,18 +2364,27 @@ class TunnelProfiles(BridgeProfiles):
             subs = {}
             for n, (a, b, kd) in enumerate(secs):
                 if kd == 0:
-                    subs[n] = (0, None, None, None)
+                    subs[n] = (0, None, None, None, False, [])
                     continue
                 th = roadmesh.TUNNEL_H
                 if kd == 1:
                     c_ = cover[a:b + 1]
                     k0, k1 = int(len(c_) * 0.2), max(int(len(c_) * 0.8), int(len(c_) * 0.2) + 1)
                     th = float(np.clip(np.percentile(c_[k0:k1], 20) - TUNNEL_SOIL_M, TUNNEL_LOW_H, roadmesh.TUNNEL_H))
+                if upper is not None:
+                    physical = np.isfinite(upper[a:b + 1])
+                    if physical.any():
+                        available = (upper - floor)[a:b + 1][physical]
+                        th = min(th, float(np.min(available)) - ARCH_SOIL_MIN)
+                        if th < roadmesh.TUNNEL_H - 0.05:
+                            kd = 1          # the final upper road also bounds the vault, not just its existence
+                            secs[n] = (a, b, kd)
                 ups = []
                 for near in (s[a:b + 1] <= s[a] + PORTAL_LOOK_M, s[a:b + 1] >= s[b] - PORTAL_LOOK_M):
                     cv = float(np.max(cover[a:b + 1][near])) if near.any() else th
                     ups.append(float(np.clip(cv + PORTAL_GROUND_M - th, PORTAL_UP_MIN, roadmesh.PORTAL_FRAME)))
-                subs[n] = (kd, th, ups, (n == 0 or secs[n - 1][2] == 0, n == len(secs) - 1 or secs[n + 1][2] == 0))
+                subs[n] = (kd, th, ups, (n == 0 or secs[n - 1][2] == 0, n == len(secs) - 1 or secs[n + 1][2] == 0),
+                           bool(crossings[a:b + 1].any()), upper_roads)
             self._tls.staged[k] = (secs, subs)
             out.append(floor)
         return out
@@ -2344,7 +2459,7 @@ LOW_HOLE_STEP = 2.5         # ... the cut a terrain grid step further (the squar
 TUNNEL_HOLE_MARGIN = 0.5    # m around the tube a portal's terrain hole reaches (above, below and sideways)
 
 
-def tunnel_hole_mask(parts, u, cx, cy, square, heights=None, mouths=None):
+def tunnel_hole_mask(parts, u, cx, cy, square, heights=None, mouths=None, protected=None):
     """Where the terrain block (heights u [iy, ix]: sample (ix, iy) at (cx - half + ix * square, cy - half +
     iy * square), half = n * square / 2) must be a hole for the tunnels `parts` ([(fid, spec, xy, z, lon)]: a
     TunnelProfiles' parts): the samples over a tube's footprint whose ground lies between its floor and its
@@ -2404,14 +2519,17 @@ def tunnel_hole_mask(parts, u, cx, cy, square, heights=None, mouths=None):
                 ends = ((s_ <= LOW_HOLE_M + LOW_HOLE_STEP) & m0) | ((s_ >= sj[-1] - LOW_HOLE_M - LOW_HOLE_STEP) & m1)
                 hit = inside & (d <= hw + ARCH_SIDE_M + 1.0) & ends     # (inside the portal face: LOW_PORTAL_SIDE)
             mask[iy0:iy1 + 1, ix0:ix1 + 1] |= hit
+    if protected is not None:
+        mask &= ~np.asarray(protected, bool).reshape(mask.shape)
     return mask
 
 
 ARCH_SIDE_M = 1.0           # m beside a low arch's tube its soil is raised too
 ARCH_SOIL_MIN = 0.6         # m of ground kept over a low arch's vault (arch_raise)
+UPPER_ROAD_MARGIN = 3.0    # m: protect the 2 m terrain grid's triangles at an upper carriageway edge
 
 
-def arch_raise(parts, heights, px, py, z, mouths=None):
+def arch_raise(parts, heights, px, py, z, mouths=None, protected=None):
     """z (ground heights at the anchor-frame points px, py) raised over the low arches among parts (TunnelProfiles
     parts; heights: their tubes, TunnelProfiles.heights) to ARCH_SOIL_MIN over the vault, beside it too, but for
     their mouths (LOW_HOLE_M, cut there by tunnel_hole_mask): the ground dipping into a low tube near its mouths
@@ -2419,7 +2537,8 @@ def arch_raise(parts, heights, px, py, z, mouths=None):
     outside (Central Park, 2026-10-17). Pure."""
     import fast
     import roadmesh
-    z = np.array(z, np.float64, copy=True)
+    original = np.asarray(z, np.float64)
+    z = original.copy()
     rust = fast.AVAILABLE and hasattr(fast._ef, "arch_raise_part")
     if rust:
         px = np.ascontiguousarray(px, np.float64)
@@ -2467,7 +2586,36 @@ def arch_raise(parts, heights, px, py, z, mouths=None):
                 z[k[on]] = np.maximum(z[k[on]], floor[on] + th + ARCH_SOIL_MIN)
             if mouth.any():         # its mouths: flat at its floor (cut away, tunnel_hole_mask; no slope into the
                 z[k[mouth]] = np.minimum(z[k[mouth]], floor[mouth] - 0.02)    # opening from the soil)
+    if protected is not None:
+        keep = np.asarray(protected, bool)
+        z[keep] = original[keep]
     return z
+
+
+def tunnel_upper_mask(tunnels, parts, px, py):
+    """Physical upper-road footprints only, so tunnel mouths cannot cut the road above."""
+    points = np.c_[np.asarray(px).ravel(), np.asarray(py).ravel()]
+    mask = np.zeros(len(points), bool)
+    seen = set()
+    for fid, _spec, _xy, _z, _lon in parts:
+        for line, width in getattr(tunnels, "upper_roads", {}).get(fid, ()):
+            key = (width, line.tobytes())
+            if key in seen:
+                continue
+            seen.add(key)
+            # Include one terrain-cell diagonal beyond the pavement: a hole at a
+            # neighbouring vertex removes a whole triangle from the upper road.
+            half = width / 2 + UPPER_ROAD_MARGIN
+            lo, hi = line.min(0) - half, line.max(0) + half
+            ii = np.flatnonzero((points[:, 0] >= lo[0]) & (points[:, 0] <= hi[0]) &
+                               (points[:, 1] >= lo[1]) & (points[:, 1] <= hi[1]) & ~mask)
+            # Bound the point/segment temporaries on a full terrain block.
+            batch = max(1, 200_000 // max(1, len(line) - 1))
+            for start in range(0, len(ii), batch):
+                selected = ii[start:start + batch]
+                distance = _seg_dist(points[selected], line[:-1], line[1:]).min(1)
+                mask[selected[distance <= half]] = True
+    return mask
 
 
 def tunnel_floor_at(parts, x, y):
@@ -2512,7 +2660,8 @@ def block_arch_raise(tunnels, cell_fn, frame, la, lo, z, box):
             return z
         e, n, _ = frame.geodetic_to_enu(np.asarray(la, np.float64).ravel(), np.asarray(lo, np.float64).ravel(), 0.0)
         return arch_raise(parts, tunnels.heights, np.asarray(e), np.asarray(n),
-                          np.asarray(z, np.float64).ravel(), getattr(tunnels, "mouths", None)).reshape(np.shape(z))
+                          np.asarray(z, np.float64).ravel(), getattr(tunnels, "mouths", None),
+                          tunnel_upper_mask(tunnels, parts, e, n)).reshape(np.shape(z))
     except Exception as ex:         # no raise rather than no block
         log.debug("arch raise: %s: %s", type(ex).__name__, ex)
         return z
@@ -2538,8 +2687,9 @@ def block_tunnel_holes(tunnels, cell_fn, frame, keep, cx, cy, square):
         return None
     if not parts:
         return None
+    e, n, _ = frame.geodetic_to_enu(np.asarray(lat).ravel(), np.asarray(lon).ravel(), 0.0)
     return tunnel_hole_mask(parts, u, cx, cy, square, getattr(tunnels, "heights", None),
-                            getattr(tunnels, "mouths", None))
+                            getattr(tunnels, "mouths", None), tunnel_upper_mask(tunnels, parts, e, n))
 
 
 WALL_STEP = 2.0         # m between a retaining wall's points
@@ -2675,7 +2825,7 @@ def _tunnel_chunks(tunnels, cells, exact):
                 lines.append((look, w, line))
         for look, w, line in lines:
             for piece in clip_polyline(line, *exact):
-                for c in split(densify(simplify(piece))):
+                for c in split(densify(simplify(piece, z_tol=FIXED_Z_TOL))):
                     if len(c) >= 2:
                         ch = _chunk(look, w, c)
                         ch["fixed"] = True
@@ -2688,6 +2838,8 @@ def _tunnel_chunks(tunnels, cells, exact):
                                 at = lambda p: u0 if np.hypot(*(p - ends[0])) < 0.5 else u1    # noqa: E731
                                 ch["portal_up"] = [at(c[0, :2]), at(c[-1, :2])]
                             m0, m1 = tunnels.mouth(fid) if getattr(tunnels, "mouth", None) is not None else (True, True)
+                            if fid in getattr(tunnels, "surface_crossings", ()):
+                                ch["arch_cap"] = False
                             isp = lambda p: bool((np.hypot(*(p - ends[0])) < 0.5 and m0) or      # noqa: E731
                                                  (np.hypot(*(p - ends[1])) < 0.5 and m1))
                             ch["portal"] = [isp(c[0, :2]), isp(c[-1, :2])]
@@ -2734,9 +2886,8 @@ def _bridge_chunks(frame, bseen, elev, exact, bridges=None, cells=None):
         g = g + DECK_CLEAR
         z = np.maximum(z, g)
         if len(z) > 3:
-            import grading
-            zz = grading.smooth_profile(z, DECK_STEP, grading.SIGMA_M)
-            zz[0], zz[-1] = z[0], z[-1]
+            step = float(np.hypot(*np.diff(xy, axis=0).T).sum()) / (len(xy) - 1)
+            zz = _smooth_pinned(z, step, DECK_SIGMA)
             z = np.maximum(zz, g)
         decks.append((fid, spec, np.c_[xy, z], lon))
     return _deck_chunks(decks, exact)
@@ -2755,7 +2906,7 @@ def _deck_chunks(decks, exact):
     wide = (x0 - DECK_CONTEXT_M, y0 - DECK_CONTEXT_M, x1 + DECK_CONTEXT_M, y1 + DECK_CONTEXT_M)
     for fid, spec, pts, lon in decks:
         for piece in clip_polyline(pts, *wide):
-            for c in split(densify(simplify(piece))):
+            for c in split(densify(simplify(piece, z_tol=FIXED_Z_TOL))):
                 if len(c) >= 2:
                     ch = _chunk({**DECK, "deck": True}, spec.width, c)
                     ch.update(fixed=True, deck=True, fid=fid, ctx=True)
@@ -2767,7 +2918,7 @@ def _deck_chunks(decks, exact):
                 lines.append((look, w, line))
         for look, w, line in lines:
             for piece in clip_polyline(line, *exact):
-                for c in split(densify(simplify(piece))):
+                for c in split(densify(simplify(piece, z_tol=FIXED_Z_TOL))):
                     if len(c) >= 2:
                         ch = _chunk(look, w, c)
                         ch["fixed"] = True
