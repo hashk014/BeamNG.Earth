@@ -151,9 +151,7 @@ def plan(frame, x, y, sea_at, radius=None, dry_at=None):
 # --- lakes and rivers ----------------------------------------------------------------------------------------
 LAKE_RADIUS_M = 2000.0      # lake tiles within this of the player (the far tiles carved: L <= 2)
 LAKE_TILE_MAX = 512.0
-LAKE_TILE_MIN = 64.0
-LAKE_TILE_FLOOR = 16.0      # ... split on to this where land under the water's plane would flood (LAKE_FLOOD_SHARE)
-LAKE_FLOOD_SHARE = 0.05     # a tile's share of samples that may be land under the water's plane
+LAKE_TILE_FLOOR = 16.0      # refine flooded shoreline squares down to this, then omit unsafe squares
 LAKE_SAMPLES = 24           # samples per tile edge when checking a lake tile
 LAKE_FLOOD_M = 1.0          # land inside a lake tile lower than the lake by more than this splits it
                             # (a valley below a dam; the banks themselves are ~ at the lake's level)
@@ -180,8 +178,8 @@ def plan_lakes(frame, x, y, lake_at, ground_at, radius=None):
     LAKE_TILE_MAX lattice holding lake water becomes one tile at that level when every other point in it
     is land no lower than the water's plane by more than LAKE_FLOOD_M and the water is within LEVEL_TOL_M
     of that plane (a least-squares fit: a river falls across a tile, which is tilted to match), else it
-    is split, down to LAKE_TILE_MIN (kept there when at least half of
-    it is water; at the median level). So a reservoir's tile never floods the valley below its dam. Tilted to
+    is split, down to LAKE_TILE_FLOOR. Unresolved flooded squares are omitted there,
+    rather than spilling over a dam or a coastal bank. Tilted to
     the local vertical like the sea's tiles."""
     r = LAKE_RADIUS_M if radius is None else radius
     x = (math.floor(x / PLAN_SQUARE) + 0.5) * PLAN_SQUARE
@@ -193,7 +191,9 @@ def plan_lakes(frame, x, y, lake_at, ground_at, radius=None):
              if _dist(x, y, i * s0, j * s0, s0) <= r]
     if not roots:
         return []
-    f = (np.arange(LAKE_SAMPLES) + 0.5) / LAKE_SAMPLES
+    # Include the square's edges: centre-only probes missed a narrow low strip
+    # along a tile boundary and accepted the whole square without refinement.
+    f = np.linspace(0.0, 1.0, LAKE_SAMPLES)
     out = []
 
     def samples(sq, s):
@@ -226,12 +226,9 @@ def plan_lakes(frame, x, y, lake_at, ground_at, radius=None):
             plane = a + bx * U + by * V
             low = gr[~wet] < plane[~wet] - LAKE_FLOOD_M  # land under the water's plane: it would flood
             clear = not low.any()
-            # a tile at least half water may hold a little low land (a shore's noise), but not a trench or a
-            # valley: those split on down to LAKE_TILE_FLOOR (a reservoir's 64 m tile flooded Central Park's
-            # sunken 86th Street Transverse beside it, the user's report 2026-10-17)
-            flooded = low.sum() / low.size if low.size else 0.0
-            if (fit and clear) or (s <= LAKE_TILE_MIN and wet.mean() >= 0.5 and fit
-                                   and (flooded <= LAKE_FLOOD_SHARE or s <= LAKE_TILE_FLOOR)):
+            # Reaching the refinement limit is not evidence of water on low dry land.
+            # Even a narrow sliver can be a road or the sea side of a coastal lake's bank.
+            if fit and clear:
                 out.append((x0, y0, s, a, bx, by))
             elif s > LAKE_TILE_FLOOR:
                 h = s / 2

@@ -653,7 +653,7 @@ def tunnel(chunks, origin, walls=()):
             T.append(np.concatenate([tri, tri[:, ::-1]]))   # seen from outside and from in the tube
             M.append(2 if low else 0)
             nv += 2 * m
-            if low:
+            if low and c.get("arch_cap", True):
                 nv = _arch_cap(P, T, UV, M, nv, mid, u, z, at, k, float(np.max(o[:, 0])), float(o[:, 1].max()), th, origin)
     allm = [TUNNEL_SIDE, TUNNEL_LIGHT, TUNNEL_STONE, TUNNEL_STONE_IN, TUNNEL_SOIL, TUNNEL_INNER]
     Tall = np.concatenate(T)

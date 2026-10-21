@@ -1,13 +1,13 @@
 {
   "repository": "TecnaGamer/BeamNG.Earth",
-  "refreshedAt": "2026-10-20T21:23:00.404736+00:00",
+  "refreshedAt": "2026-10-21T10:04:17.315601+00:00",
   "issues": [
     {
       "labels": [],
       "number": 1,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "Real-time sky changes the time of day on other levels too (sky.lua onUpdate has no level check)",
-      "updatedAt": "2026-10-17T07:30:42Z",
+      "updatedAt": "2026-10-21T05:48:23Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/1",
       "review": {
         "status": "fixed-in-base",
@@ -123,7 +123,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Bounded coastal refinement and confined physics protect sampled known dry low land.",
-        "validation": "Synthetic and Lua tests pass. Netherlands gameplay, inland water and source gaps remain; see WATER.md."
+        "validation": "Previous coastal synthetic/Lua checks pass. Local candidate also confines inland-water volumes and rejects unsafe minimum-size lake squares; 286 generator tests and 4707 Lua assertions pass. Netherlands gameplay, inland levels and source gaps remain unverified; see WATER.md."
       }
     },
     {
@@ -209,9 +209,9 @@
         "enhancement"
       ],
       "number": 14,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "[Idea / suggestion] I think there is no need to generate doors.",
-      "updatedAt": "2026-10-18T21:15:51Z",
+      "updatedAt": "2026-10-21T05:48:25Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/14",
       "review": {
         "status": "implemented-this-batch",
@@ -293,10 +293,10 @@
       "updatedAt": "2026-10-18T22:53:01Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/19",
       "review": {
-        "status": "needs-reproduction",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Road solidity needs exact generated terrain/mesh files and rays.",
-        "validation": "Material classification does not prove collision is fixed."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -353,9 +353,9 @@
         "bug"
       ],
       "number": 23,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "[Bug] World server degraded - never connects to downloads.sourceforge.net",
-      "updatedAt": "2026-10-19T01:27:42Z",
+      "updatedAt": "2026-10-21T05:48:27Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/23",
       "review": {
         "status": "needs-reproduction",
@@ -388,10 +388,10 @@
       "updatedAt": "2026-10-20T11:40:51Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/25",
       "review": {
-        "status": "planned",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Bridge clearance/approaches need generalized constraints and actual elevation data.",
-        "validation": "Evaluate upstream bridge work and actual geometry; avoid coordinate-specific fixes."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -413,9 +413,9 @@
         "bug"
       ],
       "number": 27,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "[Bug] Error",
-      "updatedAt": "2026-10-20T10:40:42Z",
+      "updatedAt": "2026-10-21T05:48:28Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/27",
       "review": {
         "status": "merged-in-preview",
@@ -585,7 +585,7 @@
       "number": 40,
       "state": "OPEN",
       "title": "[Map issue] horrible generation...",
-      "updatedAt": "2026-10-20T13:21:25Z",
+      "updatedAt": "2026-10-21T00:16:16Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/40",
       "review": {
         "status": "partly-addressed",
@@ -687,7 +687,7 @@
       "number": 48,
       "state": "OPEN",
       "title": "[Map issue]",
-      "updatedAt": "2026-10-20T02:37:07Z",
+      "updatedAt": "2026-10-20T23:41:46Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/48",
       "review": {
         "status": "partial-this-batch",
@@ -736,10 +736,10 @@
       "updatedAt": "2026-10-20T10:07:15Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/51",
       "review": {
-        "status": "planned",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Bridge clearance/approaches need generalized constraints and actual elevation data.",
-        "validation": "Evaluate upstream bridge work and actual geometry; avoid coordinate-specific fixes."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -765,13 +765,13 @@
       "number": 53,
       "state": "OPEN",
       "title": "[Idea / suggestion] water in the Netherlands.",
-      "updatedAt": "2026-10-20T14:21:28Z",
+      "updatedAt": "2026-10-21T09:13:03Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/53",
       "review": {
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Bounded coastal refinement and confined physics protect sampled known dry low land.",
-        "validation": "Synthetic and Lua tests pass. Netherlands gameplay, inland water and source gaps remain; see WATER.md."
+        "validation": "Previous coastal synthetic/Lua checks pass. Local candidate also confines inland-water volumes and rejects unsafe minimum-size lake squares; 286 generator tests and 4707 Lua assertions pass. Netherlands gameplay, inland levels and source gaps remain unverified; see WATER.md."
       }
     },
     {
@@ -779,9 +779,9 @@
         "bug"
       ],
       "number": 54,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "[Bug]",
-      "updatedAt": "2026-10-20T13:47:04Z",
+      "updatedAt": "2026-10-21T05:48:31Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/54",
       "review": {
         "status": "monitor",
@@ -795,7 +795,7 @@
       "number": 55,
       "state": "OPEN",
       "title": "[Map issue]",
-      "updatedAt": "2026-10-20T16:06:00Z",
+      "updatedAt": "2026-10-21T01:55:30Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/55",
       "review": {
         "status": "planned",
@@ -807,9 +807,9 @@
     {
       "labels": [],
       "number": 56,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "Launcher takes a non-Proton compat tool (steamlinuxruntime_4) for Proton and installs the mod into a stale Windows user folder",
-      "updatedAt": "2026-10-20T15:00:15Z",
+      "updatedAt": "2026-10-21T05:48:34Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/56",
       "review": {
         "status": "merged-in-preview",
@@ -865,9 +865,9 @@
     {
       "labels": [],
       "number": 60,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "[Map issue] Building is Floating",
-      "updatedAt": "2026-10-20T16:13:39Z",
+      "updatedAt": "2026-10-21T05:48:35Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/60",
       "review": {
         "status": "partial-this-batch",
@@ -930,38 +930,38 @@
       "updatedAt": "2026-10-20T18:04:33Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/65",
       "review": {
-        "status": "needs-review",
-        "priority": "P2",
-        "notes": "",
-        "validation": "not assessed"
+        "status": "partial-in-fork-pr-5",
+        "priority": "P1",
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
       "labels": [],
       "number": 66,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "Really bad performance once I start moving",
-      "updatedAt": "2026-10-20T19:28:33Z",
+      "updatedAt": "2026-10-21T05:48:38Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/66",
       "review": {
-        "status": "needs-review",
+        "status": "upstream-released",
         "priority": "P2",
-        "notes": "",
-        "validation": "not assessed"
+        "notes": "Maintainer reports a correction in upstream 1.5.4-beta; not fully integrated or independently tested in this fork.",
+        "validation": "Release and closing discussion read on 2026-10-21. Reproduce with 1.5.4 before further work."
       }
     },
     {
       "labels": [],
       "number": 67,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "[Bug] PermissionError (WinError 5) when saving terrain cache files",
-      "updatedAt": "2026-10-20T18:58:01Z",
+      "updatedAt": "2026-10-21T05:48:40Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/67",
       "review": {
-        "status": "needs-review",
+        "status": "upstream-released",
         "priority": "P2",
-        "notes": "",
-        "validation": "not assessed"
+        "notes": "Maintainer reports a correction in upstream 1.5.4-beta; not fully integrated or independently tested in this fork.",
+        "validation": "Release and closing discussion read on 2026-10-21. Reproduce with 1.5.4 before further work."
       }
     },
     {
@@ -978,6 +978,204 @@
         "priority": "P2",
         "notes": "",
         "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 70,
+      "state": "OPEN",
+      "title": "[Map issue] Buggy red brick textures",
+      "updatedAt": "2026-10-21T10:02:43Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/70",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 72,
+      "state": "OPEN",
+      "title": "Ai Traffic spawning the wrong way",
+      "updatedAt": "2026-10-20T22:17:59Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/72",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 73,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Allow user to add custom map tiles server",
+      "updatedAt": "2026-10-20T22:18:50Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/73",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 74,
+      "state": "OPEN",
+      "title": "[Map issue] Building on the middle of the scene",
+      "updatedAt": "2026-10-20T23:56:57Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/74",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 75,
+      "state": "CLOSED",
+      "title": "[Idea / suggestion] is this playable in multiplayer",
+      "updatedAt": "2026-10-21T02:21:21Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/75",
+      "review": {
+        "status": "upstream-closed",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 76,
+      "state": "OPEN",
+      "title": "[Map issue] Lack of roads",
+      "updatedAt": "2026-10-21T09:49:18Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/76",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 77,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] obstacles on the roads",
+      "updatedAt": "2026-10-21T09:51:33Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/77",
+      "review": {
+        "status": "partial-in-fork-pr-5",
+        "priority": "P1",
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 79,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] Dark Cities/towns",
+      "updatedAt": "2026-10-21T02:42:41Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/79",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 80,
+      "state": "CLOSED",
+      "title": "[Idea / suggestion]  Detect False Buildings",
+      "updatedAt": "2026-10-21T05:48:41Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/80",
+      "review": {
+        "status": "upstream-released",
+        "priority": "P2",
+        "notes": "Maintainer reports a correction in upstream 1.5.4-beta; not fully integrated or independently tested in this fork.",
+        "validation": "Release and closing discussion read on 2026-10-21. Reproduce with 1.5.4 before further work."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 81,
+      "state": "OPEN",
+      "title": "[Bug]",
+      "updatedAt": "2026-10-21T06:00:08Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/81",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 83,
+      "state": "OPEN",
+      "title": "[Idea / suggestion] realictic textures",
+      "updatedAt": "2026-10-21T08:07:39Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/83",
+      "review": {
+        "status": "needs-review",
+        "priority": "P2",
+        "notes": "",
+        "validation": "not assessed"
+      }
+    },
+    {
+      "labels": [],
+      "number": 84,
+      "state": "OPEN",
+      "title": "[Map issue] Double Tunnel issue on highways",
+      "updatedAt": "2026-10-21T08:50:13Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/84",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Two adjacent highway tunnels overlap. The Sables crossing fix protects upper surface roads and does not establish a fix for parallel tunnel overlap.",
+        "validation": "Reproduce the reported Reunion coordinates before changing tunnel-to-tunnel geometry."
+      }
+    },
+    {
+      "labels": [],
+      "number": 85,
+      "state": "OPEN",
+      "title": "[Epic] Netherlands / low-lying countries: water below sea level, lidar DEM depth, river tunnels, lanes, real street furniture",
+      "updatedAt": "2026-10-21T09:57:56Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/85",
+      "review": {
+        "status": "coordination-needed",
+        "priority": "P1",
+        "notes": "Contributor epic contains measured Netherlands water/DEM, lane, furniture and tunnel proposals with local work in progress. Coordinate focused changes rather than duplicating the whole epic.",
+        "validation": "Discussion inspected on 2026-10-21. Sables lake bounds do not establish a solution for the epic or below-sea-level inland-water estimation."
       }
     }
   ]
