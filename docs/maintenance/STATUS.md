@@ -1,8 +1,18 @@
 # Maintenance status
 
-Updated: 2026-10-20. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/BeamNG.Earth).
+Updated: 2026-10-21. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/BeamNG.Earth).
 
 ## Current state
+
+- Branch `codex/sables-road-water-quality` contains the maintenance changes
+  for upper roads over small underpasses and confined lake tiles/physics.
+  The Decathlon crossing is reproduced from real cached data. A frozen local
+  test kit is prepared. On 21 October, the player reported that the updated
+  version works better overall. This is informal gameplay feedback; no measured
+  collision drive, complete site checklist or new public release is claimed.
+  See [the evidence and limits](../research/2026-10-21-sables-underpass-water.md).
+- Upstream has released `1.5.4-beta`. This fork candidate remains based on its
+  existing preview; it does not claim a complete integration of that release.
 
 - `preview` contains the unreleased `1.5.3-europe-preview.2-dev` candidate, merged in
   [fork PR #3](https://github.com/hashk014/BeamNG.Earth/pull/3), alongside the earlier
@@ -35,9 +45,15 @@ Updated: 2026-10-20. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 Five requests have implemented corrections/features and ten have partial implementations,
 including the continuity subset of the sidewalk reports. The refreshed inventory contains
-64 issues, 52 open upstream; the four new open reports #65-#68 still await assessment.
+77 issues, 54 open upstream after the 21 October refresh. Closed upstream reports
+remain distinct from fork implementation and gameplay validation.
 
 ## Next priorities
+
+- Drive **TEST 5 - Decathlon - passage inferieur** in both directions, then check
+  the lower passage, portal faces and road-edge collision. Check **TEST 6 - Tanchet -
+  lac et mer** for bank spill, absolute lake level and marine rendering. The desktop
+  test shortcut now selects `runtime-sables-20261021`; earlier runtimes are retained.
 
 - A frozen local in-game test kit, desktop shortcut and cached test locations are
   ready on the development PC. See [the French handoff](INGAME_READY.md).
@@ -53,7 +69,11 @@ including the continuity subset of the sidewalk reports. The refreshed inventory
 
 ## Verification and release boundaries
 
-- Current local checks: 51 focused Python tests, 243 generator tests and 4,703 checks
+- The 21 October candidate passes 286 generator tests, 31 native equivalence tests,
+  and 4,707 Lua assertions in 44 files. Its Python fallback passes 94 tests with
+  three native-only skips. The real candidate server handshake passes in isolation.
+  These results do not establish BeamNG rendering, driving or FPS gains.
+- Previous 20 October checks: 51 focused Python tests, 243 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
   [The validated urban source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39480170941)

@@ -1,5 +1,12 @@
 # Coastal water and low dry land
 
+21 October follow-up: inland tiles now include edge samples and omit unsafe
+16 m squares instead of accepting flooding at the refinement limit. Visible
+and hidden lake volumes are confined to their approved squares. The real
+Tanchet polygon/DEM diagnostic shows no flooded dry samples in the candidate
+plan; this does not validate the absolute lake level or marine rendering.
+See [the Sables evidence](../research/2026-10-21-sables-underpass-water.md).
+
 Issues: [#8](https://github.com/TecnaGamer/BeamNG.Earth/issues/8),
 [#53](https://github.com/TecnaGamer/BeamNG.Earth/issues/53).
 

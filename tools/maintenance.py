@@ -14,7 +14,8 @@ SUITES = {
               "test_coastal_water", "test_area_prefetch"],
     "generators": ["test_heightmap", "test_roads", "test_surface", "test_roadmesh", "test_buildings",
                    "test_navgraph", "test_vegetation", "test_seatiles", "test_seacarve", "test_world_fidelity",
-                   "test_european_traffic", "test_urban_frontages"],
+                   "test_european_traffic", "test_urban_frontages", "test_grading", "test_tunnels",
+                   "test_fixed_road_profiles", "test_sables_crossings", "test_inland_water_bounds"],
     "server": ["test_server", "test_restart", "test_protocol_agreement"],
 }
 

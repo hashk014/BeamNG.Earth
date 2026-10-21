@@ -1,5 +1,31 @@
 # Test en jeu prêt sur ce PC
 
+## Mise à jour du 21 octobre 2026
+
+Le même raccourci **Tester BeamNG Earth** lance maintenant la copie figée
+`dist/ingame-ready/runtime-sables-20261021`. Le module d'eau installé a aussi
+été mis à jour. Le jeu n'a pas été lancé pendant cette préparation.
+L'ancienne copie `runtime-urban` est conservée ; sauvegarde du module d'eau,
+des favoris et du manifeste dans `backups/sables-20261021-120602`.
+
+- **TEST 5 - Decathlon - passage inferieur** : parcourir les deux chaussées
+  au-dessus du petit tunnel, puis examiner son entrée et la voie inférieure.
+  Vérifier l'absence de trou, marche, toit ou collision qui bloque la chaussée.
+- **TEST 6 - Tanchet - lac et mer** : longer les berges et le bord de mer.
+  Vérifier le niveau visible, les débordements et l'absence d'eau physique
+  invisible sur terrain sec. Le niveau réel du lac et le rendu marin restent
+  à confirmer ; aucune correction universelle de la mer n'est annoncée.
+
+Les autres favoris et réglages ont été conservés. Les tests hors jeu et le
+handshake serveur passent. Les mesures et limites sont dans le
+[rapport de cette passe](../research/2026-10-21-sables-underpass-water.md).
+
+Retour du joueur le 21 octobre : la version mise à jour fonctionne globalement
+mieux. Ce retour ne constitue pas encore une validation mesurée des collisions,
+du niveau du lac ou du rendu de la mer.
+
+## Préparation précédente
+
 Préparé le 20 octobre 2026 pour `1.5.3-europe-preview.2-dev`.
 Le raccourci **Tester BeamNG Earth** est sur le Bureau. Il ouvre
 `TESTER_EN_JEU.cmd`, puis une copie figée du serveur et du mod dans

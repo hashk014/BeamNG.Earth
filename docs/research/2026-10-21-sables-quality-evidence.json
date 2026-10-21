@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-21",
+  "baseCommit": "c9059347b3fa358b67fa1d631e0d5e890b29765a",
+  "source": "Overture Maps 2026-09-23.1 and selected cached Mapterhorn tiles, copied to an isolated offline cache",
+  "measurements": {
+    "crossings": [
+      {
+        "tunnel": "907bce43-1f96-427d-b40c-af586d3b3845",
+        "crossingRoad": "a734649f-8f19-483a-b7dc-16e9590e3e1c",
+        "roadClass": "primary",
+        "lat": 46.51416974496999,
+        "lon": -1.7845223350169437,
+        "beforeCenter": 13.204690193790134,
+        "afterCenter": 16.04136906895997,
+        "beforeMaxGrade": 0.5562625910369103,
+        "afterMaxGrade": 0.5562625910369103,
+        "maxChange": 2.836678875169836
+      },
+      {
+        "tunnel": "907bce43-1f96-427d-b40c-af586d3b3845",
+        "crossingRoad": "e2758843-740d-434b-999d-39d2fd3bad1b",
+        "roadClass": "primary",
+        "lat": 46.514257552230376,
+        "lon": -1.7845266640829591,
+        "beforeCenter": 13.156391730393631,
+        "afterCenter": 16.095647251683328,
+        "beforeMaxGrade": 0.5162769751939393,
+        "afterMaxGrade": 0.5144983367664242,
+        "maxChange": 2.939255521289697
+      }
+    ],
+    "lake": {
+      "tiles": 32,
+      "samplesPerTile": 256,
+      "outsideLakeFloodedSamples": 0,
+      "maxFloodDepth": 0.0,
+      "seaLevelGroundCoveredSamples": 0,
+      "lakeDemLevel": 8.4
+    }
+  },
+  "lakeBefore": {
+    "tiles": 20,
+    "samplesPerTile": 256,
+    "outsideLakeFloodedSamples": 2,
+    "maxFloodDepth": 1.1989021029789004,
+    "seaLevelGroundCoveredSamples": 0,
+    "lakeDemLevel": 8.4
+  },
+  "finalStructure": {
+    "parts": 1,
+    "upperRoadHoleSamples": 0,
+    "maxUpperRoadRaise": 0.0,
+    "minUpperRoadChange": 0.0,
+    "tubeHeights": {
+      "907bce43-1f96-427d-b40c-af586d3b3845.0#0": 3.6
+    },
+    "limits": "Offline generated heights and hole mask, not BeamNG rendering or driving."
+  },
+  "generators": {
+    "suite": "generators",
+    "time": "2026-10-21T10:06:30.991885+00:00",
+    "tests": 286,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "scope": "offline Python tests; no game or FPS validation"
+  },
+  "fallback": {
+    "discovered": 97,
+    "passed": 94,
+    "nativeOnlySkipped": 3
+  },
+  "native": {
+    "passed": 31
+  },
+  "lua": {
+    "files": 44,
+    "assertions": 4707
+  },
+  "runtime": {
+    "startupSeconds": 2.047,
+    "helloProtocol": 4,
+    "helloFormat": 4,
+    "nativeTests": 0,
+    "manifestFiles": 165,
+    "evidence": "Real server process and protocol handshake; no BeamNG gameplay."
+  },
+  "limits": [
+    "No automated BeamNG gameplay or measured render/physical-drive validation; player reports an overall improvement.",
+    "Lake absolute level and sea appearance remain unvalidated.",
+    "Profile slope improvement is measured only within 24 m of each crossing; nearby transitions remain.",
+    "No CI run or public release for this local candidate."
+  ],
+  "playerFeedback": {
+    "date": "2026-10-21",
+    "summary": "Player reports that the prepared version works better overall.",
+    "scope": "Informal gameplay feedback; no measured collision drive, location checklist or render capture supplied."
+  }
+}
