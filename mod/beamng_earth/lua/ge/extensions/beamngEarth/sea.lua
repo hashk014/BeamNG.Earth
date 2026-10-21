@@ -171,12 +171,13 @@ local function setGridSize(o, size)
   o:setField('gridSize', 0, tostring(math.max(1, math.floor(math.min(100, size)))))
 end
 
--- Coastal refinement tiles must keep their physics volume inside the approved water square.
--- A player-centred 256 m box would otherwise flood adjacent dry polders again.
+-- Coastal and inland tiles keep their physics volume inside the approved water square.
+-- A player-centred 256 m box would otherwise flood polders or the land below a lake's bank.
 function M.physicsBox(t, p)
-  local size = t.coastal and math.min(M.PHYS_SIZE, t.size) or M.PHYS_SIZE
+  local bounded = t.coastal or t.inland
+  local size = bounded and math.min(M.PHYS_SIZE, t.size) or M.PHYS_SIZE
   local x, y = p.x, p.y
-  if t.coastal then
+  if bounded then
     local margin = (t.size - size) / 2
     x = math.max(t.x - margin, math.min(t.x + margin, x))
     y = math.max(t.y - margin, math.min(t.y + margin, y))
@@ -216,7 +217,7 @@ local function create(key, t)
   end
   o:setPosition(vec3(t.x, t.y, t.z))
   -- a little larger than its square: tilted neighbours meet without a hairline gap (2026-10-13)
-  local overlap = t.coastal and 0 or M.TILE_OVERLAP_M
+  local overlap = (t.coastal or t.inland) and 0 or M.TILE_OVERLAP_M
   o:setScale(vec3(t.size + overlap, t.size + overlap, M.DEPTH_M))
   -- after the scale: the engine warns ("gridSize cannot be > scale", meaning this one) when it exceeds the scale, 100 m
   -- before setScale (an 8 km tile's 128 m, 2026-10-17)
@@ -238,7 +239,8 @@ function M.onMessage(msg)
   for _, r in ipairs(type(msg.tiles) == 'table' and msg.tiles or {}) do
     if type(r) == 'table' and #r >= 7 then
       tiles[tostring(r[1])] = { x = tonumber(r[2]), y = tonumber(r[3]), z = tonumber(r[4]), size = tonumber(r[5]),
-        nx = tonumber(r[6]), ny = tonumber(r[7]), coastal = tostring(r[1]):sub(1, 1) == 'C' }
+        nx = tonumber(r[6]), ny = tonumber(r[7]), coastal = tostring(r[1]):sub(1, 1) == 'C',
+        inland = tostring(r[1]):sub(1, 1) == 'L' }
     end
   end
   local rivers = {}

@@ -171,5 +171,19 @@ sea.update(6, coastPlayer)
 T.check(physBlock() == nil, 'dry land beside the coastal tile has no water physics')
 local box = sea.physicsBox({ x = 0, y = 0, z = 0, size = 512, coastal = true }, { x = 250, y = -250 })
 T.check(box.x + box.size / 2 <= 256 and box.y - box.size / 2 >= -256, 'larger coastal physics stays inside its water tile')
+-- A lake above a nearby road or beach cannot extend its hidden water volume past its bank.
+sea.onMessage({ type = 'sea', anchorId = 7, tiles = { tile('L16_0_0_84', 8, 8, 8.4, 16) } })
+local lakePlayer = { x = 15, y = 2, z = 7, vx = 0, vy = 0, vz = 0 }
+sea.update(7, lakePlayer); sea.update(7, lakePlayer)
+local boundedLake, lp = blocks()[sea.PREFIX .. 'L16_0_0_84'], physBlock()
+T.check(boundedLake.scale.x == 16 and boundedLake.scale.y == 16, 'lake tile has no overlap across its bank')
+T.check(lp.scale.x == 16 and lp.pos.x == 8 and lp.pos.y == 8, 'lake physics stays in its approved tile')
+lakePlayer.x = -1
+sea.update(7, lakePlayer)
+T.check(physBlock() == nil, 'land beside an elevated lake has no lake physics')
+local tiltedLake = sea.physicsBox({ x = 0, y = 0, z = 8.4, size = 512, inland = true, nx = 0.02, ny = 0 },
+  { x = 250, y = -250 })
+T.check(tiltedLake.x == 128 and tiltedLake.y == -128 and math.abs(tiltedLake.z - 5.84) < 1e-9,
+  'large inland physics is confined and follows the water plane')
 sea.clear()
 T.done('test_sea')
