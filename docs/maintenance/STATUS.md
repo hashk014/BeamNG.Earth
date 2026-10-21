@@ -11,6 +11,7 @@ Updated: 2026-10-21. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
   version works better overall. This is informal gameplay feedback; no measured
   collision drive, complete site checklist or new public release is claimed.
   See [the evidence and limits](../research/2026-10-21-sables-underpass-water.md).
+  The change set is tracked in [fork PR #5](https://github.com/hashk014/BeamNG.Earth/pull/5).
 - Upstream has released `1.5.4-beta`. This fork candidate remains based on its
   existing preview; it does not claim a complete integration of that release.
 
@@ -73,6 +74,9 @@ remain distinct from fork implementation and gameplay validation.
   and 4,707 Lua assertions in 44 files. Its Python fallback passes 94 tests with
   three native-only skips. The real candidate server handshake passes in isolation.
   These results do not establish BeamNG rendering, driving or FPS gains.
+- The road/water implementation at `e35a75d` passes the full maintenance workflow
+  on Windows and Linux: [validated run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39584284913).
+  This includes quick/generator suites, all Lua stubs and both map-math suites.
 - Previous 20 October checks: 51 focused Python tests, 243 generator tests and 4,703 checks
   across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
 - The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.

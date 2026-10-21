@@ -114,7 +114,11 @@ profile fixtures used by the published regression tests are committed.
   lake volumes, dry neighbouring ground and tilted inland-water planes.
 - A real server process from the frozen candidate answers with protocol 4 /
   format 4, using temporary user and cache directories.
-- `git diff --check` passes. CI has not run for this local candidate.
+- `git diff --check` passes. The implementation at `e35a75d` passes
+  [Windows/Linux CI](https://github.com/hashk014/BeamNG.Earth/actions/runs/39584284913),
+  including quick/generator suites, all Lua stubs and both map-math suites.
+
+Publication is tracked in [fork PR #5](https://github.com/hashk014/BeamNG.Earth/pull/5).
 
 The previous extended Windows server timing failures in
 [the session-file report](2026-10-20-session-file-recovery.md) were not rerun or

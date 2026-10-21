@@ -89,11 +89,22 @@
     "No automated BeamNG gameplay or measured render/physical-drive validation; player reports an overall improvement.",
     "Lake absolute level and sea appearance remain unvalidated.",
     "Profile slope improvement is measured only within 24 m of each crossing; nearby transitions remain.",
-    "No CI run or public release for this local candidate."
+    "Windows/Linux maintenance CI passes for the recorded implementation commit. No new public executable release."
   ],
   "playerFeedback": {
     "date": "2026-10-21",
     "summary": "Player reports that the prepared version works better overall.",
     "scope": "Informal gameplay feedback; no measured collision drive, location checklist or render capture supplied."
-  }
+  },
+  "ci": {
+    "url": "https://github.com/hashk014/BeamNG.Earth/actions/runs/39584284913",
+    "headCommit": "e35a75d7ad87c6b639f2d5fb3f7a2bd99f53ab28",
+    "platforms": [
+      "ubuntu-24.04",
+      "windows-2025"
+    ],
+    "conclusion": "success",
+    "scope": "Quick and generator tests, all Lua engine-stub tests and both map-math suites; no BeamNG gameplay."
+  },
+  "pullRequest": "https://github.com/hashk014/BeamNG.Earth/pull/5"
 }

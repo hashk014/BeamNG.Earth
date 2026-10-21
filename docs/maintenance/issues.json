@@ -293,10 +293,10 @@
       "updatedAt": "2026-10-18T22:53:01Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/19",
       "review": {
-        "status": "partial-local-candidate",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented locally. General bridge geometry and the original report remain separate.",
-        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 generator tests pass. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -388,10 +388,10 @@
       "updatedAt": "2026-10-20T11:40:51Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/25",
       "review": {
-        "status": "partial-local-candidate",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented locally. General bridge geometry and the original report remain separate.",
-        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 generator tests pass. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -736,10 +736,10 @@
       "updatedAt": "2026-10-20T10:07:15Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/51",
       "review": {
-        "status": "partial-local-candidate",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented locally. General bridge geometry and the original report remain separate.",
-        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 generator tests pass. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -930,10 +930,10 @@
       "updatedAt": "2026-10-20T18:04:33Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/65",
       "review": {
-        "status": "partial-local-candidate",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented locally. General bridge geometry and the original report remain separate.",
-        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 generator tests pass. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
@@ -1080,10 +1080,10 @@
       "updatedAt": "2026-10-21T09:51:33Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/77",
       "review": {
-        "status": "partial-local-candidate",
+        "status": "partial-in-fork-pr-5",
         "priority": "P1",
-        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented locally. General bridge geometry and the original report remain separate.",
-        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 generator tests pass. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
+        "notes": "Mapped road-over-underpass grading, fixed vertical profiles and protection from portal cuts are implemented in fork PR #5. General bridge geometry and the original report remain separate.",
+        "validation": "Decathlon source reproduction: both upper carriageways preserved, lower tube retained, zero sampled upper-road holes. 286 local generator tests pass; Windows/Linux maintenance CI passes at e35a75d. Player reports overall improvement, without a completed site checklist. Original issue location and physical driving are not validated; see 2026-10-21-sables-underpass-water.md."
       }
     },
     {
