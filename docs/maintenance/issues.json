@@ -1,6 +1,6 @@
 {
   "repository": "TecnaGamer/BeamNG.Earth",
-  "refreshedAt": "2026-10-23T17:11:29.664064+00:00",
+  "refreshedAt": "2026-10-23T18:59:22.653924+00:00",
   "issues": [
     {
       "labels": [],
@@ -27,7 +27,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -60,7 +60,7 @@
       "review": {
         "status": "partial-integrated-upstream",
         "priority": "P1",
-        "notes": "Upstream 1.6.0 adds experimental BeamMP sessions, shared origins, peer compute and remote-car handling.",
+        "notes": "Upstream 1.6.0 adds experimental BeamMP sessions, shared origins, peer compute and remote-car handling. The b15991e dev snapshot scopes holds to the local car, bounds remote-car restoration and avoids full damage state for undamaged cars.",
         "validation": "Peer wire/session and Lua tests cover offline behavior. Two-player internet gameplay is not validated in this fork."
       }
     },
@@ -377,7 +377,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Retain short sidewalk links and join coincident/small gaps with compatible heights; add bounded concrete frontages. Sidewalk placement and all terrain profiles are not solved.",
-        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction."
+        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -453,7 +453,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Retain short sidewalk links and join coincident/small gaps with compatible heights; add bounded concrete frontages. Sidewalk placement and all terrain profiles are not solved.",
-        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -693,7 +693,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -873,7 +873,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -2398,10 +2398,10 @@
       "updatedAt": "2026-10-23T15:35:19Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/181",
       "review": {
-        "status": "needs-profile",
+        "status": "partial-integrated-upstream-dev",
         "priority": "P1",
-        "notes": "New 1.6 report says roads/buildings load much slower than 1.5.4, with no profiler numbers.",
-        "validation": "Body read 23 October. Requires same-machine, same-location frame and server traces; offline tests cannot establish FPS or loading gains."
+        "notes": "Experimental source integrates upstream dev b15991e: priority terrain/photo work, earlier block following, deferred photos above 70 m/s, shared road plans and frame-budgeted Lua work. Fork tunnel-crossing protection survives shared-plan reloads.",
+        "validation": "Offline regression results and remaining drive checks are in 2026-10-23-streaming-stability.md. No FPS gain or fix at the report location is established. Compare cold/warm runs with 1.6.0 on the same hardware; the 70 m/s photo threshold does not cover every reported speed."
       }
     },
     {
@@ -2454,8 +2454,8 @@
       ],
       "number": 185,
       "state": "OPEN",
-      "title": "[Bug]",
-      "updatedAt": "2026-10-23T17:02:54Z",
+      "title": "[Bug]Problems with roads, trees and more ",
+      "updatedAt": "2026-10-23T17:15:25Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/185",
       "review": {
         "priority": "P1",
@@ -2470,14 +2470,58 @@
       ],
       "number": 186,
       "state": "OPEN",
-      "title": "[Idea / suggestion]",
-      "updatedAt": "2026-10-23T17:09:52Z",
+      "title": "[Idea / suggestion]Adding new Infostructure",
+      "updatedAt": "2026-10-23T17:19:59Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/186",
       "review": {
         "status": "planned-content",
         "priority": "P2",
         "notes": "Requests country-appropriate fences, bus stops, shops, gas stations and signs. Existing roadmap covers related content; no implementation in this batch.",
         "validation": "Body read 23 October. Requires source data and focused content work after release stability."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 189,
+      "state": "OPEN",
+      "title": "[Bug] нету ничего кроме поля",
+      "updatedAt": "2026-10-23T18:14:07Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/189",
+      "review": {
+        "status": "needs-reproduction",
+        "priority": "P1",
+        "notes": "Empty-world report needs launcher/server/game logs and confirmation of data download and mod activation.",
+        "validation": "Not reproduced; no fix attributed to this streaming integration."
+      }
+    },
+    {
+      "labels": [],
+      "number": 190,
+      "state": "OPEN",
+      "title": "[Performance issue] 1.6.0 - freezing when driving",
+      "updatedAt": "2026-10-23T18:47:35Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/190",
+      "review": {
+        "status": "partial-integrated-upstream-dev",
+        "priority": "P1",
+        "notes": "Experimental source integrates upstream dev b15991e: priority terrain/photo work, earlier block following, deferred photos above 70 m/s, shared road plans and frame-budgeted Lua work. Fork tunnel-crossing protection survives shared-plan reloads.",
+        "validation": "Offline regression results and remaining drive checks are in 2026-10-23-streaming-stability.md. No FPS gain or fix at the report location is established. Compare cold/warm runs with 1.6.0 on the same hardware; the 70 m/s photo threshold does not cover every reported speed."
+      }
+    },
+    {
+      "labels": [],
+      "number": 191,
+      "state": "OPEN",
+      "title": "[Performance Issue] (New as of 1.6.0) Frequent Frame Drop while driving at high speed",
+      "updatedAt": "2026-10-23T18:28:25Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/191",
+      "review": {
+        "status": "partial-integrated-upstream-dev",
+        "priority": "P1",
+        "notes": "Experimental source integrates upstream dev b15991e: priority terrain/photo work, earlier block following, deferred photos above 70 m/s, shared road plans and frame-budgeted Lua work. Fork tunnel-crossing protection survives shared-plan reloads.",
+        "validation": "Offline regression results and remaining drive checks are in 2026-10-23-streaming-stability.md. No FPS gain or fix at the report location is established. Compare cold/warm runs with 1.6.0 on the same hardware; the 70 m/s photo threshold does not cover every reported speed."
       }
     }
   ]

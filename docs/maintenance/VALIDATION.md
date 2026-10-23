@@ -1,5 +1,26 @@
 # Validation ledger
 
+## Experimental streaming integration (2026-10-23)
+
+Upstream development snapshot: `b15991e`, after the 1.6.0 release. The fork adapts
+its shared grading cache to retain protected upper-road profiles across workers.
+The [integration report](../research/2026-10-23-streaming-stability.md) records the
+scope, commands, corrected Windows test-cleanup failure and gameplay checks.
+
+Local Windows suites: quick **62 passed**, generators **361 passed**, integration
+**280 passed / 2 skipped**, streaming **96 passed / 1 skipped**. These four suites
+total **799 passing checks and 3 skips**. The streaming suite is now included in
+the Windows/Linux maintenance workflow, using synthetic imagery sources only.
+Native version 67 loads successfully; Python compilation passes. These checks
+do not establish an FPS gain, two-player reliability or original-issue resolution.
+
+The extended server suite passes 84 checks and skips the external-LuaJIT check;
+its protocol checks overlap integration. All 55 embedded-LuaJIT test files and
+both JavaScript map-math suites pass. Source/BeamMP ZIP integrity, extracted native
+loading and launcher help pass with existing Python dependencies. Full results
+are in [the validation record](../research/2026-10-23-streaming-validation.json);
+cross-platform runs are attached to [fork PR #8](https://github.com/hashk014/BeamNG.Earth/pull/8/checks).
+
 ## Road rendering choice and worker consistency (2026-10-23)
 
 The patch keeps terrain roads as the default, adds a saved startup choice, and

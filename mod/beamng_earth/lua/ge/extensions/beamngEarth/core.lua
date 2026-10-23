@@ -953,14 +953,10 @@ M.dropHoldState = function() return dropHold end      -- (tests, tools)
 -- The game's own pause (simTimeAuthority, what the pause key does): holding the car by setting its position every frame
 -- strained it (its damage rose 0 -> 93k in 7 s of holding, the user 2026-10-18: "the hold seems to damage my car",
 -- "can you use the actual pause system"). Resumed only if the hold paused it; the player resuming it ends the hold.
-local function simPause(on)
-  local sta = rawget(_G, 'simTimeAuthority')
-  if sta and sta.pause then sta.pause(on) end
-end
-local function simPaused()
-  local sta = rawget(_G, 'simTimeAuthority')
-  return sta and sta.getPause and sta.getPause() or false
-end
+-- (in a BeamMP session: our own car held, not every car on the screen: simhold.lua)
+local simhold = require('beamngEarth/simhold')
+local function simPause(on) simhold.pause(on) end
+local function simPaused() return simhold.paused() end
 
 local function setCarAt(veh, x, y, z)
   -- the cluster moves by the reference node: set it where it is relative to the vehicle's position, at the target
@@ -1029,6 +1025,7 @@ local function updateDropHold(dt)
   local act, z = drophold.step(h, st.clock, box, serial, gz, building, near)
   if act == nil then return end
   if act == 'place' then
+    if simhold.carHeld() then simPause(false) end     -- (BeamMP: the car active again before it is placed)
     setCarAt(veh, h.x, h.y, z)
     log('I', 'beamngEarth', string.format('drop hold: set on the ground at %.1f', z))
   elseif act == 'timeout' then
@@ -1588,14 +1585,16 @@ local function onUpdate(dtReal, dtSim)
     if not fociBroken then
       local ok, err = pcall(collisionfoci.update, dtReal, { roads.setFoci, trees.setFoci }, farcars.foci)
       if not ok then fociBroken = true; log('E', 'beamngEarth', 'collision foci: ' .. tostring(err)) end
+      t = mark('foci', t)
       ok, err = pcall(terrainpatch.update, dtReal, st.anchorId, collisionfoci.last, st.player, pb, net.send)
       if not ok then fociBroken = true; log('E', 'beamngEarth', 'terrain patches: ' .. tostring(err)) end
       ok, err = pcall(farcars.update, dtReal)
       if not ok then fociBroken = true; log('E', 'beamngEarth', 'far cars: ' .. tostring(err)) end
+      t = mark('farcars', t)
     end
-    parking.update(st.anchorId, not (st.player and st.player.camera) and st.player or nil, pb)   -- (no car: none parked)
+    parking.update(st.anchorId, not (st.player and st.player.camera) and st.player or nil, pb, gov)  -- (no car: none parked)
     t = mark('parking', t)
-    navgraph.update(st.anchorId, pb)
+    navgraph.update(st.anchorId, pb, gov)
     t = mark('navgraph', t)
     updateSky(dtReal)
     updateGuard()
