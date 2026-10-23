@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 import install
-from server import storage
+from server import roadconfig, storage
 
 ROOT = install.ROOT
 EARTHD = os.path.join(ROOT, "server", "earthd.py")
@@ -47,13 +47,16 @@ def has_flag(help_text, flag):
 def main():
     ap = argparse.ArgumentParser(description="Start the BeamNG.Earth world server with the recommended options.")
     storage.add_arguments(ap)
+    roadconfig.add_arguments(ap)
     ap.add_argument("--update-mod", action="store_true", help="(the default now) copy the mod into the game when it differs")
     ap.add_argument("--keep-mod", action="store_true", help="leave the game's copy of the mod as it is")
     ap.add_argument("--user-dir", help="BeamNG.drive user folder (default: the one install.py found)")
     ap.add_argument("--yes", "-y", action="store_true", help="with --update-mod: replace the installed mod without asking")
     ap.add_argument("extra", nargs=argparse.REMAINDER, help="after --: more options for server/earthd.py")
     args = ap.parse_args()
-    if storage.configure(args, ap):
+    storage_done = storage.configure(args, ap)
+    rendering_done = roadconfig.configure(args, ap)
+    if storage_done or rendering_done:
         return
 
     cfg = install.load_config()
@@ -95,6 +98,7 @@ def main():
     install.say(f"BeamNG.Earth {install.version()}: starting the world server")
     install.say(f"  BeamNG.drive user folder: {user_dir}")
     install.say(f"  Download cache: {storage.cache_dir()}")
+    install.say(f"  Road surfaces: {roadconfig.mode()} (change with --road-rendering terrain|mesh; restart required)")
     if skipped:
         install.say(f"  (this server version has no {', '.join(skipped)}; left out)")
     install.say("  Leave this window open while you play; close it (or press Ctrl+C) to stop the server.")

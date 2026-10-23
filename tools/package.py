@@ -24,11 +24,12 @@ FILES = ["install.py", "start.py", "launcher.py", "run_server.bat", "run_server.
          "docs/images/road-comparison.png", "docs/images/courtyard-comparison.png",
          "docs/research/world-generation-validation.json", "docs/research/fork-comparison.json",
          "docs/ARCHITECTURE.md", "docs/research/2026-10-23-upstream-160-integration.md",
-         "docs/research/2026-10-23-upstream-160-validation.json"]
+         "docs/research/2026-10-23-upstream-160-validation.json",
+         "docs/research/2026-10-23-road-rendering-validation.json"]
 TREES = ["mod/beamng_earth", "server"]
 FILES += ["docs/maintenance/" + name for name in
           ("STATUS.md", "ISSUES.md", "issues.json", "VALIDATION.md", "STORAGE.md", "PREFETCH.md", "WATER.md",
-           "INGAME_READY.md")]
+           "INGAME_READY.md", "PLAN_PRODUCTION.md", "ROAD_RENDERING.md")]
 TOOLS = ["tools/reports.py", "tools/render_comparison.py", "tools/prefetch.py"]
 SKIP_DIRS = {"__pycache__", "tests", ".git", "backups", "probes", "research", ".venv", "dist"}
 SKIP_EXT = {".pyc", ".pyo", ".log", ".swp"}

@@ -4,6 +4,15 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Current state
 
+- Source now offers a [persistent road-surface choice](ROAD_RENDERING.md) through
+  both launchers. Terrain remains the default; mesh selects the existing legacy
+  pipeline. Local and remote workers receive the selected mode, and shared jobs
+  reject incompatible modes. No game appearance fix is claimed for #179.
+- The compute-helper consistency fix is proposed separately in
+  [upstream PR #187](https://github.com/TecnaGamer/BeamNG.Earth/pull/187).
+- The [production delivery plan](PLAN_PRODUCTION.md) defines proposed release lots,
+  deliverables, game checks and publication gates. It is planning documentation;
+  it does not mark any additional fix implemented, tested in-game or released.
 - The `1.6.0-europe-preview.2-dev` source candidate integrates the complete upstream
   release **v1.6.0-beta**, commit `b4c478d68795e441eef2ba9fb5981e74c7b11f49`.
   Upstream `main` at refresh was `18f131c`; its two later commits only change
@@ -25,7 +34,7 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Issue review
 
-The 23 October snapshot contains **159 issues, 129 open upstream**. Metadata for
+The refreshed 23 October snapshot contains **164 issues, 134 open upstream**. Metadata for
 all issues is refreshed; existing assessments are retained, with focused reviews
 of release-related changes and the newest actionable reports. See [ISSUES.md](ISSUES.md).
 An upstream issue being open or closed is independent of fork validation.
@@ -37,13 +46,27 @@ Priority follow-ups from the new 1.6 reports:
 2. [#180](https://github.com/TecnaGamer/BeamNG.Earth/issues/180): autodrive failure.
    The issue body has no location; attached diagnostics have not been analyzed.
 3. [#179](https://github.com/TecnaGamer/BeamNG.Earth/issues/179): blurry/bright small
-   roads in Taipei. Needs identical camera/settings comparison with 1.5.5.
+   roads in Taipei. A saved terrain/mesh choice is implemented in source; identical
+   camera/settings comparison with 1.5.5 and actual driving still remain.
 4. [#171](https://github.com/TecnaGamer/BeamNG.Earth/issues/171): water flooding
    Ingles Street, Melbourne. Existing lake/coast tests do not establish a fix there.
+5. [#182](https://github.com/TecnaGamer/BeamNG.Earth/issues/182) and
+   [#183](https://github.com/TecnaGamer/BeamNG.Earth/issues/183): sharp underpass ramps,
+   including precise Brazilian locations. Evaluate upstream PR #177 before duplicating it.
+6. [#185](https://github.com/TecnaGamer/BeamNG.Earth/issues/185): multiple road/object
+   obstructions on the MKAD. Exact affected segments still need to be identified.
 
 ## Validation and limits
 
-- Local Windows: **55 quick tests** and **361 generator tests** pass with no skips.
+- Road-rendering source patch: **62 quick tests**, **361 generator tests** and
+  **275 integration tests** pass on Windows; one additional CLI-LuaJIT check skips.
+  All **54 Lua files**, both map-math suites and compilation pass. See
+  [the validation ledger](VALIDATION.md) for exact commands and historical results.
+- The focused upstream contribution passes [Windows/Linux worker CI](https://github.com/hashk014/BeamNG.Earth/actions/runs/39993299377).
+- Its [upstream PR checks also pass](https://github.com/TecnaGamer/BeamNG.Earth/actions/runs/39993356422).
+  The local source ZIP passes extraction, launcher preference and server-help
+  checks in isolated folders; no new executable has been published.
+- The following broader runtime totals describe the earlier 1.6 integration:
 - LuaJIT engine stubs: **54 files, 4,975 assertions** pass. The scoping test now
   walks bytecode and nested prototypes without Unix `find` or a separate luajit executable.
 - Both JavaScript map-math suites pass. Python compilation passes.

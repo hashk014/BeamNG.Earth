@@ -32,6 +32,7 @@ import numpy as np
 import junctions
 import mapcells
 import mapgeom
+import roadconfig
 import staging
 
 log = logging.getLogger("earthd.roads")
@@ -170,7 +171,7 @@ LANE_M = 3.3            # m per lane when counting the lanes a carriageway holds
 # carriageways painted into the drawn ground instead of meshes (surface.photo_roads; the user, 2026-10-22: "I dont love
 # that we are applying a floating road texture over the normal terrain"; it also ended the white diamonds on the
 # Stelvio's hairpins, GitHub #135). BNGE_ROADS_IN_GROUND=0: the carriageway meshes as before
-ROADS_IN_GROUND = os.environ.get("BNGE_ROADS_IN_GROUND", "1") != "0"
+ROADS_IN_GROUND = roadconfig.mode() == "terrain"
 # m per driving lane by class when OpenStreetMap gives the lane count (osmtags.py; typical design widths)
 LANE_W = {"motorway": 3.6, "trunk": 3.5, "primary": 3.3, "secondary": 3.3, "tertiary": 3.1}
 LANE_W_DEFAULT = 3.0
