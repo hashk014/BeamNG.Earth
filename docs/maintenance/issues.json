@@ -1,6 +1,6 @@
 {
   "repository": "TecnaGamer/BeamNG.Earth",
-  "refreshedAt": "2026-10-23T16:32:13.750783+00:00",
+  "refreshedAt": "2026-10-23T16:59:52.299247+00:00",
   "issues": [
     {
       "labels": [],
@@ -2402,6 +2402,66 @@
         "priority": "P1",
         "notes": "New 1.6 report says roads/buildings load much slower than 1.5.4, with no profiler numbers.",
         "validation": "Body read 23 October. Requires same-machine, same-location frame and server traces; offline tests cannot establish FPS or loading gains."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 182,
+      "state": "OPEN",
+      "title": "[Bug] Bridges are still not good",
+      "updatedAt": "2026-10-23T16:38:22Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/182",
+      "review": {
+        "priority": "P1",
+        "status": "needs-reproduction",
+        "notes": "The 1.6 report describes abrupt terrain cuts under bridges on Rodovia Washington Luis; no exact coordinates in the issue body.",
+        "validation": "Reproduce and compare profiles before choosing a patch. Upstream PR #177 proposes smooth underpass dips; assess it before duplicating work. No new implementation in the production plan."
+      }
+    },
+    {
+      "labels": [],
+      "number": 183,
+      "state": "OPEN",
+      "title": "[Map issue] (1.6.0) Access below bridges are too steep.",
+      "updatedAt": "2026-10-23T16:43:49Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/183",
+      "review": {
+        "priority": "P1",
+        "status": "needs-reproduction",
+        "notes": "The 1.6 report supplies Fortaleza and Teresina coordinates for steep underpass ramps and terrain transitions.",
+        "validation": "Use the reported locations for before/after driving and profile checks; upstream PR #177 remains open. The production plan defines acceptance only, not a validated fix."
+      }
+    },
+    {
+      "labels": [],
+      "number": 184,
+      "state": "OPEN",
+      "title": "[Map issue] Roads under construction are rendered as normal roads",
+      "updatedAt": "2026-10-23T16:48:39Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/184",
+      "review": {
+        "priority": "P2",
+        "status": "planned-triage",
+        "notes": "Construction-status handling is a later scoped map-data/navigation work item in the production plan.",
+        "validation": "Confirm source tags and distinguish a planned road, existing road and temporary closure before implementation. No patch or gameplay result claimed."
+      }
+    },
+    {
+      "labels": [
+        "bug"
+      ],
+      "number": 185,
+      "state": "OPEN",
+      "title": "[Bug]",
+      "updatedAt": "2026-10-23T16:54:03Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/185",
+      "review": {
+        "priority": "P1",
+        "status": "needs-reproduction",
+        "notes": "MKAD report combines uneven/impassable roads with floating or in-road trees, buildings, signals and boxes.",
+        "validation": "The issue body names a long road without exact affected coordinates. Locate individual defects and split their causes before implementation; the production plan adds no fix."
       }
     }
   ]

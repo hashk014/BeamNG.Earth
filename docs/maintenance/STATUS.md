@@ -4,6 +4,9 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Current state
 
+- The [production delivery plan](PLAN_PRODUCTION.md) defines proposed release lots,
+  deliverables, game checks and publication gates. It is planning documentation;
+  it does not mark any additional fix implemented, tested in-game or released.
 - The `1.6.0-europe-preview.2-dev` source candidate integrates the complete upstream
   release **v1.6.0-beta**, commit `b4c478d68795e441eef2ba9fb5981e74c7b11f49`.
   Upstream `main` at refresh was `18f131c`; its two later commits only change
@@ -25,7 +28,7 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Issue review
 
-The 23 October snapshot contains **159 issues, 129 open upstream**. Metadata for
+The refreshed 23 October snapshot contains **163 issues, 133 open upstream**. Metadata for
 all issues is refreshed; existing assessments are retained, with focused reviews
 of release-related changes and the newest actionable reports. See [ISSUES.md](ISSUES.md).
 An upstream issue being open or closed is independent of fork validation.
@@ -40,6 +43,11 @@ Priority follow-ups from the new 1.6 reports:
    roads in Taipei. Needs identical camera/settings comparison with 1.5.5.
 4. [#171](https://github.com/TecnaGamer/BeamNG.Earth/issues/171): water flooding
    Ingles Street, Melbourne. Existing lake/coast tests do not establish a fix there.
+5. [#182](https://github.com/TecnaGamer/BeamNG.Earth/issues/182) and
+   [#183](https://github.com/TecnaGamer/BeamNG.Earth/issues/183): sharp underpass ramps,
+   including precise Brazilian locations. Evaluate upstream PR #177 before duplicating it.
+6. [#185](https://github.com/TecnaGamer/BeamNG.Earth/issues/185): multiple road/object
+   obstructions on the MKAD. Exact affected segments still need to be identified.
 
 ## Validation and limits
 
