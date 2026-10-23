@@ -27,6 +27,16 @@ covering peer work, block-worker parity and road generation against upstream
 `main` at `18f131c`. It is proposed as
 [upstream PR #187](https://github.com/TecnaGamer/BeamNG.Earth/pull/187), independently
 of the fork's preference and maintenance documentation.
+The PR's [own upstream Windows/Linux run also passed](https://github.com/TecnaGamer/BeamNG.Earth/actions/runs/39993356422).
+
+The source ZIP built from `7bb6cdc` passed CRC, bounded-path extraction, byte
+agreement for the changed modules/guides, saved mesh selection across both
+extracted launchers, default reset and `launcher.py --server --help`. Checks used
+temporary user/config roots and the existing development Python environment.
+This validates source packaging, not an independently installed EXE. The archive
+and SHA-256 are recorded in `dist/road-rendering-candidate/validation.json`.
+Consolidated local evidence is also tracked in
+[`../research/2026-10-23-road-rendering-validation.json`](../research/2026-10-23-road-rendering-validation.json).
 
 This is source validation. No new public executable, original-location gameplay,
 two-player driving, visual quality, physical collision or FPS improvement is

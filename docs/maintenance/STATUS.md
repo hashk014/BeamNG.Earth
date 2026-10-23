@@ -63,6 +63,9 @@ Priority follow-ups from the new 1.6 reports:
   All **54 Lua files**, both map-math suites and compilation pass. See
   [the validation ledger](VALIDATION.md) for exact commands and historical results.
 - The focused upstream contribution passes [Windows/Linux worker CI](https://github.com/hashk014/BeamNG.Earth/actions/runs/39993299377).
+- Its [upstream PR checks also pass](https://github.com/TecnaGamer/BeamNG.Earth/actions/runs/39993356422).
+  The local source ZIP passes extraction, launcher preference and server-help
+  checks in isolated folders; no new executable has been published.
 - The following broader runtime totals describe the earlier 1.6 integration:
 - LuaJIT engine stubs: **54 files, 4,975 assertions** pass. The scoping test now
   walks bytecode and nested prototypes without Unix `find` or a separate luajit executable.

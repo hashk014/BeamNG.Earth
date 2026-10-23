@@ -1,0 +1,386 @@
+{
+  "sourceCommit": "7bb6cdc87c3f405184cae6f9e9313e21c7716665",
+  "local": {
+    "quick": {
+      "suite": "quick",
+      "time": "2026-10-23T17:11:33.856308+00:00",
+      "tests": 62,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    "generator": {
+      "suite": "generators",
+      "time": "2026-10-23T17:12:07.668547+00:00",
+      "tests": 361,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    "integration": {
+      "suite": "integration",
+      "time": "2026-10-23T17:14:26.595619+00:00",
+      "tests": 276,
+      "failures": [],
+      "errors": [],
+      "skipped": [
+        {
+          "test": "test_protocol_agreement.ConstantsTest.test_default_err_and_exact_level_in_lua",
+          "reason": "luajit not installed"
+        }
+      ],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    "lua": {
+      "scope": "LuaJIT engine-stub tests; no gameplay or FPS validation",
+      "files": [
+        {
+          "file": "test_banner.lua",
+          "ok": true,
+          "checksPassed": 50,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_beammp.lua",
+          "ok": true,
+          "checksPassed": 28,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_beammp_plugin.lua",
+          "ok": true,
+          "checksPassed": 17,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_benchmark.lua",
+          "ok": true,
+          "checksPassed": 50,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_camshift.lua",
+          "ok": true,
+          "checksPassed": 72,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_collisionfoci.lua",
+          "ok": true,
+          "checksPassed": 14,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_core_robustness.lua",
+          "ok": true,
+          "checksPassed": 61,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_core_stubbed.lua",
+          "ok": true,
+          "checksPassed": 266,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_credits.lua",
+          "ok": true,
+          "checksPassed": 69,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_crossover.lua",
+          "ok": true,
+          "checksPassed": 931,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_detail_mode.lua",
+          "ok": true,
+          "checksPassed": 25,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_dev.lua",
+          "ok": true,
+          "checksPassed": 69,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_drive_driver.lua",
+          "ok": true,
+          "checksPassed": 428,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_drophold.lua",
+          "ok": true,
+          "checksPassed": 35,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_edgeguard.lua",
+          "ok": true,
+          "checksPassed": 33,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_farcars.lua",
+          "ok": true,
+          "checksPassed": 29,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_farfield.lua",
+          "ok": true,
+          "checksPassed": 175,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_farfield_spares.lua",
+          "ok": true,
+          "checksPassed": 23,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_follow.lua",
+          "ok": true,
+          "checksPassed": 111,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_framing.lua",
+          "ok": true,
+          "checksPassed": 16,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_geodesy.lua",
+          "ok": true,
+          "checksPassed": 489,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_governor.lua",
+          "ok": true,
+          "checksPassed": 447,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_gps.lua",
+          "ok": true,
+          "checksPassed": 39,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_horizon.lua",
+          "ok": true,
+          "checksPassed": 29,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_hudapps.lua",
+          "ok": true,
+          "checksPassed": 26,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_imagery.lua",
+          "ok": true,
+          "checksPassed": 73,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_issuefmt.lua",
+          "ok": true,
+          "checksPassed": 40,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_keybinds.lua",
+          "ok": true,
+          "checksPassed": 3,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_lattice.lua",
+          "ok": true,
+          "checksPassed": 51,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_m4_probes.lua",
+          "ok": true,
+          "checksPassed": 36,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_mpanchor.lua",
+          "ok": true,
+          "checksPassed": 12,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_mpsession.lua",
+          "ok": true,
+          "checksPassed": 28,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_navgraph.lua",
+          "ok": true,
+          "checksPassed": 29,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_parking.lua",
+          "ok": true,
+          "checksPassed": 20,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_perfmon.lua",
+          "ok": true,
+          "checksPassed": 7,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_places.lua",
+          "ok": true,
+          "checksPassed": 152,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_postfx.lua",
+          "ok": true,
+          "checksPassed": 3,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_rebase.lua",
+          "ok": true,
+          "checksPassed": 33,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_recouple.lua",
+          "ok": true,
+          "checksPassed": 10,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_report.lua",
+          "ok": true,
+          "checksPassed": 17,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_retex.lua",
+          "ok": true,
+          "checksPassed": 77,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_roads.lua",
+          "ok": true,
+          "checksPassed": 81,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_satmat_layer.lua",
+          "ok": true,
+          "checksPassed": 10,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_scoping.lua",
+          "ok": true,
+          "checksPassed": 3,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_sea.lua",
+          "ok": true,
+          "checksPassed": 47,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_seasonlook.lua",
+          "ok": true,
+          "checksPassed": 9,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_settings.lua",
+          "ok": true,
+          "checksPassed": 155,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_sky.lua",
+          "ok": true,
+          "checksPassed": 102,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_statusbar.lua",
+          "ok": true,
+          "checksPassed": 16,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_surface_layers.lua",
+          "ok": true,
+          "checksPassed": 52,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_terrain_swap.lua",
+          "ok": true,
+          "checksPassed": 29,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_terrainpatch.lua",
+          "ok": true,
+          "checksPassed": 14,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_trees.lua",
+          "ok": true,
+          "checksPassed": 60,
+          "checksFailed": 0
+        },
+        {
+          "file": "test_weather.lua",
+          "ok": true,
+          "checksPassed": 274,
+          "checksFailed": 0
+        }
+      ]
+    }
+  },
+  "sourcePackage": {
+    "sourceCommit": "7bb6cdc87c3f405184cae6f9e9313e21c7716665",
+    "archive": "BeamNG.Earth-1.6.0-europe-preview.2-dev.zip",
+    "sha256": "7981690beddd4164564a7f4602a45a626d3f66d51584dc7e0bfdd4a8a262c941",
+    "checks": [
+      "ZIP CRC and extraction paths passed",
+      "launcher.py --road-rendering mesh --print-road-rendering: mesh",
+      "start.py --print-road-rendering: mesh",
+      "launcher.py --reset-road-rendering --print-road-rendering: terrain",
+      "Extracted packaged-source server help passed"
+    ],
+    "scope": "Source ZIP only; Python dependencies already installed; no EXE or gameplay validation"
+  },
+  "upstreamCommit": "99c295b",
+  "upstreamCI": "https://github.com/TecnaGamer/BeamNG.Earth/actions/runs/39993356422",
+  "limitations": [
+    "source ZIP uses existing Python dependencies",
+    "No new executable",
+    "No BeamNG gameplay, multiplayer or FPS validation"
+  ]
+}
