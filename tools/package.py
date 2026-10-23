@@ -23,7 +23,8 @@ FILES = ["install.py", "start.py", "launcher.py", "run_server.bat", "run_server.
          "docs/TRAFFIC_IMPROVEMENTS.md", "docs/FORK_CHANGELOG.md", "docs/COMPARISON.md",
          "docs/images/road-comparison.png", "docs/images/courtyard-comparison.png",
          "docs/research/world-generation-validation.json", "docs/research/fork-comparison.json",
-         "docs/ARCHITECTURE.md"]
+         "docs/ARCHITECTURE.md", "docs/research/2026-10-23-upstream-160-integration.md",
+         "docs/research/2026-10-23-upstream-160-validation.json"]
 TREES = ["mod/beamng_earth", "server"]
 FILES += ["docs/maintenance/" + name for name in
           ("STATUS.md", "ISSUES.md", "issues.json", "VALIDATION.md", "STORAGE.md", "PREFETCH.md", "WATER.md",
