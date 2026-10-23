@@ -70,6 +70,10 @@ Priority follow-ups from the new 1.6 reports:
 
 - Current streaming integration results are recorded in
   [the integration report](../research/2026-10-23-streaming-stability.md).
+  Four local Python suites pass 799 checks (3 skips); the extended server suite
+  passes 84 (1 skip), with protocol overlap. All 55 Lua files, both JavaScript
+  suites and extracted-source startup checks pass. Cross-platform results are
+  attached to [fork PR #8](https://github.com/hashk014/BeamNG.Earth/pull/8/checks).
   The totals below describe the preceding candidate, not the newer snapshot.
 - Road-rendering source patch: **62 quick tests**, **361 generator tests** and
   **275 integration tests** pass on Windows; one additional CLI-LuaJIT check skips.

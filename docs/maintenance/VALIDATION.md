@@ -14,6 +14,13 @@ the Windows/Linux maintenance workflow, using synthetic imagery sources only.
 Native version 67 loads successfully; Python compilation passes. These checks
 do not establish an FPS gain, two-player reliability or original-issue resolution.
 
+The extended server suite passes 84 checks and skips the external-LuaJIT check;
+its protocol checks overlap integration. All 55 embedded-LuaJIT test files and
+both JavaScript map-math suites pass. Source/BeamMP ZIP integrity, extracted native
+loading and launcher help pass with existing Python dependencies. Full results
+are in [the validation record](../research/2026-10-23-streaming-validation.json);
+cross-platform runs are attached to [fork PR #8](https://github.com/hashk014/BeamNG.Earth/pull/8/checks).
+
 ## Road rendering choice and worker consistency (2026-10-23)
 
 The patch keeps terrain roads as the default, adds a saved startup choice, and

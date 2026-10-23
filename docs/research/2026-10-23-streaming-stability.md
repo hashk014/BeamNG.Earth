@@ -61,6 +61,9 @@ under `dist/streaming-update`. No game installation or actual user folder is use
 | `python tools/maintenance.py test --suite generators` | 361 passed |
 | `python tools/maintenance.py test --suite integration` | 280 passed, 2 skipped (282 run) |
 | `python tools/maintenance.py test --suite streaming` | 96 passed, 1 skipped (97 run), after harness cleanup correction |
+| `python tools/maintenance.py test --suite server` | 84 passed, 1 skipped (85 run), including server sessions, restarts and protocol |
+| `python tools/run_lua_tests.py` | 55 files passed using embedded LuaJIT |
+| `node mod/tests/test_mapmath.mjs` and `node server/tests/test_mapmath.mjs` | Both passed |
 | `python -m compileall -q server launcher.py start.py tools` | Passed |
 
 Integration skips the separate CLI-LuaJIT check and GPU equivalence (GPU kernels
@@ -73,6 +76,18 @@ there. The harness now joins server executors and imagery workers before verifyi
 its owned root and cleaning up. All 97 streaming checks then completed with the
 single platform skip above. This was addressed separately from the historical
 Windows cleanup timing failures recorded on 20 October.
+
+The extended server run also passes those three historical timing cases. Its
+protocol checks overlap the integration suite, so these totals are not a count
+of distinct tests. [Machine-readable results](2026-10-23-streaming-validation.json)
+record the local results. Cross-platform checks are attached to
+[fork PR #8](https://github.com/hashk014/BeamNG.Earth/pull/8/checks).
+
+Source and BeamMP ZIPs pass CRC checks, including the nested client ZIP. The source
+archive includes the new Python modules, native binaries and current reports;
+bounded extraction, native version 67 loading and `launcher.py --server --help`
+pass with the existing development Python dependencies in an isolated folder.
+This is not a clean-machine installation or executable build test.
 
 ## Remaining gameplay checks
 

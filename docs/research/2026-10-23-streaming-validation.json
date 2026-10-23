@@ -1,0 +1,78 @@
+{
+  "runtimeSourceCommit": "33f46cb4aac3a8cd081da1ead253e1aaf3ccfbc3",
+  "upstreamSnapshot": "b15991e",
+  "platform": "Windows",
+  "pythonSuites": [
+    {
+      "suite": "quick",
+      "time": "2026-10-23T19:01:00.008020+00:00",
+      "tests": 62,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    {
+      "suite": "generators",
+      "time": "2026-10-23T19:01:20.116361+00:00",
+      "tests": 361,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    {
+      "suite": "integration",
+      "time": "2026-10-23T19:05:07.834798+00:00",
+      "tests": 282,
+      "failures": [],
+      "errors": [],
+      "skipped": [
+        {
+          "test": "test_colormatch.DetectTest.test_gpu_matches_cpu",
+          "reason": "no GPU here (earthfast.gpu_name)"
+        },
+        {
+          "test": "test_protocol_agreement.ConstantsTest.test_default_err_and_exact_level_in_lua",
+          "reason": "luajit not installed"
+        }
+      ],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    {
+      "suite": "streaming",
+      "time": "2026-10-23T19:06:43.681759+00:00",
+      "tests": 97,
+      "failures": [],
+      "errors": [],
+      "skipped": [
+        {
+          "test": "test_cpupin.BoostTest.test_pin_tree_keeps_this_process",
+          "reason": "Linux"
+        }
+      ],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    {
+      "suite": "server",
+      "time": "2026-10-23T19:14:23.496075+00:00",
+      "tests": 85,
+      "failures": [],
+      "errors": [],
+      "skipped": [
+        {
+          "test": "test_protocol_agreement.ConstantsTest.test_default_err_and_exact_level_in_lua",
+          "reason": "luajit not installed"
+        }
+      ],
+      "scope": "offline Python tests; no game or FPS validation"
+    }
+  ],
+  "luaFilesPassed": 55,
+  "luaAssertionsPassed": 4997,
+  "javascriptMapMath": "both passed",
+  "pythonCompilation": "passed",
+  "nativeVersion": 67,
+  "initialStreamingRun": "one temporary-directory teardown error; corrected by joining background writers; full streaming rerun passed",
+  "scope": "offline checks only; server suite overlaps protocol tests in integration; no gameplay, FPS or multiplayer proof"
+}
