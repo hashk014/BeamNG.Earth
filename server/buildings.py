@@ -14,7 +14,6 @@ its windows a whole number of bays along every wall (no window cut at a corner).
 footprints and a ground-height function; no game state.
 """
 import hashlib
-import itertools
 import math
 
 import numpy as np
@@ -174,7 +173,18 @@ STEEL_LEG_MAX = 3.0         # m: a frame's legs at most this thick (a quarter of
 STEEL_BAY_M = 14.0          # m between a frame's bracing levels
 STEEL_TOP_SHARE = 0.85      # cross beams over the decks only from this share of the height up
 SHED_CLASSES = {"shed", "garage", "garages", "carport", "roof", "hut", "cabin", "barn", "farm_auxiliary",
-                "greenhouse", "service", "storage_tank", "toilets", "kiosk", "parking"}
+                "greenhouse", "service", "storage_tank", "toilets", "kiosk", "parking", "shelter"}
+# A grain elevator (the plains' small towns: Strasburg, CO by I-70 had two 8-storey brick apartment blocks with windows
+# in the farmland): a tall slender footprint of no class (or a silo's) in a US small town, plain concrete
+# A pyramid (Giza's, GitHub #47: drawn as 66-140 m boxes with windows): a pyramidal roof mapped as (nearly) the whole
+# height over a monument-sized footprint is a stone pyramid on a low plinth (pitched roofs are otherwise flat past 28 m)
+PYRAMID_ROOF_SHARE = 0.8
+PYRAMID_MIN_M2 = 500.0
+PYRAMID_PLINTH_M = 1.0
+ELEVATOR_CLASSES = {"", "industrial", "silo", "grain_silo", "storage_tank", "farm_auxiliary", "agricultural"}
+ELEVATOR_MIN_H = 15.0       # m mapped (a height, no floors)
+ELEVATOR_MAX_M2 = 1500.0
+ELEVATOR_SLENDER = 0.7      # height / sqrt(area) at least (11 x 11 m, 25 m: 2.3; 28 x 31 m, 23 m: 0.78; a 15 m motel: 0.4)
 GLASS_FLOORS = (20, 40)     # towers from 20 floors: glass, but for OLD_TOWER_GLASS of the old ones below 40 ...
 OLD_TOWER_GLASS = 0.65      # ... (Midtown's pre-war skyscrapers are stone)
 MIDRISE_GLASS_OFFICE = 0.45 # offices / hotels of 7+ floors: this share glass (modern), the rest masonry
@@ -202,11 +212,17 @@ def _area2(p):
     return float(np.dot(x, np.concatenate((y[1:], y[:1]))) - np.dot(np.concatenate((x[1:], x[:1])), y))
 
 
+def _close2(a, b):
+    """np.allclose(a, b) of two 2-vectors (rtol 1e-5, atol 1e-8; NaN never close) without its per-call cost."""
+    ax, ay, bx, by = float(a[0]), float(a[1]), float(b[0]), float(b[1])
+    return abs(ax - bx) <= 1e-08 + 1e-05 * abs(bx) and abs(ay - by) <= 1e-08 + 1e-05 * abs(by)
+
+
 def clean_ring(p):
     """The ring (n, 2) without its closing point, duplicate and nearly collinear vertices, counter-clockwise;
     None if fewer than 3 are left."""
     p = np.asarray(p, np.float64)[:, :2]
-    if len(p) > 1 and np.allclose(p[0], p[-1]):
+    if len(p) > 1 and _close2(p[0], p[-1]):
         p = p[:-1]
     tol = SIMPLIFY_M
     for _ in range(8):
@@ -238,6 +254,7 @@ def triangulate(p):
     """Ear clipping of the counter-clockwise simple ring p (n, 2): (n-2, 3) indices into p (fewer if the
     ring is not simple: the rest is left out)."""
     n = len(p)
+    p = np.asarray(p, np.float64)[:, :2].tolist()      # plain floats: the same products, without numpy's per-scalar cost
     idx = list(range(n))
     out = []
 
@@ -277,23 +294,33 @@ def triangulate(p):
 def oriented_box(p):
     """The minimum-area rectangle around ring p along one of its edges: (centre (2,), axis u (2,) along the
     long side, half length, half width)."""
+    # in plain floats (numpy's per-edge calls on a handful of points were ~8 % of a far buildings tile); the same
+    # products and sums as p @ u, bit for bit (checked on Baltimore's 17.5k building rings, 2026-10-20)
+    pts = np.asarray(p, np.float64).tolist()
+    n = len(pts)
     best = None
-    for i in range(len(p)):
-        e = p[(i + 1) % len(p)] - p[i]
-        L = math.hypot(*e)
+    for i in range(n):
+        x0, y0 = pts[i]
+        x1, y1 = pts[(i + 1) % n]
+        ex, ey = x1 - x0, y1 - y0
+        L = math.hypot(ex, ey)
         if L < 1e-6:
             continue
-        u = e / L
-        v = np.array([-u[1], u[0]])
-        a, b = p @ u, p @ v
-        area = (a.max() - a.min()) * (b.max() - b.min())
+        ux, uy = ex / L, ey / L
+        vx, vy = -uy, ux
+        a = [x * ux + y * uy for x, y in pts]
+        b = [x * vx + y * vy for x, y in pts]
+        amin, amax, bmin, bmax = min(a), max(a), min(b), max(b)
+        area = (amax - amin) * (bmax - bmin)
         if best is None or area < best[0]:
-            best = (area, u, v, a, b)
-    _, u, v, a, b = best
-    c = u * (a.max() + a.min()) / 2 + v * (b.max() + b.min()) / 2
-    hl, hw = (a.max() - a.min()) / 2, (b.max() - b.min()) / 2
+            best = (area, ux, uy, vx, vy, amin, amax, bmin, bmax)
+    _, ux, uy, vx, vy, amin, amax, bmin, bmax = best
+    sa, sb = amax + amin, bmax + bmin
+    c = np.array([ux * sa / 2 + vx * sb / 2, uy * sa / 2 + vy * sb / 2])
+    hl, hw = np.float64((amax - amin) / 2), np.float64((bmax - bmin) / 2)     # (numpy scalars, as before)
+    u = np.array([ux, uy])
     if hw > hl:
-        u, hl, hw = v, hw, hl
+        u, hl, hw = np.array([vx, vy]), hw, hl
     return c, u, hl, hw
 
 
@@ -495,6 +522,21 @@ def plan(ring, attrs, neighbours=0, lat=None, lon=None, look=None, town=False, d
         nf = 1                                          # a nave: one tall storey under a steep gable
     h = None if h is None or not np.isfinite(h) or h <= 0 else float(h)
     nf = None if nf is None or not np.isfinite(nf) or nf <= 0 else int(round(nf))
+    rh = attrs.get("roof_height")
+    rh = float(rh) if rh is not None and np.isfinite(rh) else None
+    if ((attrs.get("roof_shape") or "").lower() == "pyramidal" and h is not None and rh is not None
+            and rh >= PYRAMID_ROOF_SHARE * h and area >= PYRAMID_MIN_M2 and hw > 1.0):
+        look = f"{STONE}|0"
+        return Spec(ring=ring, floors=1, floor_h=PYRAMID_PLINTH_M, height=PYRAMID_PLINTH_M, roof="hipped", roof_mat=look,
+                    facade=look, band=None, shop=False, plain=True, seed=seed, min_h=0.0, wall=None, windows=False,
+                    steeple=False, porch=False, cls="pyramid", deck=False,
+                    pitch=math.degrees(math.atan2(max(h - PYRAMID_PLINTH_M, 0.1), hw)))
+    if (town and style.name.startswith("us_") and cls in ELEVATOR_CLASSES and h is not None and h >= ELEVATOR_MIN_H
+            and nf is None and area <= ELEVATOR_MAX_M2 and h / math.sqrt(max(area, 1.0)) >= ELEVATOR_SLENDER
+            and not (church or terminal or garage)):
+        return Spec(ring=ring, floors=1, floor_h=h, height=h, roof="flat", roof_mat="bne_precast", facade="bne_precast",
+                    band=None, shop=False, plain=True, seed=seed, min_h=0.0, wall=None, windows=False, steeple=False,
+                    porch=False, cls="elevator", deck=False, pitch=None)
     if attrs.get("bridge_part"):    # a mapped part of a bridge's tower (support_rings): a plain box of painted steel
         return Spec(ring=ring, floors=1, floor_h=h or BRIDGE_PIER_M, height=h or BRIDGE_PIER_M, roof="flat",
                     roof_mat=f"{STEEL}|{attrs['bridge_part']}", facade=f"{STEEL}|{attrs['bridge_part']}", band=None,
@@ -521,7 +563,7 @@ def plan(ring, attrs, neighbours=0, lat=None, lon=None, look=None, town=False, d
     if church:
         floor_h = 7.5
     # (a big shed is a barn; a row of garages, a carport or a canopy is not)
-    barn = cls in BARN_CLASSES or (shed and area >= 150 and cls not in ("garage", "garages", "carport", "roof"))
+    barn = cls in BARN_CLASSES or (shed and area >= 150 and cls not in ("garage", "garages", "carport", "roof", "shelter"))
     if barn:
         floor_h = 5.5 if area >= 150 else 3.5          # one tall storey; the gable above it
     if h is None and nf is None:
@@ -733,7 +775,8 @@ def plan(ring, attrs, neighbours=0, lat=None, lon=None, look=None, town=False, d
 
 class Mesh:
     """Positions, uvs, colours, triangles and their material index, appended to. A material is a token
-    (index, RGBA) as _Looks gives."""
+    (index, RGBA) as _Looks gives. Kept as flat lists of numbers (x y z x y z ..., one material per triangle):
+    a road tile adds ~25k quads, and lists of tuples flattened at the end took ~2.5 s of a Steam Deck's 87 s."""
 
     def __init__(self):
         self.P, self.UV, self.C, self.T, self.M = [], [], [], [], []
@@ -742,19 +785,19 @@ class Mesh:
     def quad(self, a, b, c, d, uva, uvb, uvc, uvd, mat):
         """Corners counter-clockwise seen from outside."""
         i = self.n
-        self.P += [a, b, c, d]
-        self.UV += [uva, uvb, uvc, uvd]
-        self.C += [mat[1]] * 4
-        self.T += [(i, i + 1, i + 2), (i, i + 2, i + 3)]
-        self.M += [mat[0], mat[0]]
+        self.P += (*a, *b, *c, *d)
+        self.UV += (*uva, *uvb, *uvc, *uvd)
+        self.C += mat[1] * 4
+        self.T += (i, i + 1, i + 2, i, i + 2, i + 3)
+        self.M += (mat[0], mat[0])
         self.n += 4
 
     def tri(self, a, b, c, uva, uvb, uvc, mat):
         i = self.n
-        self.P += [a, b, c]
-        self.UV += [uva, uvb, uvc]
-        self.C += [mat[1]] * 3
-        self.T.append((i, i + 1, i + 2))
+        self.P += (*a, *b, *c)
+        self.UV += (*uva, *uvb, *uvc)
+        self.C += mat[1] * 3
+        self.T += (i, i + 1, i + 2)
         self.M.append(mat[0])
         self.n += 3
 
@@ -770,19 +813,17 @@ class Mesh:
         else:
             tris = triangulate(xy)
         i = self.n
-        self.P += [tuple(p) for p in pts3]
-        self.UV += [tuple(u) for u in uv]
-        self.C += [mat[1]] * len(pts3)
-        self.T += [(i + a, i + b, i + c) for a, b, c in tris]
+        self.P += np.asarray(pts3, np.float64)[:, :3].ravel().tolist()
+        self.UV += np.asarray(uv, np.float64)[:, :2].ravel().tolist()
+        self.C += tuple(mat[1]) * len(pts3)
+        self.T += (np.asarray(tris, np.int64).reshape(-1, 3) + i).ravel().tolist()
         self.M += [mat[0]] * len(tris)
         self.n += len(pts3)
 
     def arrays(self):
-        # fromiter over the flattened tuples: the same arrays, ~2x faster than np.array of a list of tuples
-        def flat(L, k, dt):
-            return np.fromiter(itertools.chain.from_iterable(L), dt, len(L) * k).reshape(-1, k)
-        return (flat(self.P, 3, np.float64), flat(self.UV, 2, np.float64), flat(self.T, 3, np.int64),
-                np.array(self.M, np.int64), flat(self.C, 4, np.uint8))
+        return (np.array(self.P, np.float64).reshape(-1, 3), np.array(self.UV, np.float64).reshape(-1, 2),
+                np.array(self.T, np.int64).reshape(-1, 3), np.array(self.M, np.int64),
+                np.array(self.C, np.uint8).reshape(-1, 4))
 
     def courtyard_surface(self, ring, holes, z, mat, up=True):
         from polygon import roof_cells
@@ -851,6 +892,7 @@ def _walls(m, spec, ring, z0, z_eave, mat_idx, lite=False):
     """Each wall of the ring, floor by floor: one band of the window sheet, a whole number of bays."""
     n = len(ring)
     fac = mat_idx[spec.facade]
+    pts = np.asarray(ring, np.float64)[:, :2].tolist()     # (plain floats: the arithmetic below, per bay)
     for i in range(n):
         a, b = ring[i], ring[(i + 1) % n]
         L = float(math.hypot(*(b - a)))
@@ -859,9 +901,10 @@ def _walls(m, spec, ring, z0, z_eave, mat_idx, lite=False):
         if spec.wall:
             _plain_wall_with_windows(m, spec, a, b, L, z0, z_eave, fac, mat_idx, i)
             continue
+        (ax, ay), (bx, by) = pts[i], pts[(i + 1) % n]
         if spec.plain:
             u1 = L / SIDING_UV_M
-            m.quad((a[0], a[1], z0), (b[0], b[1], z0), (b[0], b[1], z_eave), (a[0], a[1], z_eave),
+            m.quad((ax, ay, z0), (bx, by, z0), (bx, by, z_eave), (ax, ay, z_eave),
                    (0, z0 / SIDING_UV_M), (u1, z0 / SIDING_UV_M), (u1, z_eave / SIDING_UV_M), (0, z_eave / SIDING_UV_M),
                    fac)
             continue
@@ -876,7 +919,7 @@ def _walls(m, spec, ring, z0, z_eave, mat_idx, lite=False):
             pv0, pv1 = _band_v(spec.band, spec.band[0])
             hp = (base - 0.3) - z0                      # the plinth: the band's plain strip at its scale
             _plain_strip(m, a, b, z0, base - 0.3, bays_per_tile, bay, pv0,
-                         pv0 + (pv1 - pv0) * min(1.0, hp / max(spec.floor_h, 1e-3)), fac)
+                         pv0 + (pv1 - pv0) * min(1.0, hp / max(spec.floor_h, 1e-3)), fac, whole=lite)
             za = base - 0.3
         for f in range(spec.floors):
             zb = z_eave if f == spec.floors - 1 else base + (f + 1) * spec.floor_h
@@ -893,9 +936,11 @@ def _walls(m, spec, ring, z0, z_eave, mat_idx, lite=False):
                     dk = None
                     if f == 0 and spec.door and spec.door[0] == i and spec.roof == "flat":
                         dk = min(nb - 1, int(spec.door[1] / L * nb))      # the bay behind the front door
+                    dx, dy = bx - ax, by - ay
                     for k in range(nb):
                         g = good[int(_hash01(spec.seed, i, f, k) * len(good))]
-                        pa, pb = a + (b - a) * (k / nb), a + (b - a) * ((k + 1) / nb)
+                        t0, t1 = k / nb, (k + 1) / nb
+                        pa, pb = (ax + dx * t0, ay + dy * t0), (ax + dx * t1, ay + dy * t1)
                         if k == dk:
                             _plain_strip(m, pa, pb, za, zb, bays_per_tile, bay, v0, v1, mat)
                             continue
@@ -920,11 +965,11 @@ def _walls(m, spec, ring, z0, z_eave, mat_idx, lite=False):
                     m.quad((pa[0], pa[1], za), (pb[0], pb[1], za), (pb[0], pb[1], zb), (pa[0], pa[1], zb),
                            (uu * ta / L, v0), (uu * tb / L, v0), (uu * tb / L, v1), (uu * ta / L, v1), mat)
                 pa, pb = a + (b - a) * (s0 / L), a + (b - a) * (s1 / L)
-                _plain_strip(m, pa, pb, za, zb, bays_per_tile, bay, v0, v1, mat)
+                _plain_strip(m, pa, pb, za, zb, bays_per_tile, bay, v0, v1, mat, whole=lite)
                 za = zb
                 continue
             # the foundation and the parapet stretch the band a little; the windows stay a floor's height
-            m.quad((a[0], a[1], za), (b[0], b[1], za), (b[0], b[1], zb), (a[0], a[1], zb),
+            m.quad((ax, ay, za), (bx, by, za), (bx, by, zb), (ax, ay, zb),
                    (0, v0), (uu, v0), (uu, v1), (0, v1), mat)
             za = zb
 
@@ -932,20 +977,25 @@ def _walls(m, spec, ring, z0, z_eave, mat_idx, lite=False):
 PLAIN_STRIP = 0.3           # of a bay: the plain wall between two windows of a sheet's band (centred on a bay edge)
 
 
-def _plain_strip(m, pa, pb, za, zb, bays_per_tile, bay_w, v0, v1, mat):
+def _plain_strip(m, pa, pb, za, zb, bays_per_tile, bay_w, v0, v1, mat, whole=False):
     """The wall from pa to pb (za..zb) in slices of the band's plain strip between its first two windows, at the
     sheet's own scale (a bay of the sheet = bay_w m). The wall behind a front door was one texel of the sheet
-    stretched over it, a blurred smear round every door (the user, 2026-10-17)."""
-    L = float(np.hypot(*(pb - pa)))
+    stretched over it, a blurred smear round every door (the user, 2026-10-17). whole (the lite mesh: far buildings,
+    a near tile's distant detail): one slice stretched over it (the plinths of buildings on a slope were ~78 % of a
+    far buildings tile's quads, ~1 m slices nobody sees from 600 m)."""
+    ax, ay, bx, by = float(pa[0]), float(pa[1]), float(pb[0]), float(pb[1])
+    dx, dy = bx - ax, by - ay
+    L = math.hypot(dx, dy)
     if L < 1e-3:
         return
     c, h = 1.0 / bays_per_tile, 0.5 * PLAIN_STRIP / bays_per_tile
     sw = max(0.1, PLAIN_STRIP * bay_w)                  # m one slice covers
-    n = max(1, int(round(L / sw)))
+    n = 1 if whole else max(1, int(round(L / sw)))
+    uva, uvb, uvc, uvd = (c - h, v0), (c + h, v0), (c + h, v1), (c - h, v1)
     for j in range(n):
-        qa, qb = pa + (pb - pa) * (j / n), pa + (pb - pa) * ((j + 1) / n)
-        m.quad((qa[0], qa[1], za), (qb[0], qb[1], za), (qb[0], qb[1], zb), (qa[0], qa[1], zb),
-               (c - h, v0), (c + h, v0), (c + h, v1), (c - h, v1), mat)
+        t0, t1 = j / n, (j + 1) / n
+        qax, qay, qbx, qby = ax + dx * t0, ay + dy * t0, ax + dx * t1, ay + dy * t1
+        m.quad((qax, qay, za), (qbx, qby, za), (qbx, qby, zb), (qax, qay, zb), uva, uvb, uvc, uvd, mat)
 
 
 def _cornice(m, spec, ring, z_eave, mat_idx):
@@ -973,12 +1023,7 @@ def _cornice(m, spec, ring, z_eave, mat_idx):
 def _inside(ring, p):
     """Point p inside the ring (even-odd)."""
     x, y = p
-    if fast._ef is not None and ring.dtype == np.float64 and ring.ndim == 2:
-        return fast._ef.point_inside(ring, float(x), float(y))
-    xs, ys = ring[:, 0], ring[:, 1]
-    xj, yj = np.roll(xs, 1), np.roll(ys, 1)
-    cross = ((ys > y) != (yj > y)) & (x < (xj - xs) * (y - ys) / np.where(yj - ys == 0, 1e-12, yj - ys) + xs)
-    return bool(np.count_nonzero(cross) % 2)
+    return fast._ef.point_inside(np.asarray(ring, np.float64), float(x), float(y))     # (Rust; even-odd)
 
 
 def _box(m, c, u, hx, hy, z0, z1, mat):
@@ -1033,7 +1078,7 @@ def _portal_lift(frame, ring, x0, y0, tunnels_xy, elev):
         if len(ln) < 2:
             continue
         seg = np.hypot(*np.diff(ln, axis=0).T)
-        s = np.r_[0.0, np.cumsum(seg)]
+        s = np.concatenate(([0.0], np.cumsum(seg)))
         t = np.arange(0.0, s[-1] + 1e-9, 2.0)
         p = np.stack([np.interp(t, s, ln[:, 0]), np.interp(t, s, ln[:, 1])], axis=1)
         p = p[(p[:, 0] >= lo[0]) & (p[:, 0] <= hi[0]) & (p[:, 1] >= lo[1]) & (p[:, 1] <= hi[1])]
@@ -1556,6 +1601,8 @@ def build(specs_and_ground, lite=False):
     cornices, whole walls instead of one quad per bay."""
     m = Mesh()
     for spec, gmin, gmax in specs_and_ground:
+        if spec.cls == "toll_booth":        # a stock prop (toll_booth_rows)
+            continue
         mat_idx = _Looks(spec.seed)
         if spec.cls in BRIDGE_CLASSES:
             _steel_frame(m, spec, gmin, mat_idx[spec.facade if spec.facade in LOOKS else STEEL], lite)
@@ -1685,31 +1732,13 @@ def _shared_walls(rings, tol=0.6):
     cents = np.array([r.mean(0) for r in rings])
     rads = np.array([np.hypot(*(r - r.mean(0)).T).max() for r in rings])
     order = np.argsort(cents[:, 0])
-    if fast._ef is not None and hasattr(fast._ef, "shared_walls"):     # the Rust loop: the same counts
-        offs = np.zeros(n + 1, np.int64)
-        offs[1:] = np.cumsum([len(r) for r in rings])
-        coords = np.ascontiguousarray(np.concatenate(rings)[:, :2], np.float64)
-        return np.asarray(fast._ef.shared_walls(coords, offs, np.ascontiguousarray(cents, np.float64),
-                                                np.ascontiguousarray(rads, np.float64), order.astype(np.int64),
-                                                float(tol)), np.int64)
-    xs = cents[order, 0]
-    for oi, i in enumerate(order):
-        lo = np.searchsorted(xs, cents[i, 0] - rads[i] - 30.0)
-        hi = np.searchsorted(xs, cents[i, 0] + rads[i] + 30.0)
-        for j in order[lo:hi]:
-            if j == i or np.hypot(*(cents[j] - cents[i])) > rads[i] + rads[j] + tol:
-                continue
-            ri, rj = rings[i], rings[j]
-            a, b = ri, np.roll(ri, -1, 0)
-            d = b - a
-            L2 = np.maximum((d * d).sum(1), 1e-9)
-            t = np.clip(((rj[:, None, :] - a[None]) * d[None]).sum(2) / L2[None], 0, 1)
-            q = a[None] + t[..., None] * d[None]
-            dist = np.hypot(*(rj[:, None, :] - q).transpose(2, 0, 1))
-            if (dist < tol).sum() >= 2:
-                cnt[i] += 1
-    return cnt
-
+    fast.require(1, "shared_walls")
+    offs = np.zeros(n + 1, np.int64)
+    offs[1:] = np.cumsum([len(r) for r in rings])
+    coords = np.ascontiguousarray(np.concatenate(rings)[:, :2], np.float64)
+    return np.asarray(fast._ef.shared_walls(coords, offs, np.ascontiguousarray(cents, np.float64),
+                                            np.ascontiguousarray(rads, np.float64), order.astype(np.int64),
+                                            float(tol)), np.int64)
 
 def _part_heights(a, i):
     """A building part's (own height, its bottom) from its attributes, or None without a height."""
@@ -1726,8 +1755,12 @@ def _part_heights(a, i):
     return float(top) - mh, mh
 
 
-ROAD_THROUGH_M = 15.0       # minimum mapped crossing for an inferred local street passage
-OVER_ROAD_CLEAR_M = 5.5     # passage headroom; the rest of the building keeps its grounded walls
+ROAD_THROUGH_M = 15.0       # a footprint that public roads run through this far is a structure over them
+OVER_ROAD_CLEAR_M = 5.5     # ... lifted this high (an expressway's or a station's slab over the streets: Baltimore's
+                            # 17,500 m2 one by I-83, the AI drove into its wall at 35 mph, 2026-10-14)
+ACROSS_W = 8.0              # m: a footprint at most this wide that a public road crosses (its long middle line) is a
+                            # walkway or canopy over it (GitHub #48: the 69th Street station's 3 m shelters stood across
+                            # the Dan Ryan as brick walls; a road crossing one runs only its width inside it)
 STREET_PASSAGE_W = 5.0
 THROUGH_CLASSES = {"motorway", "trunk", "primary", "secondary", "tertiary", "residential", "unclassified",
                    "living_street"}
@@ -1735,7 +1768,8 @@ THROUGH_CLASSES = {"motorway", "trunk", "primary", "secondary", "tertiary", "res
 
 def tunnel_lines(frame, road_layers, x0, y0, margin=50.0, size=256.0):
     """Polylines (k, 2) relative to (x0, y0) of the road tunnels near the tile (roads.tunnel_parts; for
-    road_through: a building a tunnel runs into is its portal building, its floor over the tube)."""
+    road_through: a building a tunnel runs into is its portal building, its floor over the tube), but those of
+    PORTAL_SKIP_CLASSES."""
     import roads as roadsmod
     out = []
     for f in road_layers:
@@ -1743,7 +1777,7 @@ def tunnel_lines(frame, road_layers, x0, y0, margin=50.0, size=256.0):
             continue
         ts = roadsmod.tunnel_specs(f)
         for i in range(len(f.kind)):
-            if ts[i] is None:
+            if ts[i] is None or ts[i].cls in PORTAL_SKIP_CLASSES:
                 continue
             for ring in roadsmod.tunnel_parts(f, i):
                 e, n = mapgeom.enu_xy(f, frame, ring)
@@ -1817,7 +1851,10 @@ def support_rings(frame, infra_layers, x0, y0, margin=50.0, size=256.0):
         cs = cls.astype(str)
         # a bridge's supports, and its own outlines mapped as buildings (Tower Bridge's high walkways: building:colour
         # lightblue, 45 m); not a bare bridge outline (Ponte Vecchio's shops stand on one)
-        three_d = np.array(['"building' in str(t) for t in tags], bool) if tags is not None else np.zeros(len(cs), bool)
+        three_d = f.__dict__.get("_three_d")         # (once per cell's features: every tile of it asked)
+        if three_d is None:
+            three_d = f._three_d = (np.array(['"building' in str(t) for t in tags], bool) if tags is not None
+                                    else np.zeros(len(cs), bool))
         for i in np.flatnonzero(((cs == "bridge_support") | ((cs == "bridge") & three_d)) & (f.kind == 3)):
             fid = f.ids[i]
             if fid in seen:
@@ -1865,6 +1902,10 @@ def _covers_garage(ring, garages):
 
 
 TUNNEL_THROUGH_M = 5.0      # a footprint a road tunnel runs into this far: its portal building, lifted over the tube
+PORTAL_SKIP_CLASSES = ("service",)     # tunnels that lift no building: a driveway, loading dock or covered drop-off
+                            # under a building, which stands on the ground (GitHub #60: a 15 m drive-through under an
+                            # Oklahoma City church floated it 10 m up; in downtown Baltimore and Chicago 20 office and
+                            # garage blocks of up to 7,156 m2 stood 7.4-10.5 m up over loading-dock tunnels, 2026-10-20)
 OVER_TUNNEL_CLEAR_M = 7.5   # (the tube's vault is roadmesh.TUNNEL_H = 6.8 m over the floor; 2026-10-17: Eisenhower's
                             # east portal building closed the tunnel)
 
@@ -1877,8 +1918,13 @@ def road_lines(frame, road_layers, x0, y0, margin=50.0, size=256.0):
         if f is None or len(f.kind) == 0:
             continue
         cls = f.attrs.get("class")
-        for i in range(len(f.kind)):
-            if cls is None or str(cls[i]) not in THROUGH_CLASSES or roadsmod.level_ranges(f, i):
+        if cls is None:
+            continue
+        bb = f.boxes(frame)             # (only the roads near the tile: the test below, all at once)
+        near = np.flatnonzero((bb[:, 2] - x0 >= -margin) & (bb[:, 0] - x0 <= size + margin)
+                              & (bb[:, 3] - y0 >= -margin) & (bb[:, 1] - y0 <= size + margin))
+        for i in near.tolist():
+            if str(cls[i]) not in THROUGH_CLASSES or roadsmod.level_ranges(f, i):
                 continue
             a = f.coord_off[f.ring_off[f.part_off[i]]]
             b = f.coord_off[f.ring_off[f.part_off[i + 1]]]
@@ -1978,12 +2024,61 @@ def _passages(rings, attrs, looks, mins, bridges_xy, decks=None, ground_at=None)
 
 
 ML_BRIDGE_M = 6.0          # m of a road bridge's line through a machine-learned footprint: the deck, not a building
+ML_ROAD_M = 4.0            # m from a public road's centre line to a machine-learned footprint's centre: a vehicle on it
+ML_MEDIAN_M = 9.0          # m: a machine-learned footprint between two parallel roads this close on either side lies in a
+                           # dual carriageway's median (GitHub #90: a house between Moscow's Bolshaya Tulskaya carriageways)
 
 
-def _ml_false(ring, bridges_xy, water_xy):
-    """A machine-learned footprint (Microsoft's, Google's) that is a bridge deck or a boat: a road bridge runs
-    through it, or its centre lies on mapped water (Tower Bridge's river: barges as brick buildings, 2026-10-18)."""
+def _line_dist(p, lines):
+    """Distance from point p (2,) to the nearest of the polylines lines (k, 2), or inf."""
+    best = np.inf
+    for ln in lines:
+        a, b = ln[:-1], ln[1:]
+        d = b - a
+        t = np.clip(((p - a) * d).sum(1) / np.maximum((d * d).sum(1), 1e-12), 0.0, 1.0)
+        q = a + t[:, None] * d
+        best = min(best, float(np.hypot(*(q - p).T).min()))
+    return best
+
+
+def _nearest_on(p, ln):
+    """(distance, unit direction of the segment) of polyline ln (k, 2) nearest point p (2,)."""
+    a, b = ln[:-1], ln[1:]
+    d = b - a
+    t = np.clip(((p - a) * d).sum(1) / np.maximum((d * d).sum(1), 1e-12), 0.0, 1.0)
+    q = a + t[:, None] * d
+    dist = np.hypot(*(q - p).T)
+    k = int(np.argmin(dist))
+    u = d[k] / max(float(np.hypot(*d[k])), 1e-9)
+    return float(dist[k]), q[k], u
+
+
+def _in_median(c, roads_xy):
+    """Does point c (2,) lie between two parallel roads each within ML_MEDIAN_M, on opposite sides of it?"""
+    near = []
+    for ln in roads_xy:
+        if len(ln) < 2 or ln[:, 0].min() > c[0] + ML_MEDIAN_M or ln[:, 0].max() < c[0] - ML_MEDIAN_M or \
+                ln[:, 1].min() > c[1] + ML_MEDIAN_M or ln[:, 1].max() < c[1] - ML_MEDIAN_M:
+            continue
+        dist, q, u = _nearest_on(c, ln)
+        if dist <= ML_MEDIAN_M:
+            near.append((q - c, u))
+    for i in range(len(near)):
+        for j in range(i + 1, len(near)):
+            (vi, ui), (vj, uj) = near[i], near[j]
+            if abs(float(ui @ uj)) > 0.9 and float(vi @ vj) < 0:        # parallel, one on each side
+                return True
+    return False
+
+
+def _ml_false(ring, bridges_xy, water_xy, roads_xy=None):
+    """A machine-learned footprint (Microsoft's, Google's) that is a bridge deck, a boat or a vehicle: a road bridge
+    runs through it, its centre lies on mapped water (Tower Bridge's river: barges as brick buildings, 2026-10-18), on
+    a public road (a lorry on a Norwegian trunk road stood as a white building over the lanes, GitHub #2) or in a dual
+    carriageway's median (_in_median, GitHub #90)."""
     if bridges_xy and road_through(ring, bridges_xy) >= ML_BRIDGE_M:
+        return True
+    if roads_xy and (_line_dist(ring.mean(0), roads_xy) <= ML_ROAD_M or _in_median(ring.mean(0), roads_xy)):
         return True
     if water_xy:
         from polygon import Path
@@ -2042,13 +2137,31 @@ def water_rings(frame, water_layers, x0, y0, margin=50.0, size=256.0):
     return out
 
 
+_BOXES = {}                     # id(list of polylines) -> (that list, its boxes (n, 4)): the last few lists asked
+
+
+def line_boxes(lines):
+    """(n, 4) x0 y0 x1 y1 of each polyline (k, 2+) of the list, made once per list (a tile's buildings test the same
+    lists of roads one footprint after another: ~1.2M small numpy min / max calls a Baltimore tile set)."""
+    got = _BOXES.get(id(lines))
+    if got is not None and got[0] is lines:
+        return got[1]
+    b = np.array([(ln[:, 0].min(), ln[:, 1].min(), ln[:, 0].max(), ln[:, 1].max()) for ln in lines],
+                 np.float64).reshape(-1, 4)
+    if len(_BOXES) >= 16:
+        _BOXES.clear()
+    _BOXES[id(lines)] = (lines, b)      # (the list kept: its id cannot be another list's meanwhile)
+    return b
+
+
 def road_through(ring, lines, step=2.0, holes=(), inset=0.0):
     """Metres of the polylines lines (k, 2) inside ring (sampled every step m)."""
     lo, hi = ring.min(0), ring.max(0)
+    b = line_boxes(lines)
+    near = np.flatnonzero((b[:, 2] >= lo[0]) & (b[:, 0] <= hi[0]) & (b[:, 3] >= lo[1]) & (b[:, 1] <= hi[1]))
     total = 0.0
-    for ln in lines:
-        if ln[:, 0].max() < lo[0] or ln[:, 0].min() > hi[0] or ln[:, 1].max() < lo[1] or ln[:, 1].min() > hi[1]:
-            continue
+    for li in near:
+        ln = lines[li]
         for p, q in zip(ln[:-1], ln[1:]):
             L = float(np.hypot(*(q - p)))
             k = max(1, int(L / step))
@@ -2119,12 +2232,37 @@ def street_passages(items, lines):
         out.append((upper, gmin, gmax))
     return out
 
+def road_across(ring, lines, max_w=ACROSS_W):
+    """Does one of the polylines lines (k, 2) cross the narrow footprint ring (at most max_w wide) along its length,
+    over its long middle line?"""
+    c, u, hl, hw = oriented_box(ring)
+    if 2 * hw > max_w or hl <= hw:
+        return False
+    a, b = c - u * hl, c + u * hl
+    lo, hi = np.minimum(a, b), np.maximum(a, b)
+    bx = line_boxes(lines)
+    for li in np.flatnonzero((bx[:, 2] >= lo[0]) & (bx[:, 0] <= hi[0]) & (bx[:, 3] >= lo[1]) & (bx[:, 1] <= hi[1])):
+        ln = lines[li]
+        p, q = ln[:-1], ln[1:]
+        d = q - p
+        e = b - a
+        den = d[:, 0] * e[1] - d[:, 1] * e[0]
+        ok = np.abs(den) > 1e-9
+        den = np.where(ok, den, 1.0)
+        w = a - p
+        t = (w[:, 0] * e[1] - w[:, 1] * e[0]) / den         # along the road segment
+        s_ = (w[:, 0] * d[:, 1] - w[:, 1] * d[:, 0]) / den  # along the middle line
+        if np.any(ok & (t >= 0) & (t <= 1) & (s_ >= 0) & (s_ <= 1)):
+            return True
+    return False
+
 
 CENTRE_PREFILTER_M = 1.0       # m of slack for Features.outer_centres (cumulative sums: within ~1e-5 m of the exact mean)
 
 
 def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=(), west_town=False, roads_xy=None,
-                   tunnels_xy=None, garages_xy=None, supports=None, bridges_xy=None, water_xy=None, decks=None):
+                   tunnels_xy=None, garages_xy=None, supports=None, bridges_xy=None, water_xy=None, decks=None,
+                   ml_roads_xy=None):
     """[(Spec, gmin, gmax)] of the buildings whose footprint centroid is in the tile [x0, x1) x [y0, y1)
     (anchor frame), rings relative to (x0, y0). layers: mapgeom.Features of buildings (one per map cell; a
     building in two cells is taken once, by id); elev(lat, lon) the physics ground. part_layers: the
@@ -2132,7 +2270,8 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
     uncovered parent wings remain grounded. garages_xy: garage_rings (a building one covers, or
     covering one's centre, is a parking structure). supports: support_rings (a building or part on one is the
     bridge's painted steel). bridges_xy / water_xy (bridge_lines, water_rings): a machine-learned footprint (not
-    OSM) on a road bridge or over water is a deck or a boat, left out (_ml_false)."""
+    OSM) on a road bridge, over water or on a public road (roads_xy, or ml_roads_xy for that test alone: the far
+    buildings) is a deck, a boat or a vehicle, left out (_ml_false)."""
     parts_of = {}                       # building id -> [(ring in the anchor frame, own height, bottom)]
     pseen = set()
     for f in part_layers:
@@ -2195,6 +2334,10 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
                    "roof_orientation", "name", "facade_material")}
             if key is not None:
                 at["_seed"] = _hash01(str(key), "look")
+            hh_ = at.get("height")
+            if hh_ is not None and np.isfinite(hh_) and 0 < hh_ < FLAT_FOOTPRINT_M and not parts_of.get(str(key)):
+                continue                # a mapped area, not a building (the Golden Gate toll plaza's 0.01 m footprint
+                                        # drew a slab with a rim round the booths, 2026-10-21)
             bparts = parts_of.get(str(key)) if key is not None else None
             if bparts and any(h is not None for _, h, _, _ in bparts):
                 at = dict(at, _parts_group=str(key))
@@ -2215,6 +2358,8 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
                 grounded, voids, base_heights = [], list(parent_holes), [fill]
                 for pring, hh, pholes, roof_attrs in bparts:
                     ph, pmh = hh if hh is not None else (fill, 0.0)
+                    if ph + pmh < FLAT_FOOTPRINT_M:
+                        continue        # (a part taking a flat area's height: FLAT_FOOTPRINT_M)
                     r = clean_ring(pring - np.array([x0, y0]))
                     if r is None or _area2(r) / 2 < 4.0:
                         continue
@@ -2266,13 +2411,18 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
             if holes:
                 at["_holes"] = holes
             if "src_dataset" in a and str(a["src_dataset"][i]) != "OpenStreetMap" and \
-                    _ml_false(ring, bridges_xy, water_xy):
+                    _ml_false(ring, bridges_xy, water_xy, ml_roads_xy if ml_roads_xy is not None else roads_xy):
                 continue
             if key is not None:
                 seen.add(seen_key)
             rings.append(ring)
             mh = at.get("min_height")
             mh = float(mh) if mh is not None and np.isfinite(mh) and mh > 0 else 0.0
+            if mh <= 0.5 and roads_xy and road_across(ring, roads_xy):
+                mh = OVER_ROAD_CLEAR_M
+                h = at.get("height")
+                if h is None or not np.isfinite(h) or h < mh + 3.0:
+                    at = dict(at, height=mh + 3.0)      # keeps its top; at least a slab's worth over the clearance
             if mh < OVER_TUNNEL_CLEAR_M and tunnels_xy and road_through(ring, tunnels_xy) >= TUNNEL_THROUGH_M:
                 # over a tunnel: its floor OVER_TUNNEL_CLEAR_M over the road at the mouth near it (the lowest ground
                 # along the tunnel's line round it), from its own lowest ground (base_z); none where its ground is
@@ -2361,7 +2511,125 @@ def tile_buildings(frame, x0, y0, x1, y1, layers, elev, water=None, part_layers=
     for spec, _, _ in out:
         if spec.datum_group in datums and not spec.cls.startswith('bridge') and not spec.deck:
             spec.datum = datums[spec.datum_group]
+    lines = roads_xy if roads_xy else ml_roads_xy
+    if lines and out:
+        isl = _toll_islands(frame, layers, parts_of, lines, x0, y0)
+        if isl:
+            out = _toll_mark(out, isl)
     return street_passages(out, roads_xy)
+
+
+# Toll plazas (the user's report at the Golden Gate Bridge, 2026-10-21: "Toll booths need work. west coast has one,
+# reference that"): OSM maps a plaza's islands as low "buildings" (0.2 m there) with the booths as building parts
+# standing on them; drawn as buildings they were bare boxes on slabs. An island with a booth on it, along a road, is
+# West Coast USA's toll booth instead (trees.lua group "tollbooth": the island, its booth and kerbs in one shape, 22 m
+# long along its local y), placed along the island (toll_booth_rows); the island and its booth parts are not built.
+FLAT_FOOTPRINT_M = 0.1     # m: a footprint mapped lower than this is an area (a plaza), not drawn
+G_TOLLBOOTH = "tollbooth"
+TOLLBOOTH_H = 4.96          # m: the stock shape's height (s_toll_booth_center)
+TOLL_ISLAND_MAX_H = 1.0     # m: an island is a "building" no taller than this ...
+TOLL_ISLAND_MIN_L = 8.0     # ... at least this long ...
+TOLL_ISLAND_MAX_W = 4.0     # ... and at most this wide
+TOLL_BOOTH_H = (2.0, 8.0)   # m: a booth on it: a footprint this tall ...
+TOLL_BOOTH_MAX_AREA = 40.0  # ... and this small (m2), its centre on the island
+TOLL_ROAD_M = 25.0          # m: a road this near the island's centre ...
+TOLL_ROAD_DEG = 25.0        # ... running along it within this
+
+
+def _on_box(p, box, pad=1.0):
+    """Is point p (2,) within the oriented box (centre, axis u, half length, half width) grown by pad?"""
+    c, u, hl, hw = box
+    d = np.asarray(p, np.float64) - c
+    return abs(float(d @ u)) <= hl + pad and abs(float(d[0] * u[1] - d[1] * u[0])) <= hw + pad
+
+
+def _toll_islands(frame, layers, parts_of, lines, x0, y0):
+    """The toll islands among all the buildings of the tile's cells, as oriented boxes relative to (x0, y0): a low
+    building (TOLL_ISLAND_*) with a booth (TOLL_BOOTH_*) among all the cells' building parts centred on it, along a
+    road (lines, relative to (x0, y0)). Not only the tile's own buildings: a part is in its building's tile, and the
+    Golden Gate's booths are parts of the plaza's footprint, centred in the next tile from most islands."""
+    booths = []
+    for prings in parts_of.values():
+        for pring, hh in prings:
+            if hh is None or not (TOLL_BOOTH_H[0] <= hh[0] + hh[1] <= TOLL_BOOTH_H[1]):
+                continue
+            r = pring - np.array([x0, y0])
+            if _area2(r) / 2 <= TOLL_BOOTH_MAX_AREA:
+                booths.append(r[:-1].mean(0) if len(r) > 1 and np.allclose(r[0], r[-1]) else r.mean(0))
+    if not booths:
+        return []
+    segs = [np.concatenate([np.asarray(ln, np.float64)[:-1], np.asarray(ln, np.float64)[1:]], 1)
+            for ln in lines if len(ln) >= 2]
+    if not segs:
+        return []
+    segs = np.concatenate(segs)
+    a, b = segs[:, :2], segs[:, 2:]
+    ab = b - a
+    L = np.maximum(np.hypot(ab[:, 0], ab[:, 1]), 1e-9)
+    cos_max = math.cos(math.radians(TOLL_ROAD_DEG))
+    out, seen = [], set()
+    for f in layers:
+        if f is None or len(f.kind) == 0 or f.attrs.get("height") is None:
+            continue
+        h = np.asarray(f.attrs["height"], np.float64)
+        ids = getattr(f, "ids", None)
+        for i in np.flatnonzero(np.isfinite(h) & (h > 0) & (h <= TOLL_ISLAND_MAX_H)).tolist():
+            key = ids[i] if ids is not None else None
+            if key is not None and key in seen:
+                continue
+            seen.add(key)
+            parts = f.parts(i)
+            if not parts or not parts[0] or len(parts[0][0]) < 4:
+                continue
+            e, n = mapgeom.enu_xy(f, frame, np.asarray(parts[0][0], np.float64))
+            box = oriented_box(np.stack([e - x0, n - y0], 1)[:-1])
+            c, u, hl, hw = box
+            if 2 * hl < TOLL_ISLAND_MIN_L or 2 * hw > TOLL_ISLAND_MAX_W:
+                continue
+            if not any(_on_box(q, box) for q in booths):
+                continue
+            tt = np.clip(((c - a) * ab).sum(1) / (L * L), 0.0, 1.0)
+            dist = np.hypot(*(a + tt[:, None] * ab - c).T)
+            if ((dist <= TOLL_ROAD_M) & (np.abs((ab @ u) / L) >= cos_max)).any():
+                out.append(box)
+    return out
+
+
+def _toll_mark(items, islands):
+    """items with each toll island (islands: _toll_islands' boxes) marked cls "toll_booth" and the booths standing on
+    them left out (West Coast USA's booth stands there instead: toll_booth_rows). Pure."""
+    out = []
+    for spec, gmin, gmax in items:
+        p = spec.ring.mean(0)
+        on = next((bx for bx in islands if _on_box(p, bx)), None)
+        if on is None:
+            out.append((spec, gmin, gmax))
+            continue
+        h = spec.height or 0.0
+        if h <= TOLL_ISLAND_MAX_H:
+            _c, _u, hl, hw = oriented_box(spec.ring)
+            if 2 * hl >= TOLL_ISLAND_MIN_L and 2 * hw <= TOLL_ISLAND_MAX_W and (spec.min_h or 0) <= 0.5:
+                spec.cls = "toll_booth"         # the island itself (not a plaza's flat footprint round it)
+            out.append((spec, gmin, gmax))
+        elif not (TOLL_BOOTH_H[0] <= h <= TOLL_BOOTH_H[1] and _area2(spec.ring) / 2 <= TOLL_BOOTH_MAX_AREA):
+            out.append((spec, gmin, gmax))
+    return out
+
+
+def toll_booth_rows(items, x0, y0):
+    """Prop rows (trees.lua rows, group G_TOLLBOOTH) of the toll islands (_toll_mark) among items (rings relative to
+    (x0, y0)): West Coast USA's booth along each island, on its lowest ground."""
+    rows = []
+    for spec, gmin, _gmax in items:
+        if spec.cls != "toll_booth":
+            continue
+        c, u, _hl, _hw = oriented_box(spec.ring)
+        if u[0] < 0 or (u[0] == 0 and u[1] < 0):    # one way along the axis for every island: the booths face alike
+            u = -u
+        yaw = (math.degrees(math.atan2(u[1], u[0])) - 90.0) % 360.0       # (its length is the shape's local y)
+        rows.append([G_TOLLBOOTH, round(float(c[0] + x0), 2), round(float(c[1] + y0), 2), round(gmin, 2),
+                     round(yaw, 1), 1.0, TOLLBOOTH_H, 0.5])
+    return rows
 
 
 def collider_boxes(items, x0, y0):
@@ -2546,7 +2814,7 @@ def doors(items, lines, x0, y0, drives=None):
                                "n": [[round(float(pp[0]), 3), round(float(pp[1]), 3), 0.0] for pp in pts]})
         if spec.roof != "flat" and not narrow and _hash01(spec.seed, "fence") < FENCE_SHARE:
             rows.extend(_front_fence(spec, a, d, Le, f, A[kseg], D[kseg], L2[kseg], SHALF[kseg], gmin,
-                                     drives is not None and spec.wall and Le >= 7.0))
+                                     drives is not None and spec.wall and Le >= 7.0, (A, B, SHALF)))
         p = a + d * (Le * f) + out * DOOR_OUT_M
         gd = door_ground(spec, edge, Le * f, gmax) if spec.stoop else gmax     # a stoop's door: over its own ground
         base = gd + (STOOP_H if spec.stoop else 0.0) + (PORCH_DECK_M if spec.porch else 0.0)   # (the deck / stoop)
@@ -2612,11 +2880,14 @@ FENCE_SEG_M = 5.4
 FENCE_SHARE = 0.3           # detached houses with a fence along the front of their yard (hashed)
 FENCE_BACK_M = 3.2          # m from the road's edge (the back of the sidewalk)
 FENCE_MIN_YARD_M = 2.5      # the front yard at least this deep between the fence and the house
+FENCE_CLEAR_M = 2.0         # m every piece keeps from any road's edge (a house on a bend or a corner: its fence ran
+                            # along one road out across another, GitHub #105 Falcon Drive, Coquitlam)
 
 
-def _front_fence(spec, a, d, Le, f, A, D, L2, half, z, driveway):
+def _front_fence(spec, a, d, Le, f, A, D, L2, half, z, driveway, roads=None):
     """Prop rows of a fence along the front of a house's yard, parallel to the road at the back of the sidewalk,
-    a little wider than the house, with gaps for the path to the door and the driveway."""
+    a little wider than the house, with gaps for the path to the door and the driveway. roads: (starts (n, 2), ends
+    (n, 2), half widths (n,)) of the roads near: no piece within FENCE_CLEAR_M of their edges."""
     mid = a + d * (Le / 2)
     t = float(np.clip(((mid - A) * D).sum() / L2, 0, 1))
     q = A + t * D
@@ -2638,6 +2909,13 @@ def _front_fence(spec, a, d, Le, f, A, D, L2, half, z, driveway):
         if any(abs(sk - g) < FENCE_SEG_M / 2 + 0.6 for g in gaps):
             continue
         p = centre + dr * sk
+        if roads is not None and len(roads[0]):
+            ends = np.array([p - dr * (FENCE_SEG_M / 2), p, p + dr * (FENCE_SEG_M / 2)])
+            fast.require(0, "points_near_segments")
+            if np.asarray(fast._ef.points_near_segments(ends, np.ascontiguousarray(roads[0], np.float64),
+                                                        np.ascontiguousarray(roads[1], np.float64),
+                                                        np.asarray(roads[2], np.float64) + FENCE_CLEAR_M)).any():
+                continue
         rows.append([G_FENCE, round(float(p[0]), 2), round(float(p[1]), 2), round(float(z), 2), yaw, 1.0, 1.3,
                      round(_hash01(spec.seed, "fr", k), 3)])
     return rows
@@ -2795,7 +3073,8 @@ def far_tile(frame, tx, ty, md, ground, out_dir, vfs_dir, aid):
                            garages_xy=garage_rings(frame, [c.layers.get("infrastructure") for c in cds], x0, y0),
                            supports=support_rings(frame, [c.layers.get("infrastructure") for c in cds], x0, y0),
                            bridges_xy=bridge_lines(frame, [c.layers.get("roads") for c in cds], x0, y0),
-                           water_xy=water_rings(frame, [c.layers.get("water") for c in cds], x0, y0))
+                           water_xy=water_rings(frame, [c.layers.get("water") for c in cds], x0, y0),
+                           ml_roads_xy=road_lines(frame, [c.layers.get("roads") for c in cds], x0, y0))
     mesh = build(items, lite=True)
     data = {"v": 1}
     if mesh is not None:
@@ -2949,8 +3228,8 @@ def cell_footprints(key, layer):
         x = ll[:, 0] * 111320.0 * math.cos(math.radians(lat0))
         y = ll[:, 1] * 111320.0
         cross = np.r_[x[:-1] * y[1:] - x[1:] * y[:-1], 0.0]
-        C = np.r_[0.0, np.cumsum(cross)]
-        CX, CY = np.r_[0.0, np.cumsum(ll[:, 0])], np.r_[0.0, np.cumsum(ll[:, 1])]
+        C = np.concatenate(([0.0], np.cumsum(cross)))
+        CX, CY = np.concatenate(([0.0], np.cumsum(ll[:, 0]))), np.concatenate(([0.0], np.cumsum(ll[:, 1])))
         n = np.maximum(b - a, 1)
         last = np.maximum(b - 1, a)
         area = np.abs(C[last] - C[a] + x[last] * y[a] - x[a] * y[last]) / 2

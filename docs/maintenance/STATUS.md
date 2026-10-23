@@ -1,103 +1,84 @@
 # Maintenance status
 
-Updated: 2026-10-21. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/BeamNG.Earth).
+Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/BeamNG.Earth).
 
 ## Current state
 
-- Branch `codex/sables-road-water-quality` contains the maintenance changes
-  for upper roads over small underpasses and confined lake tiles/physics.
-  The Decathlon crossing is reproduced from real cached data. A frozen local
-  test kit is prepared. On 21 October, the player reported that the updated
-  version works better overall. This is informal gameplay feedback; no measured
-  collision drive, complete site checklist or new public release is claimed.
-  See [the evidence and limits](../research/2026-10-21-sables-underpass-water.md).
-  The change set is tracked in [fork PR #5](https://github.com/hashk014/BeamNG.Earth/pull/5).
-- Upstream has released `1.5.4-beta`. This fork candidate remains based on its
-  existing preview; it does not claim a complete integration of that release.
+- The `1.6.0-europe-preview.2-dev` source candidate integrates the complete upstream
+  release **v1.6.0-beta**, commit `b4c478d68795e441eef2ba9fb5981e74c7b11f49`.
+  Upstream `main` at refresh was `18f131c`; its two later commits only change
+  README/changelog text. This integration deliberately targets the released code.
+- Upstream features include experimental BeamMP, shared generation, GPU image work,
+  OSM lane/width metadata, painted terrain roads, raceways, polar elevation and
+  the RGBA terrain-mip correction. Upstream performance figures are not fork measurements.
+- Fork building footprints, courtyards, foundations/frontages, narrow-road widths,
+  fixed road profiles, Decathlon upper-road protection, bounded coast/lake tiles,
+  persistent cache location, rock/prop preferences and resumable area prefetch remain.
+- Integration regressions check the combined behavior. Ordinary grading retains
+  upstream road-level separation; repaired upper-road pieces blend as one surface.
+  Both source and worker-process geometry paths carry the fork frontage data.
+- The update check and checked-download updater remain scoped to this fork.
+- The only existing public fork binary is still **v1.5.1-europe-preview.1**.
+  The 1.6 update is source and local test-kit work, not a newly published executable.
+- Git author remains the existing human identity `hashk014`. Upstream authorship,
+  licence, roadmap and historical design notes are preserved.
 
-- `preview` contains the unreleased `1.5.3-europe-preview.2-dev` candidate, merged in
-  [fork PR #3](https://github.com/hashk014/BeamNG.Earth/pull/3), alongside the earlier
-  Linux-runtime and session-file recovery fixes (fork PRs #1 and #2).
-- `codex/maintenance-october` retains the batch's focused implementation history.
-- Building and sidewalk corrections are merged in [fork PR #4](https://github.com/hashk014/BeamNG.Earth/pull/4).
-  The focused upstream contribution is [PR #69](https://github.com/TecnaGamer/BeamNG.Earth/pull/69),
-  based directly on upstream `main`, with separate geometry tests and Windows/Linux CI.
-  It also fixes an existing Python-only pier-clearance exception, backported here.
-- Git author is the existing human account `hashk014`. User-facing work must never carry a Codex signature or AI co-author trailer; see the root `AGENTS.md`.
-- The issue inventory is recorded in [ISSUES.md](ISSUES.md). It distinguishes upstream state, implementation, automated checks and remaining game validation.
+## Issue review
 
-## Implemented in this batch
+The 23 October snapshot contains **159 issues, 129 open upstream**. Metadata for
+all issues is refreshed; existing assessments are retained, with focused reviews
+of release-related changes and the newest actionable reports. See [ISSUES.md](ISSUES.md).
+An upstream issue being open or closed is independent of fork validation.
 
-1. Integrated upstream 1.5.3 compatibility work while preserving fork geometry and traffic.
-2. Added a persistent custom download-cache location (#58, #61). See [storage guide](STORAGE.md).
-3. Added persisted rock and decorative-prop controls (#5, #14). In BeamNG.Earth settings,
-   open **World**, then **Rocks** or **Decorative doors and benches**. Existing items update
-   within the usual per-frame item budget; trees and traffic signs stay visible.
-4. Improved surface classification (#31): unknown metadata falls back to road class;
-   explicit loose surfaces stay loose and normalized concrete/chipseal tags are recognized.
-5. Added bounded low-land coastal protection (#8, #53). This is a partial, sampled fix;
-   see [water limits](WATER.md).
-6. Added bounded resumable area downloads (#10, #28, #30). Source caching is implemented;
-   independent map exports and a selection UI remain open. See [prefetch guide](PREFETCH.md).
-7. Follow-up from the local drive: retain grounded building wings, incomplete
-   parent bodies and mapped wall outlines; align foundations with graded terrain;
-   repair short sidewalk links and add bounded concrete frontages. See the
-   [urban geometry evidence and limits](../research/2026-10-20-urban-ground-contact.md).
+Priority follow-ups from the new 1.6 reports:
 
-Five requests have implemented corrections/features and ten have partial implementations,
-including the continuity subset of the sidewalk reports. The refreshed inventory contains
-77 issues, 54 open upstream after the 21 October refresh. Closed upstream reports
-remain distinct from fork implementation and gameplay validation.
+1. [#181](https://github.com/TecnaGamer/BeamNG.Earth/issues/181): slower building/road
+   loading than 1.5.4. Needs comparable server/frame traces; no performance fix claimed.
+2. [#180](https://github.com/TecnaGamer/BeamNG.Earth/issues/180): autodrive failure.
+   The issue body has no location; attached diagnostics have not been analyzed.
+3. [#179](https://github.com/TecnaGamer/BeamNG.Earth/issues/179): blurry/bright small
+   roads in Taipei. Needs identical camera/settings comparison with 1.5.5.
+4. [#171](https://github.com/TecnaGamer/BeamNG.Earth/issues/171): water flooding
+   Ingles Street, Melbourne. Existing lake/coast tests do not establish a fix there.
 
-## Next priorities
+## Validation and limits
 
-- Drive **TEST 5 - Decathlon - passage inferieur** in both directions, then check
-  the lower passage, portal faces and road-edge collision. Check **TEST 6 - Tanchet -
-  lac et mer** for bank spill, absolute lake level and marine rendering. The desktop
-  test shortcut now selects `runtime-sables-20261021`; earlier runtimes are retained.
+- Local Windows: **55 quick tests** and **361 generator tests** pass with no skips.
+- LuaJIT engine stubs: **54 files, 4,975 assertions** pass. The scoping test now
+  walks bytecode and nested prototypes without Unix `find` or a separate luajit executable.
+- Both JavaScript map-math suites pass. Python compilation passes.
+- [Windows/Linux CI passes at source merge 6eda732](https://github.com/hashk014/BeamNG.Earth/actions/runs/39989395375).
+  Each runner skips GPU equivalence (no GPU) and the separate CLI-LuaJIT check.
+- Integration suite: **268 passed, 1 skipped** (269 run), covering native, OSM,
+  process-worker, peer-wire, updater, imagery and protocol checks. The skip needs
+  a separate luajit executable; all Lua files run through Lupa. See [VALIDATION.md](VALIDATION.md).
+- All **43 synthetic server tests** and **10 restart tests** pass, including the
+  three historical Windows timing failures. The old baseline remains recorded
+  in [the recovery report](../research/2026-10-20-session-file-recovery.md).
+- The frozen 1.6 local runtime passes its isolated real-server handshake, and its
+  installed mod matches the prepared source tree. Source/BeamMP ZIP CRC checks pass.
+- Native `earthfast` is now required by upstream. Historical Python-only fallback
+  totals from 1.5.3 are not validation of this 1.6 candidate.
+- No BeamNG gameplay, multiplayer session, physical Steam Deck run, FPS gain,
+  original-issue location verification or automatic update from a hosted binary is claimed.
 
-- A frozen local in-game test kit, desktop shortcut and cached test locations are
-  ready on the development PC. See [the French handoff](INGAME_READY.md).
-  Native kernels and a real server handshake pass. The player reports that the
-  corrected version looks better. Exact locations, collisions and driving behavior
-  have not been systematically checked.
+## Local test handoff
 
-- Reproduce GPS/autodrive oscillation (#21/#38) and coarse/fine terrain overlap (#46).
-- Locate the exact annex with the player's floating-fragment report. The main
-  school body was complete during the diagnostic view; another wing was reported.
-- Validate this candidate in BeamNG 0.40: water boundaries, UI persistence, material physics,
-  collision at speed, dense-city frame times and offline drives.
+See [INGAME_READY.md](INGAME_READY.md) for the frozen runtime and existing shortcut.
+Recheck Decathlon in both directions, Tanchet water, saved World settings, building
+foundations and narrow roads after regeneration. Keep the previous runtimes for rollback.
+The player-reported overall improvement on 21 October applies to the older 1.5.3 kit,
+not to this 1.6 integration.
 
-## Verification and release boundaries
+## Contribution history
 
-- The 21 October candidate passes 286 generator tests, 31 native equivalence tests,
-  and 4,707 Lua assertions in 44 files. Its Python fallback passes 94 tests with
-  three native-only skips. The real candidate server handshake passes in isolation.
-  These results do not establish BeamNG rendering, driving or FPS gains.
-- The road/water implementation at `e35a75d` passes the full maintenance workflow
-  on Windows and Linux: [validated run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39584284913).
-  This includes quick/generator suites, all Lua stubs and both map-math suites.
-- Previous 20 October checks: 51 focused Python tests, 243 generator tests and 4,703 checks
-  across all 44 Lua engine-stub files pass. Two map-math JavaScript suites pass.
-- The consolidated `Fork maintenance checks` workflow runs these suites on Windows and Linux.
-  [The validated urban source run](https://github.com/hashk014/BeamNG.Earth/actions/runs/39480170941)
-  passed on both platforms. Review the latest run for any later code changes.
-- The extracted upstream branch passes 235 fallback tests and 266 native tests locally,
-  including 31 native equivalence checks. Its CI is [tracked separately](https://github.com/hashk014/BeamNG.Earth/actions/runs/39499801167).
-  On this fork, all 74 road, road-mesh and urban tests also pass with native kernels disabled.
-- Previous extended Windows server suite has three reproducible baseline timing failures, detailed in `docs/research/2026-10-20-session-file-recovery.md`.
-- No new standalone executable or public release has been produced for this maintenance batch.
-- Engine-stub tests and synthetic server tests do not establish gameplay, rendering, multiplayer behavior or FPS gains.
+Fork PRs #1 through #5 merged session recovery, Linux-runtime detection, storage/
+world/prefetch settings, urban geometry and Decathlon/inland-water corrections.
+[Upstream PR #69](https://github.com/TecnaGamer/BeamNG.Earth/pull/69) is still open
+and conflicting at this refresh; updating the fork does not merge or close it.
 
 ## Next session
 
-Read this page, `AGENTS.md`, `ISSUES.md` and `VALIDATION.md`. Refresh GitHub state,
-inspect the working tree, then continue the highest-impact work with supported evidence.
-
-```sh
-python -m pip install --only-binary=duckdb -r requirements-dev.txt
-python tools/maintenance.py issues
-python tools/maintenance.py test --suite quick --report dist/quick-validation.json
-python tools/maintenance.py test --suite generators --report dist/generator-validation.json
-python tools/run_lua_tests.py
-```
+Read this page, AGENTS.md, ISSUES.md and VALIDATION.md; refresh GitHub metadata
+before choosing another focused change. Keep source, automated, gameplay and release
+claims separate.

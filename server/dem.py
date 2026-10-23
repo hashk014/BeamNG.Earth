@@ -26,6 +26,7 @@ import logging
 import math
 import os
 import threading
+import time
 from collections import Counter, OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 
@@ -36,12 +37,30 @@ import cache as cachemod
 import dsmground
 import fast
 import netfetch
+import polardem
+import staging
 
 log = logging.getLogger("earthd.dem")
 
 TILE = 512                  # sampling grid tile size (Mapterhorn)
+MEM_TILES = 512             # decoded tiles kept per process (Dem's default; budget.py: fewer on a small machine)
+PROBE_WORKERS = 16          # Dem._ahead(): raw downloads started ahead of the walk down the zooms
 URGENT_WORKERS = 16         # Dem.urgent(): its own fetch threads (with the 16 shared: Mapterhorn's 32 at once)
-MAX_ZOOM = 15               # AWS stops at z15; nothing in v1 needs more
+# Decoded tiles mirrored on disk (<cache>/dem/decoded/...: float32 .npy), memory-mapped read-only: every server process
+# decoded the same tiles (WebP + Terrarium, ~3 ms a tile here, the z12 ground filter far more) and kept its own copy
+# (up to MEM_TILES MB a process, outside Python's traced memory); a mirrored tile is decoded once per machine and its
+# pages shared, dropped instead of swapped under memory pressure. At most MIRROR_MB on disk (the oldest go first);
+# older than MIRROR_MAX_AGE_S it is made again (Mapterhorn adds lidar areas). DECODED_VERSION: raise it when what a
+# tile holds changes (the decoding, the ground filter).
+MIRROR_MB = 1024
+MIRROR_MAX_AGE_S = 30 * 86400
+DECODED_VERSION = 2          # 2: tiles past the lidar's depth upsampled from its deepest tile, not z12; its holes
+                             # filled (fill_holes)
+MAX_ZOOM = 15               # AWS stops at z15 (the far field's zooms: zoom_for's default cap)
+# The near terrain and the road profiles read Mapterhorn's lidar one zoom deeper where it has it (the user, 2026-10-21:
+# "the terrain data gets smoothed ... sharper terrain features get lost": z16 is ~0.8 m a pixel at 48 N, z15 ~1.6 m, the
+# terrain's lattice 2 m); a z16 tile it lacks is its z15 parent upsampled (AWS has no z16). BNE_DEM_ZOOM=15: as before.
+FINE_ZOOM = int(os.environ.get("BNE_DEM_ZOOM", "16"))
 GLOBAL_ZOOM = 12            # Mapterhorn is complete on land up to here
 GROUND_MARGIN = 96          # px of the neighbouring z12 tiles the ground filter sees around a tile
 MAX_LAT = 85.0511287798     # Web Mercator limit
@@ -67,18 +86,62 @@ def zoom_for(lat, pixel_m, max_zoom=MAX_ZOOM):
 
 
 def decode_terrarium(data, size):
+    """float32 heights of a Terrarium tile (Rust: no RGB copy, no float temporaries; ~2/3 of a tile's decode, and
+    the worker processes each decode the DEM tiles they read)."""
     im = Image.open(io.BytesIO(data))
-    if fast._ef is not None and hasattr(fast._ef, "terrarium_heights") and im.mode in ("RGB", "RGBA") \
-            and im.size == (size, size):
-        # the same float32 heights from the decoded bytes (Rust): no RGB copy, no float temporaries (~2/3 of a
-        # tile's decode; the worker processes each decode the DEM tiles they read)
-        return fast._ef.terrarium_heights(np.asarray(im))
-    im = im.convert("RGB")
+    if im.mode not in ("RGB", "RGBA"):
+        im = im.convert("RGB")
     if im.size != (size, size):
         log.warning("unexpected DEM tile size %s (expected %d), resampling", im.size, size)
         im = im.resize((size, size), Image.BILINEAR)
-    a = np.asarray(im).astype(np.float32)
-    return a[..., 0] * 256.0 + a[..., 1] + a[..., 2] / 256.0 - 32768.0
+    fast.require(1, "decode_terrarium")
+    return fast._ef.terrarium_heights(np.ascontiguousarray(np.asarray(im)))
+
+
+HOLE_FILL_M = 600.0          # lidar holes up to ~2x this wide filled (a coarse tile's are whole city blocks: a
+HOLE_FILL_MAX_PX = 24        # Rotterdam district read 67 % zeros at z9-z11, ~1 % after 24 px; 2026-10-21); wider
+                             # zero areas are the sea
+
+
+def hole_px(z, y):
+    """fill_holes' rounds for tile row y at zoom z: HOLE_FILL_M in its pixels, 2 .. HOLE_FILL_MAX_PX."""
+    n = 2 ** z
+    lat = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * (y + 0.5) / n))))
+    px = 40075016.686 * math.cos(math.radians(lat)) / n / TILE
+    return int(min(HOLE_FILL_MAX_PX, max(2, round(HOLE_FILL_M / px))))
+
+
+def fill_holes(a, k=HOLE_FILL_MAX_PX):
+    """Lidar tile a with its small exact-0 holes filled from their surroundings. National lidar terrain models have
+    no ground under buildings, and Mapterhorn writes those cells as 0 (Rotterdam's AHN: 74 % of the zeros in
+    Spangen on land, 2026-10-21): a polder at -1.5 m got 0 m pits, and seacarve read them as the sea. Zeros take
+    the mean of their non-zero 4-neighbours, k rounds; zero areas wider than that (the sea, which reads exactly
+    0) keep 0, the band filled into their edge too. Pure."""
+    a = np.asarray(a, np.float32)
+    hole = a == 0
+    if not hole.any() or hole.all():
+        return a
+    out = a.copy()
+    todo = hole.copy()
+    for _ in range(k):
+        if not todo.any():
+            break
+        p = np.pad(out, 1, mode="edge")
+        v = np.pad(~todo, 1, mode="edge").astype(np.float32)
+        s = (p[:-2, 1:-1] * v[:-2, 1:-1] + p[2:, 1:-1] * v[2:, 1:-1] + p[1:-1, :-2] * v[1:-1, :-2]
+             + p[1:-1, 2:] * v[1:-1, 2:])
+        n = v[:-2, 1:-1] + v[2:, 1:-1] + v[1:-1, :-2] + v[1:-1, 2:]
+        got = todo & (n > 0)
+        out[got] = s[got] / n[got]
+        todo &= ~got
+    if todo.any():
+        # what is left is a wide zero area: it and the rim filled into it stay 0
+        wide = todo.copy()
+        for _ in range(k):
+            p = np.pad(wide, 1)
+            wide = wide | ((p[:-2, 1:-1] | p[2:, 1:-1] | p[1:-1, :-2] | p[1:-1, 2:]) & hole)
+        out[wide] = 0.0
+    return out
 
 
 def _resize(a, size):
@@ -93,7 +156,7 @@ class Dem:
 
     # mem_tiles: decoded float32 512² tiles kept in memory (1 MB each; 512 per docs/V1_2_DESIGN.md §4.3).
     # fetcher: the server's netfetch.Fetcher (shared rate limits); None = a Fetcher of its own.
-    def __init__(self, cache_dir, fetch_workers=16, mem_tiles=512, fetcher=None):
+    def __init__(self, cache_dir, fetch_workers=16, mem_tiles=None, fetcher=None):
         self.cache_dir = cache_dir
         self.fetcher = fetcher if fetcher is not None else netfetch.Fetcher()
         self.fetcher.register_chain("dem", (MAPTERHORN["url"], AWS["url"]))
@@ -101,8 +164,12 @@ class Dem:
         # The urgent lane (urgent()): the anchor's first block after a teleport needs ~10 tiles and waited ~33 s
         # behind hundreds queued by the far field, the road plans and the ground ahead (2026-10-16; alone 0.9 s).
         self.urgent_pool = ThreadPoolExecutor(URGENT_WORKERS, thread_name_prefix="dem-urgent")
+        # raw Mapterhorn downloads started ahead of need (_ahead): a fresh place's tiles walked z16 -> z15 -> z14 ->
+        # z13 -> z12 and its 8 neighbours one request at a time, ~1 s each before the CDN has them (2026-10-22)
+        self.probe_pool = ThreadPoolExecutor(PROBE_WORKERS, thread_name_prefix="dem-probe")
+        self._probing = {}              # (z, x, y) -> Future of its raw download
         self._local = threading.local()
-        self.mem_tiles = mem_tiles
+        self.mem_tiles = MEM_TILES if mem_tiles is None else mem_tiles
         self._lru = OrderedDict()       # (z, x, y) -> float32 [TILE, TILE]
         self._inflight = {}             # (z, x, y) -> Future
         self._lock = threading.Lock()
@@ -110,6 +177,16 @@ class Dem:
         # (z, x, y) -> the provider that served the tile ("mapterhorn" / "aws-terrarium"; None: no
         # data, zeros), for the data credits (credits.py). A few bytes per tile ever loaded.
         self.served = {}
+
+    def polar(self):
+        """The polar caps' DEM (made on first use)."""
+        p = getattr(self, "_polar", None)
+        if p is None:
+            with self._lock:
+                p = getattr(self, "_polar", None)
+                if p is None:
+                    p = self._polar = polardem.PolarDem(self.cache_dir, self.fetcher)
+        return p
 
     def _count(self, what):
         with self._lock:
@@ -149,13 +226,43 @@ class Dem:
         tmp = f"{path}.{threading.get_ident()}.tmp"
         with open(tmp, "wb") as f:
             f.write(data)
-        os.replace(tmp, path)
+        staging.replace_cached(tmp, path)
         self.disk.wrote(path, len(data))
         if os.path.exists(miss):            # an expired marker: the host has data there now
             os.remove(miss)
             self.disk.forget(miss)
         self._count(src["name"] + ":net")
         return data
+
+    def _ahead(self, keys):
+        """Start the raw Mapterhorn downloads of keys at once (on disk afterwards, or a .404 marker); one request
+        per tile however many ask. Returns their futures (result: the bytes or None; errors are left for the caller's
+        own _download to meet)."""
+        futs = []
+        with self._lock:
+            for k in keys:
+                f = self._probing.get(k)
+                if f is None:
+                    f = self._probing[k] = self.probe_pool.submit(self._probe, k)
+                futs.append(f)
+        return futs
+
+    def _probe(self, k):
+        try:
+            return self._download(MAPTERHORN, *k)
+        except netfetch.FetchError:
+            return None
+        finally:
+            with self._lock:
+                self._probing.pop(k, None)
+
+    @staticmethod
+    def _wait(futs):
+        for f in futs:
+            try:
+                f.result()
+            except Exception:
+                pass
 
     def prefetch(self, keys):
         """Download the Mapterhorn tiles (z, x, y) that are not on disk yet into the disk cache, at netfetch
@@ -224,8 +331,109 @@ class Dem:
                     found = True
         return _resize(mosaic, TILE) if found else None
 
-    def _load_tile(self, key):
+    # --- the decoded mirror (MIRROR_MB) ----------------------------------------------------------
+    def _mirror_path(self, key):
         z, x, y = key
+        return os.path.join(self.cache_dir, "decoded", f"v{DECODED_VERSION}", f"g{int(self.ground_filter)}", str(z),
+                            str(x), f"{y}.npy")
+
+    def _mirror_get(self, key):
+        """A tile from the decoded mirror (a read-only view of its memory map), or None."""
+        if MIRROR_MB <= 0:
+            return None
+        path = self._mirror_path(key)
+        try:
+            if time.time() - os.path.getmtime(path) > MIRROR_MAX_AGE_S:
+                return None
+            a = np.asarray(np.load(path, mmap_mode="r", allow_pickle=False))
+        except (OSError, ValueError, EOFError):
+            return None
+        if a.shape != (TILE, TILE) or a.dtype != np.float32:
+            return None
+        self._count("dem:mirror")
+        return a
+
+    def _mirror_put(self, key, a):
+        """a written to the mirror and read back from it (shared by the processes), or None when it cannot be."""
+        path = self._mirror_path(key)
+        tmp = f"{path}.{os.getpid()}.{threading.get_ident()}.tmp"
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(tmp, "wb") as f:
+                np.save(f, np.ascontiguousarray(a, np.float32), allow_pickle=False)
+            staging.replace_cached(tmp, path)
+        except OSError as e:
+            log.debug("dem mirror %s: %s", path, e)
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            return None
+        with Dem._mirror_lock:
+            Dem._mirror_written += TILE * TILE * 4
+            prune = Dem._mirror_written >= MIRROR_MB * 1e6 / 8
+            if prune:
+                Dem._mirror_written = 0
+        if prune:
+            self._mirror_prune()
+        return self._mirror_get(key)
+
+    _mirror_written = 0
+    _mirror_lock = threading.Lock()
+
+    def _mirror_prune(self):
+        """The mirror cut back to 80 % of MIRROR_MB, the least recently written first."""
+        files = []
+        for dirpath, _, names in os.walk(os.path.join(self.cache_dir, "decoded")):
+            for n in names:
+                if n.endswith(".npy"):
+                    p = os.path.join(dirpath, n)
+                    try:
+                        st = os.stat(p)
+                    except OSError:
+                        continue
+                    files.append((st.st_mtime, st.st_size, p))
+        total = sum(f[1] for f in files)
+        if total <= MIRROR_MB * 1e6:
+            return
+        for _, size, p in sorted(files):
+            try:
+                os.remove(p)
+            except OSError:
+                continue
+            total -= size
+            if total <= 0.8 * MIRROR_MB * 1e6:
+                break
+
+    def _partial(self):
+        """This load used a stand-in (a failed fetch): its tile is not mirrored."""
+        self._local.partial = True
+
+    def _load_tile(self, key):
+        """A decoded tile: from the mirror, else made (_make_tile) and, when it is all Mapterhorn's data as it will
+        stay (no failover, no fetch failed on the way), written to the mirror."""
+        got = self._mirror_get(key)
+        if got is not None:
+            self.served.setdefault(key, MAPTERHORN["name"])
+            return got
+        prev = getattr(self._local, "partial", False)
+        self._local.partial = False
+        partial = True
+        try:
+            a = self._make_tile(key)
+            partial = self._local.partial
+        finally:
+            self._local.partial = prev or partial
+        if not partial and a is not None and self.served.get(key) == MAPTERHORN["name"] and MIRROR_MB > 0:
+            got = self._mirror_put(key, a)
+            if got is not None:
+                return got
+        return a
+
+    def _make_tile(self, key):
+        z, x, y = key
+        if z > MAX_ZOOM:                # (most places have no z16: its z15 parent asked alongside)
+            self._ahead([(MAX_ZOOM, x >> (z - MAX_ZOOM), y >> (z - MAX_ZOOM))])
         try:
             data = self._download(MAPTERHORN, z, x, y)
             a = None if data is None else self._decode(MAPTERHORN, z, x, y, data)
@@ -233,6 +441,11 @@ class Dem:
             # Mapterhorn cannot be asked (circuit open, rate limited, failing): the same tile from AWS,
             # as it is (with AWS bathymetry: a failure says nothing about where the sea is).
             self._count("mapterhorn:failover")
+            self._partial()
+            if z > MAX_ZOOM:            # (AWS stops at z15: its tile upsampled)
+                a = self._from_ancestor(z, x, y, MAX_ZOOM)
+                self.served[key] = MAPTERHORN["name"]
+                return a
             try:
                 a = self._aws_tile(z, x, y)
             except netfetch.FetchError as e2:
@@ -241,12 +454,27 @@ class Dem:
             return np.zeros((TILE, TILE), np.float32) if a is None else a
         if a is not None:
             self.served[key] = MAPTERHORN["name"]
-            if self.ground_filter and z == GLOBAL_ZOOM and not self._lidar(x, y):
-                a = self._ground12(x, y, a)
+            if self.ground_filter:
+                if z == GLOBAL_ZOOM:
+                    lidar = self._lidar(x, y)
+                    a = fill_holes(a, hole_px(z, y)) if lidar else self._ground12(x, y, a)
+                elif z > GLOBAL_ZOOM:
+                    a = fill_holes(a, hole_px(z, y))        # lidar: no ground under buildings
+                else:
+                    d = GLOBAL_ZOOM - z                     # a coarse tile over lidar: its holes too
+                    if self._lidar((x << d) + (1 << d) // 2, (y << d) + (1 << d) // 2):
+                        a = fill_holes(a, hole_px(z, y))
+            return a
+        if z > MAX_ZOOM:                # (no lidar this deep here: the z15 tile upsampled)
+            a = self._from_ancestor(z, x, y, MAX_ZOOM)
+            self.served[key] = MAPTERHORN["name"]
             return a
         if self.ground_filter and z > GLOBAL_ZOOM:
-            # no lidar here: the surface model's ground, upsampled
-            a = self._from_ground12(z, x, y)
+            # deeper than the lidar goes here (Rotterdam: AHN to z14, z15 404): its deepest tile upsampled; no
+            # lidar at all: the surface model's ground, upsampled. z12 under lidar gave 19 m steps and 0.5 m stairs
+            # on city roads (Pleinweg's grade 1.5 % from z12, 0.4 % from z14; 2026-10-21)
+            az = self._deepest_lidar(z, x, y)
+            a = self._from_ancestor(z, x, y, az) if az else self._from_ground12(z, x, y)
             self.served[key] = MAPTERHORN["name"]
             return a
         try:
@@ -265,13 +493,14 @@ class Dem:
     # --- the ground under the surface model ------------------------------
     def _lidar(self, x, y):
         """Has Mapterhorn deeper tiles (national lidar: a terrain model already) under z12 tile (x, y)? Two of
-        its z13 children asked (404s are remembered)."""
+        its z13 children asked, at once (404s are remembered)."""
+        self._wait(self._ahead([(GLOBAL_ZOOM + 1, 2 * x, 2 * y), (GLOBAL_ZOOM + 1, 2 * x + 1, 2 * y + 1)]))
         for cx, cy in ((2 * x, 2 * y), (2 * x + 1, 2 * y + 1)):
             try:
                 if self._download(MAPTERHORN, GLOBAL_ZOOM + 1, cx, cy) is not None:
                     return True
             except netfetch.FetchError:
-                pass
+                self._partial()
         return False
 
     def _raw12(self, x, y):
@@ -283,6 +512,7 @@ class Dem:
         try:
             data = self._download(MAPTERHORN, GLOBAL_ZOOM, x, y)
         except netfetch.FetchError:
+            self._partial()
             return None
         if data is None:
             return np.zeros((TILE, TILE), np.float32)
@@ -291,6 +521,9 @@ class Dem:
     def _ground12(self, x, y, a):
         """z12 tile (x, y) (elevations a) with the surface objects taken out, its neighbours as context."""
         m = GROUND_MARGIN
+        n12 = 2 ** GLOBAL_ZOOM
+        self._wait(self._ahead([(GLOBAL_ZOOM, (x + dx) % n12, y + dy) for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+                                if (dx or dy) and 0 <= y + dy < n12]))
         big = np.empty((TILE + 2 * m, TILE + 2 * m), np.float32)
         big[m:m + TILE, m:m + TILE] = a
         for dy in (-1, 0, 1):
@@ -315,11 +548,29 @@ class Dem:
         self._count("dem:ground12")
         return np.ascontiguousarray(g[m:m + TILE, m:m + TILE])
 
+    def _deepest_lidar(self, z, x, y):
+        """The deepest zoom between GLOBAL_ZOOM + 1 and z - 1 at which Mapterhorn has the ancestor of tile (z, x, y)
+        (national lidar), else None (404s are remembered, so a miss is asked once per tile)."""
+        self._wait(self._ahead([(az, x >> (z - az), y >> (z - az)) for az in range(z - 1, GLOBAL_ZOOM, -1)]))
+        for az in range(z - 1, GLOBAL_ZOOM, -1):
+            d = z - az
+            try:
+                if self._download(MAPTERHORN, az, x >> d, y >> d) is not None:
+                    return az
+            except netfetch.FetchError:
+                self._partial()
+                return None
+        return None
+
     def _from_ground12(self, z, x, y):
         """Tile (z, x, y), z > 12, bilinear from its z12 ancestor's ground (edges held at the ancestor's)."""
-        d = z - GLOBAL_ZOOM
+        return self._from_ancestor(z, x, y, GLOBAL_ZOOM)
+
+    def _from_ancestor(self, z, x, y, z0):
+        """Tile (z, x, y) bilinear from its ancestor at zoom z0 (as loaded: z12's ground; edges held at the ancestor's)."""
+        d = z - z0
         ax, ay = x >> d, y >> d
-        key = (GLOBAL_ZOOM, ax, ay)
+        key = (z0, ax, ay)
         with self._lock:
             anc = self._lru.get(key)
         if anc is None:
@@ -351,6 +602,10 @@ class Dem:
             yield
         finally:
             self._local.urgent = prev
+
+    def is_urgent(self):
+        """Whether this thread is in urgent() (a helper it starts carries the lane over: grading._plan_missing)."""
+        return getattr(self._local, "urgent", False)
 
     def tiles(self, keys, progress=None):
         """Fetch many tiles concurrently (deduplicated across callers)."""
@@ -405,16 +660,23 @@ class Dem:
 
     # --- sampling --------------------------------------------------------
     def sample(self, lat, lon, zoom, progress=None):
-        """Bilinear elevation (m) at arbitrary lat/lon arrays from zoom-level tiles.
-        Points beyond the Web Mercator limit (|lat| > 85.05) return 0."""
-        if zoom > MAX_ZOOM:
-            raise ValueError(f"zoom {zoom} > {MAX_ZOOM}")
+        """Bilinear elevation (m) at arbitrary lat/lon arrays from zoom-level tiles. Points from polardem.FROM_LAT
+        (84.9 deg) on (Mapterhorn's heights stop short of 85, Web Mercator at 85.05) come from the Copernicus DEM
+        (polardem.py; 0 m on the Arctic Ocean)."""
+        if zoom > max(MAX_ZOOM, FINE_ZOOM):
+            raise ValueError(f"zoom {zoom} > {max(MAX_ZOOM, FINE_ZOOM)}")
         lat = np.asarray(lat, dtype=np.float64)
         lon = np.asarray(lon, dtype=np.float64)
         shape = np.broadcast(lat, lon).shape
         lat, lon = np.broadcast_to(lat, shape).ravel(), np.broadcast_to(lon, shape).ravel()
         out = np.zeros(lat.shape, np.float64)
-        valid = np.abs(lat) <= MAX_LAT
+        valid = np.abs(lat) < polardem.FROM_LAT
+        if not valid.all():                 # the polar caps: the Copernicus DEM (polardem.py)
+            px = 40075016.686 * math.cos(math.radians(MAX_LAT)) / (TILE * 2 ** zoom)
+            try:
+                out[~valid] = self.polar().sample(lat[~valid], lon[~valid], px)
+            except (netfetch.FetchError, OSError, ValueError) as e:
+                log.warning("polar DEM unavailable (%s): sea level there", e)
         if not valid.any():
             return out.reshape(shape)
         lat, lon = lat[valid], lon[valid]
@@ -455,11 +717,6 @@ class Dem:
             mosaic[r:r + TILE, c:c + TILE] = got[k]
         fx -= tx0 * TILE
         fy -= ty0 * TILE
-        ix = np.clip(np.floor(fx).astype(np.int64), 0, nx * TILE - 2)
-        iy = np.clip(np.floor(fy).astype(np.int64), 0, ny * TILE - 2)
-        wx = np.clip(fx - ix, 0.0, 1.0)
-        wy = np.clip(fy - iy, 0.0, 1.0)
-        v00, v10 = mosaic[iy, ix], mosaic[iy, ix + 1]
-        v01, v11 = mosaic[iy + 1, ix], mosaic[iy + 1, ix + 1]
-        out[valid] = (v00 * (1 - wx) + v10 * wx) * (1 - wy) + (v01 * (1 - wx) + v11 * wx) * wy
+        fast.require(55, "bilinear_grid")
+        out[valid] = fast._ef.bilinear_grid(mosaic, fx, fy)
         return out.reshape(shape)

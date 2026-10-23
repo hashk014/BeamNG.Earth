@@ -44,6 +44,20 @@ class CoastalTilesTest(unittest.TestCase):
         self.assertEqual(seatiles.plan(FlatFrame(), 20, 10, wet, radius=1000,
                                       dry_at=lambda la, lo, size: np.zeros(np.shape(la), bool)), baseline)
 
+    def test_upstream_ground_callback_refines_low_land_without_a_map_callback(self):
+        wet = lambda la, lo, size: np.asarray(lo) >= 37
+        tiles = seatiles.plan(FlatFrame(), 20, 10, wet, radius=1000,
+                              ground_at=lambda la, lo, size: np.full(np.shape(la), -4.0))
+        self.assertTrue(tiles)
+        self.assertTrue(all(t.x - t.size / 2 >= 37 for t in tiles))
+
+    def test_mapped_dry_land_is_protected_when_ground_callback_disagrees(self):
+        wet = lambda la, lo, size: np.asarray(lo) >= 37
+        dry = lambda la, lo, size: np.ones(np.shape(la), bool)
+        baseline = seatiles.plan(FlatFrame(), 20, 10, wet, radius=1000, dry_at=dry)
+        self.assertEqual(seatiles.plan(FlatFrame(), 20, 10, wet, radius=1000, dry_at=dry,
+                                      ground_at=lambda la, lo, size: np.full(np.shape(la), 3.0)), baseline)
+
     def test_refinement_is_bounded_and_deterministic(self):
         wet = mock.Mock(side_effect=lambda la, lo, size: np.floor(np.asarray(lo) / 17).astype(int) % 2 == 0)
         dry = lambda la, lo, size: np.ones(np.shape(la), bool)

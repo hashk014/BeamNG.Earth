@@ -1,5 +1,32 @@
 # Test en jeu prêt sur ce PC
 
+## Mise à jour du 23 octobre 2026
+
+Le raccourci **Tester BeamNG Earth** lance maintenant la copie figée
+`dist/ingame-ready/runtime-160-20261023`, version **1.6.0-europe-preview.2-dev**.
+Elle intègre la release upstream **1.6.0-beta** et les améliorations du fork.
+Le mod installé correspond à cette copie ; ses fichiers ont été comparés.
+
+L'ancien mod, les fichiers de réglages présents, la base des mods et les anciens
+manifestes/lanceur sont sauvegardés dans `backups/update-160-20261023-184632`.
+Les runtimes précédents sont conservés. Le jeu n'a pas été lancé.
+Le serveur de cette copie répond en protocole 4 / format 4 avec la bonne version,
+dans un dossier utilisateur et un cache temporaires isolés. Ce contrôle exclut
+le chargement du monde, le rendu et la conduite.
+
+Fermer l'ancien jeu et serveur, puis utiliser le même raccourci. Il reste configuré
+en DirectX 11 et demande directement la carte Earth. Les favoris de test existants
+restent disponibles, notamment **TEST 5 - Decathlon - passage inferieur** et
+**TEST 6 - Tanchet - lac et mer**. Vérifier aussi les rues étroites, les bâtiments,
+les réglages World et une navigation GPS avant les longs trajets.
+
+Les nouveaux signalements 1.6 sur le chargement, l'autodrive, le rendu des petites
+routes et l'eau à Melbourne sont encore à reproduire. Aucune session BeamMP,
+mesure de FPS ou comparaison de temps de chargement n'a été faite sur ce fork.
+La préparation de petites zones faite en octobre avec l'ancien kit ne prouve
+pas que toutes les nouvelles sources OSM ou tous les trajets 1.6 sont en cache.
+Voir [le rapport de mise à jour](../research/2026-10-23-upstream-160-integration.md).
+
 ## Mise à jour du 21 octobre 2026
 
 Le même raccourci **Tester BeamNG Earth** lance maintenant la copie figée

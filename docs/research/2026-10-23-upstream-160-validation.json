@@ -1,0 +1,146 @@
+{
+  "upstreamTag": "v1.6.0-beta",
+  "upstreamCommit": "b4c478d68795e441eef2ba9fb5981e74c7b11f49",
+  "sourceMerge": "6eda7323ac6ce56c5d2ec22b8e16f6d4f9059104",
+  "forkVersion": "1.6.0-europe-preview.2-dev",
+  "suites": {
+    "quick": {
+      "suite": "quick",
+      "time": "2026-10-23T16:40:47.797675+00:00",
+      "tests": 55,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    "generator": {
+      "suite": "generators",
+      "time": "2026-10-23T16:40:45.533005+00:00",
+      "tests": 361,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "scope": "offline Python tests; no game or FPS validation"
+    },
+    "integration": {
+      "suite": "integration",
+      "time": "2026-10-23T16:44:22.398727+00:00",
+      "tests": 269,
+      "failures": [],
+      "errors": [],
+      "skipped": [
+        {
+          "test": "test_protocol_agreement.ConstantsTest.test_default_err_and_exact_level_in_lua",
+          "reason": "luajit not installed"
+        }
+      ],
+      "scope": "offline Python tests; no game or FPS validation"
+    }
+  },
+  "lua": {
+    "files": 54,
+    "checksPassed": 4975,
+    "failed": 0
+  },
+  "syntheticServer": {
+    "passed": 43,
+    "failures": 0,
+    "seconds": 403.4
+  },
+  "restart": {
+    "passed": 10,
+    "failures": 0,
+    "seconds": 81.2
+  },
+  "runtime": {
+    "manifestFiles": 210,
+    "protocol": 4,
+    "format": 4,
+    "startupHandshakeSeconds": 0.86,
+    "gameLaunched": false
+  },
+  "scope": "Automated source checks and local installation; no BeamNG gameplay, multiplayer or FPS validation.",
+  "ci": {
+    "sourceCommit": "6eda7323ac6ce56c5d2ec22b8e16f6d4f9059104",
+    "url": "https://github.com/hashk014/BeamNG.Earth/actions/runs/39989395375",
+    "result": "success",
+    "platforms": {
+      "ubuntu-24.04": {
+        "quick": {
+          "suite": "quick",
+          "time": "2026-10-23T16:45:35.211017+00:00",
+          "tests": 55,
+          "failures": [],
+          "errors": [],
+          "skipped": [],
+          "scope": "offline Python tests; no game or FPS validation"
+        },
+        "generator": {
+          "suite": "generators",
+          "time": "2026-10-23T16:45:57.116545+00:00",
+          "tests": 361,
+          "failures": [],
+          "errors": [],
+          "skipped": [],
+          "scope": "offline Python tests; no game or FPS validation"
+        },
+        "integration": {
+          "suite": "integration",
+          "time": "2026-10-23T16:49:58.591066+00:00",
+          "tests": 269,
+          "failures": [],
+          "errors": [],
+          "skipped": [
+            {
+              "test": "test_colormatch.DetectTest.test_gpu_matches_cpu",
+              "reason": "no GPU here (earthfast.gpu_name)"
+            },
+            {
+              "test": "test_protocol_agreement.ConstantsTest.test_default_err_and_exact_level_in_lua",
+              "reason": "luajit not installed"
+            }
+          ],
+          "scope": "offline Python tests; no game or FPS validation"
+        }
+      },
+      "windows-2025": {
+        "quick": {
+          "suite": "quick",
+          "time": "2026-10-23T16:45:48.379312+00:00",
+          "tests": 55,
+          "failures": [],
+          "errors": [],
+          "skipped": [],
+          "scope": "offline Python tests; no game or FPS validation"
+        },
+        "generator": {
+          "suite": "generators",
+          "time": "2026-10-23T16:46:28.058840+00:00",
+          "tests": 361,
+          "failures": [],
+          "errors": [],
+          "skipped": [],
+          "scope": "offline Python tests; no game or FPS validation"
+        },
+        "integration": {
+          "suite": "integration",
+          "time": "2026-10-23T16:52:16.383707+00:00",
+          "tests": 269,
+          "failures": [],
+          "errors": [],
+          "skipped": [
+            {
+              "test": "test_colormatch.DetectTest.test_gpu_matches_cpu",
+              "reason": "no GPU here (earthfast.gpu_name)"
+            },
+            {
+              "test": "test_protocol_agreement.ConstantsTest.test_default_err_and_exact_level_in_lua",
+              "reason": "luajit not installed"
+            }
+          ],
+          "scope": "offline Python tests; no game or FPS validation"
+        }
+      }
+    }
+  }
+}

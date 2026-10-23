@@ -17,6 +17,10 @@ SUITES = {
                    "test_european_traffic", "test_urban_frontages", "test_grading", "test_tunnels",
                    "test_fixed_road_profiles", "test_sables_crossings", "test_inland_water_bounds"],
     "server": ["test_server", "test_restart", "test_protocol_agreement"],
+    "integration": ["test_approaches", "test_blockworker", "test_peerwork", "test_selfupdate", "test_updates",
+                    "test_fast", "test_osmtags", "test_roadwidth", "test_terrainpatch", "test_pools", "test_budget",
+                    "test_bridgetypes", "test_netfetch", "test_mapdata", "test_bc7", "test_colormatch", "test_polardem",
+                    "test_protocol_agreement"],
 }
 
 

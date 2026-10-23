@@ -27,6 +27,8 @@ def main():
             parser.error("test must be in mod/tests")
         lua = LuaRuntime()
         lua.globals().arg = lua.table_from({0: path.name})
+        lua.globals().BNGE_TEST_LUA_FILES = lua.table_from(
+            [str(p) for p in sorted((ROOT / "mod" / "beamng_earth" / "lua").rglob("*.lua"))])
         lua.execute(path.read_text(encoding="utf-8"))
         return 0
     try:

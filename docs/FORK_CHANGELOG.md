@@ -1,5 +1,20 @@
 # Fork changelog
 
+## 1.6.0-europe-preview.2-dev (unreleased source, 23 October 2026)
+
+- Integrates upstream v1.6.0-beta through a merge, preserving published history.
+- Keeps the fork's complex buildings, narrow streets, Decathlon crossing, bounded
+  water, cache location, rock/prop controls and resumable area-prefetch work.
+- Combines the upstream terrain-following/OSM pipeline with fork corner
+  triangulation, fixed vertical profiles and frontage geometry on both worker paths.
+- Preserves upstream bridge approaches, twin/underwater tunnels and terrain mip fixes.
+- Adapts the Lua scoping regression to Windows and embedded LuaJIT.
+- Refreshes issue tracking, including new 1.6 loading, autodrive, small-road and
+  Melbourne water reports. Those reports are not claimed fixed.
+- Extends Windows/Linux maintenance CI with integration checks.
+- Automated validation and remaining game checks are recorded in
+  [maintenance status](maintenance/STATUS.md). No new public executable is claimed.
+
 ## Urban geometry follow-up, unreleased
 
 - Keeps grounded wings beside inferred road passages and retains the body of

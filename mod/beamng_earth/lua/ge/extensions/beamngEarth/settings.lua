@@ -440,7 +440,17 @@ local function playerHeading()
   local ok, dir = pcall(function() return veh:getDirectionVector() end)
   if not ok or not dir then return nil end
   if math.abs(dir.x) + math.abs(dir.y) < 1e-6 then return nil end
-  return (math.deg(math.atan2(dir.x, dir.y)) + 360) % 360
+  local h = math.deg(math.atan2(dir.x, dir.y))
+  -- from true north (the map's up): the frame's +y is north only at the anchor
+  local core = ext('beamngEarth_core')
+  local st = core and core._state and core._state() or nil
+  local a = st and st.anchor
+  if a and a.northAt then
+    local okP, p = pcall(function() return veh:getPosition() end)
+    local okN, nx, ny = pcall(a.northAt, a, okP and p and p.x or 0, okP and p and p.y or 0)
+    if okN and tonumber(nx) and tonumber(ny) then h = h - math.deg(math.atan2(nx, ny)) end
+  end
+  return (h + 360) % 360
 end
 
 -- The map's tiles as files (the game's UI browser cancels every http request, even to 127.0.0.1): list
@@ -485,6 +495,14 @@ function M.mapTiles(list)
 end
 
 -- What the map polls every second: the player, the places, the tile endpoint, the credits.
+-- The other players of a BeamMP session for the map's arrows ({ { name, lat, lon, h } }), nil outside one.
+local function otherPlayers()
+  local okB, inMP = pcall(function() return require('beamngEarth/beammp').inSession() end)
+  if not okB or not inMP then return nil end
+  local ok, list = pcall(function() return require('beamngEarth/mpsession').others() end)
+  return ok and list or nil
+end
+
 function M.uiMapState()
   local core = ext('beamngEarth_core')
   local st = core and core._state and core._state() or nil
@@ -495,6 +513,7 @@ function M.uiMapState()
     connected = net.isConnected(), connection = net.state(),
     mapPort = net.isConnected() and st and st.mapPort or nil,
     player = (pl and pl.lat) and { lat = pl.lat, lon = pl.lon, heading = playerHeading(), speed = pl.speed } or nil,
+    others = otherPlayers(),
     places = ps.places, recent = ps.recent, cannotGo = ps.cannotGo,
     attribution = core and core.attribution and core.attribution() or '',
     creditsByArea = core and core.creditsByArea and core.creditsByArea() or nil,
@@ -551,7 +570,105 @@ function M.uiMapParse(text)
   return { lat = lat, lon = lon }
 end
 
-function M.mapOpened(on) mapOpen = on and true or false end
+-- A controller on the map (the user, 2026-10-20: "make sure our map is controller compatible; see how the default map
+-- handles controllers"): as the stock big map does (freeroam/bigMapMode.lua), its own action map "BigMap" is on while
+-- the map is open, with the player's bindings for it (stock pads: the right stick pans, the triggers zoom, A selects;
+-- X and Y come to EarthMap.vue as the menus' own 'UINavigation' events). Its
+-- actions call freeroam_bigMapMode's functions by name; while our map is open those go to EarthMap.vue
+-- (guihooks 'BeamNGEarthMapInput'). The stock map pauses the game; ours does not (the GPS autodrive drives on), so the
+-- player's own driving controls are held off instead (the triggers would rev and brake the car), the car's inputs let
+-- go first (a pedal held when the map opened would stay down), with the stock map's blocked groups.
+M.MAP_INPUT_EVENT = 'BeamNGEarthMapInput'
+M.MAP_BLOCKED = { 'gameCam', 'vehicleTeleporting', 'funStuff', 'freeCam', 'physicsControls',
+  'vehicleSwitching', 'walkingMode', 'vehicleMenues', 'aiControls', 'photoMode', 'couplers', 'missionPopup',
+  'resetPhysics', 'miniMap' }
+-- ... and every driving action by name: the action filter's groups have none ('vehicle' named no group, so the sticks
+-- and triggers still drove the car behind the map, the user 2026-10-21): the actions of these categories
+-- (core/input/actions/vehicle.json, the vehicles' own input_actions), else this list
+M.MAP_BLOCKED_CATS = { vehicle = true, vehicle_specific = true }
+M.MAP_BLOCKED_DRIVING = { 'accelerate', 'brake', 'accelerate_brake', 'steering', 'steer_left', 'steer_right', 'clutch',
+  'parkingbrake', 'parkingbrake_temporary', 'parkingbrake_toggle', 'shiftUp', 'shiftDown', 'gearR', 'gearN', 'gear1',
+  'gear2', 'gear3', 'gear4', 'gear5', 'gear6', 'gear7', 'gear8', 'horn', 'activateStarterMotor', 'toggleShifterMode' }
+
+-- The actions the map holds off: the stock map's groups and the driving actions (M.MAP_BLOCKED_CATS).
+function M.mapBlockedActions(filter, actions)
+  local out = filter.createActionTemplate(M.MAP_BLOCKED)
+  local seen = {}
+  for _, a in ipairs(out) do seen[a] = true end
+  local all = actions and actions.getActiveActions and actions.getActiveActions()
+  local n = 0
+  for name, a in pairs(type(all) == 'table' and all or {}) do
+    if type(a) == 'table' and M.MAP_BLOCKED_CATS[a.cat] and not seen[name] then
+      out[#out + 1], seen[name], n = name, true, n + 1
+    end
+  end
+  if n == 0 then
+    for _, name in ipairs(M.MAP_BLOCKED_DRIVING) do
+      if not seen[name] then out[#out + 1], seen[name] = name, true end
+    end
+  end
+  return out
+end
+local mapCtl = nil      -- the stock map's functions while ours has its controls
+
+local function mapInput(kind, a, b)
+  local gh = rawget(_G, 'guihooks')
+  if gh then gh.trigger(M.MAP_INPUT_EVENT, { kind = kind, a = a, b = b }) end
+end
+
+function M.mapControls(on)
+  local bm = rawget(_G, 'freeroam_bigMapMode')
+  local filter = rawget(_G, 'core_input_actionFilter')
+  if on and not mapCtl and bm then
+    mapCtl = { bm = bm }
+    for _, f in ipairs({ 'camMoveController', 'camMoveKey', 'zoomInOut', 'controllerZoom', 'zoom', 'onControllerSelect',
+        'onChangeUiFilter' }) do mapCtl[f] = bm[f] end
+    bm.camMoveController = function(upDown, v) mapInput(upDown and 'move_ud' or 'move_lr', v) end
+    bm.camMoveKey = function(v, dir) mapInput('move_key', v, dir) end
+    bm.zoomInOut = function(v, zoomIn) mapInput('zoom_trigger', v, zoomIn) end
+    bm.controllerZoom = function(v) mapInput('zoom_axis', v) end
+    bm.zoom = function(v) mapInput('zoom_axis', v) end
+    bm.onControllerSelect = function() mapInput('select') end
+    bm.onChangeUiFilter = function(v, dir) mapInput('filter', v, dir) end
+    local veh = rawget(_G, 'getPlayerVehicle') and getPlayerVehicle(0)
+    if veh then
+      pcall(veh.queueLuaCommand, veh, "input.event('throttle', 0, 2) input.event('brake', 0, 2) "
+        .. "input.event('steering', 0, 2) input.event('clutch', 0, 2)")
+    end
+    if filter and filter.createActionTemplate then
+      pcall(function()
+        filter.setGroup('beamngEarthMapBlocked', M.mapBlockedActions(filter, rawget(_G, 'core_input_actions')))
+        filter.addAction(0, 'beamngEarthMapBlocked', true)
+      end)
+    end
+    -- X and Y: the stock pads bind them to the vehicle triggers too (triggerAction1 / 2, gameplay.json), whose action map
+    -- takes the press before the menus' (cui_action_2 / cui_context never came on a Steam Deck, 2026-10-21): while
+    -- the map is open those two go to the map as X and Y, any other trigger as before
+    local vt = rawget(_G, 'core_vehicleTriggers') or (rawget(_G, 'extensions') and extensions.core_vehicleTriggers)
+    if vt and vt.onActionEvent then
+      mapCtl.vt, mapCtl.vtOrig = vt, vt.onActionEvent
+      vt.onActionEvent = function(id, value, ...)
+        if id == 1 then mapInput('pad_x', value) return end
+        if id == 2 then mapInput('pad_y', value) return end
+        return mapCtl and mapCtl.vtOrig and mapCtl.vtOrig(id, value, ...)
+      end
+    end
+    pcall(pushActionMap, 'BigMap')
+    local am = scenetree.findObject('BigMapActionMap')
+    if am then am.trapHandledEvents = false end      -- (as the stock map: nothing else gets stuck behind it)
+  elseif not on and mapCtl then
+    if mapCtl.vt then mapCtl.vt.onActionEvent = mapCtl.vtOrig end
+    for f, fn in pairs(mapCtl) do if f ~= 'bm' and f ~= 'vt' and f ~= 'vtOrig' then mapCtl.bm[f] = fn end end
+    mapCtl = nil
+    pcall(popActionMap, 'BigMap')
+    if filter and filter.addAction then pcall(filter.addAction, 0, 'beamngEarthMapBlocked', false) end
+  end
+end
+
+function M.mapOpened(on)
+  mapOpen = on and true or false
+  M.mapControls(mapOpen)
+end
 function M.isMapOpen() return mapOpen end
 
 -- Go to a UI screen (route): extensions.ui_router.navigate, BeamNG 0.40's way (its patch notes: "Use
@@ -639,7 +756,24 @@ function M.feedback(what)
   return { ok = true }
 end
 
+-- X and Y on the map are the menus' cui_action_2 / cui_context; the UI turns each menu action's map on only for an
+-- element that says it takes it, and off again on a route or scope change (with the map open both were off on a Steam
+-- Deck, 2026-10-21; turned on, X worked once, then the reopened map had them off). Kept on while the map is open.
+M.MAP_MENU_ACTIONS = { cui_action_2 = true, cui_context = true }
+M.MAP_MENU_CHECK_S = 0.25
+local menuCheckAt = 0
+local function keepMapMenuActions()
+  local b = rawget(_G, 'core_input_bindings')
+  if not (b and b.getMenuActionStates and b.setMenuActionsEnabled) or os.clock() < menuCheckAt then return end
+  menuCheckAt = os.clock() + M.MAP_MENU_CHECK_S
+  local states = b.getMenuActionStates() or {}
+  for name in pairs(M.MAP_MENU_ACTIONS) do
+    if states[name] == false then pcall(b.setMenuActionsEnabled, M.MAP_MENU_ACTIONS) return end
+  end
+end
+
 function M.onUpdate()
+  if mapOpen then keepMapMenuActions() end
   if feedbackQ then
     feedbackQ.frames = feedbackQ.frames - 1
     if feedbackQ.frames <= 0 then
