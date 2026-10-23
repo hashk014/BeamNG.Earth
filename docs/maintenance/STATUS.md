@@ -95,6 +95,13 @@ not to this 1.6 integration.
 
 ## Contribution history
 
+The [23 October coherence audit](../research/2026-10-23-upstream-pr-coherence.md)
+confirms upstream PRs #34 and #35 remain merged. PR #187 is mergeable, has green
+upstream Windows/Linux CI, and passes 84 focused offline tests in a synthetic
+merge with `dev` at `b15991e`. PR #69 is 224 commits behind main with four
+conflicted files; its old fallback/native CI strategy must be updated for the
+current native-required pipeline. Neither open PR has maintainer review yet.
+
 Fork PRs #1 through #5 merged session recovery, Linux-runtime detection, storage/
 world/prefetch settings, urban geometry and Decathlon/inland-water corrections.
 [Upstream PR #69](https://github.com/TecnaGamer/BeamNG.Earth/pull/69) is still open

@@ -27,7 +27,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -377,7 +377,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Retain short sidewalk links and join coincident/small gaps with compatible heights; add bounded concrete frontages. Sidewalk placement and all terrain profiles are not solved.",
-        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction."
+        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -453,7 +453,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Retain short sidewalk links and join coincident/small gaps with compatible heights; add bounded concrete frontages. Sidewalk placement and all terrain profiles are not solved.",
-        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "Urban continuity regressions pass; upstream PR #69. Augusta/Australia source locations and floating-dip behavior still require game reproduction. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -693,7 +693,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
@@ -873,7 +873,7 @@
         "status": "partial-this-batch",
         "priority": "P1",
         "notes": "Grounded street-passage wings, incomplete parent bodies, common part datums and graded foundations are implemented. Mapped wall outlines and bounded paved frontages are retained.",
-        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified."
+        "validation": "20 urban regressions and two real Sables sectors rebuild offline. The player reports an improved appearance, without identifying the original annex or a complete collision check. Upstream PR #69 proposes the focused patch; original report locations remain unverified. Rebased through upstream 1.6.0 in the 23 October source integration; original gameplay locations remain unverified. Upstream PR #69 coherence audit on 23 October: four merge conflicts and obsolete Python-fallback CI; refresh against current native-required upstream before merging. See 2026-10-23-upstream-pr-coherence.md."
       }
     },
     {
