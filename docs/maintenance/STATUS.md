@@ -4,6 +4,13 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Current state
 
+- The experimental source now includes upstream `dev` through `b15991e` (23 October):
+  priority terrain/photo work, earlier block following, deferred high-speed photos,
+  shared road plans, bounded auxiliary caches and BeamMP hold/vehicle fixes. See the
+  [streaming integration report](../research/2026-10-23-streaming-stability.md).
+  Shared plans include the fork's upper-road protection; old cache schemas rebuild.
+  These changes address reported loading costs, but do not establish that #181,
+  #190 or #191 is fixed in gameplay. The snapshot is newer than the upstream release.
 - Source now offers a [persistent road-surface choice](ROAD_RENDERING.md) through
   both launchers. Terrain remains the default; mesh selects the existing legacy
   pipeline. Local and remote workers receive the selected mode, and shared jobs
@@ -16,7 +23,7 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 - The `1.6.0-europe-preview.2-dev` source candidate integrates the complete upstream
   release **v1.6.0-beta**, commit `b4c478d68795e441eef2ba9fb5981e74c7b11f49`.
   Upstream `main` at refresh was `18f131c`; its two later commits only change
-  README/changelog text. This integration deliberately targets the released code.
+  README/changelog text. The subsequent experimental update is pinned to `b15991e`.
 - Upstream features include experimental BeamMP, shared generation, GPU image work,
   OSM lane/width metadata, painted terrain roads, raceways, polar elevation and
   the RGBA terrain-mip correction. Upstream performance figures are not fork measurements.
@@ -34,15 +41,18 @@ Updated: 2026-10-23. Fork: [hashk014/BeamNG.Earth](https://github.com/hashk014/B
 
 ## Issue review
 
-The refreshed 23 October snapshot contains **164 issues, 134 open upstream**. Metadata for
+The refreshed 23 October snapshot contains **167 issues, 137 open upstream**. Metadata for
 all issues is refreshed; existing assessments are retained, with focused reviews
 of release-related changes and the newest actionable reports. See [ISSUES.md](ISSUES.md).
 An upstream issue being open or closed is independent of fork validation.
 
 Priority follow-ups from the new 1.6 reports:
 
-1. [#181](https://github.com/TecnaGamer/BeamNG.Earth/issues/181): slower building/road
-   loading than 1.5.4. Needs comparable server/frame traces; no performance fix claimed.
+1. [#181](https://github.com/TecnaGamer/BeamNG.Earth/issues/181),
+   [#190](https://github.com/TecnaGamer/BeamNG.Earth/issues/190) and
+   [#191](https://github.com/TecnaGamer/BeamNG.Earth/issues/191): slow loading/freezes.
+   Upstream streaming changes are integrated in experimental source. Comparable
+   server/frame traces and gameplay at the reported speeds remain necessary.
 2. [#180](https://github.com/TecnaGamer/BeamNG.Earth/issues/180): autodrive failure.
    The issue body has no location; attached diagnostics have not been analyzed.
 3. [#179](https://github.com/TecnaGamer/BeamNG.Earth/issues/179): blurry/bright small
@@ -58,6 +68,9 @@ Priority follow-ups from the new 1.6 reports:
 
 ## Validation and limits
 
+- Current streaming integration results are recorded in
+  [the integration report](../research/2026-10-23-streaming-stability.md).
+  The totals below describe the preceding candidate, not the newer snapshot.
 - Road-rendering source patch: **62 quick tests**, **361 generator tests** and
   **275 integration tests** pass on Windows; one additional CLI-LuaJIT check skips.
   All **54 Lua files**, both map-math suites and compilation pass. See

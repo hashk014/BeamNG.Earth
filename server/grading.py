@@ -431,7 +431,7 @@ class Grader:
         self.keeps = {}         # cell key -> [(xy (k, 2), half width)]: the UNGRADED roads' carriageways
         self.opens = {}         # cell key -> [(xy (k, 2), Spec)]: the tunnels' open sections (roads in the open)
         self.crossovers = {}    # cell key -> Plans of surface roads crossing an explicitly mapped tunnel
-
+        self.shared = None      # plancache.PlanCache: the cells' plans shared with the server's other processes
         self.wet = None         # wet(lat, lon) -> water depth (m): tunnels under water are left out, as
                                 # roads.TunnelProfiles leaves them (their "open" sections graded a dam across the river:
                                 # the Maastunnel's bed raised from -6 m to -0.4 m, storm-ace's GitHub #85)
@@ -453,13 +453,34 @@ class Grader:
             return got
         if failed is not None and time.monotonic() - failed < RETRY_S:
             return []               # offline: no block waits on the same failing fetch again
+        shared, mine = (self.shared.claim(key) if self.shared is not None else (None, False))
+        try:
+            got = shared if shared is not None else self._make_cell(key)
+            if got is None:
+                return []
+            if mine:
+                self.shared.store(key, *got)
+        finally:
+            if mine:
+                self.shared.release(key)
+        plans, keeps, covers, opens, crossovers = got
+        with self.lock:
+            self.cells.setdefault(key, plans)
+            self.keeps.setdefault(key, keeps)
+            self.covers.setdefault(key, covers)
+            self.opens.setdefault(key, opens)
+            self.crossovers.setdefault(key, crossovers)
+            return self.cells[key]
+
+    def _make_cell(self, key):
+        """(plans, keeps, covers, opens, crossovers), or None when roads could not be fetched."""
         try:
             feats = self.md.cell(key, layers=("roads",), kind="demand").layers.get("roads")
         except Exception as e:      # no road data: ungraded (asked again after RETRY_S)
             log.debug("grading: roads of %s: %s: %s", key, type(e).__name__, e)
             with self.lock:
                 self.failed[key] = time.monotonic()
-            return []
+            return None
         plans = []
         if feats is not None and len(feats):
             specs = roadsmod.road_specs(feats, None, self.widths)
@@ -527,13 +548,7 @@ class Grader:
             opens = [(xy, spec) for _f, spec, xy, _z, k in secs if k == 0]
         else:
             covers, opens, keeps, crossovers = [], [], [], []
-        with self.lock:
-            self.cells.setdefault(key, plans)
-            self.keeps.setdefault(key, keeps)
-            self.covers.setdefault(key, covers)
-            self.opens.setdefault(key, opens)
-            self.crossovers.setdefault(key, crossovers)
-            return self.cells[key]
+        return plans, keeps, covers, opens, crossovers
 
     def _surface_crossings(self, feats, key, road_plans):
         """The surface road owns its carriageway above an explicit tunnel, even when a coarse DEM

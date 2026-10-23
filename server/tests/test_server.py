@@ -126,12 +126,23 @@ class ServerHarness(unittest.TestCase):
         self.loop.call_soon_threadsafe(self.loop.stop)
         self.thread.join(10)
         self.loop.close()
+        # Cancelling asyncio tasks does not stop their executor work. Join all
+        # producers before removing this harness's private filesystem root.
+        for pool in (self.server.ahead_pool, self.server.ui_pool, self.server.ground_pool,
+                     self.server.delta_pool):
+            pool.shutdown(wait=True, cancel_futures=True)
         self.server.tile_pool.shutdown(wait=True)
         self.server.hm_pool.shutdown(wait=True)
+        self.server.base_pool.shutdown(wait=True)
+        self.server.urgent_base_pool.shutdown(wait=True)
         if self.server.horizon_pool is not None:
             self.server.horizon_pool.shutdown(wait=True)
         if self.server.imagery is not None:
             self.server.imagery.close()
+            self.server.imagery.pool.shutdown(wait=True, cancel_futures=True)
+        owned = Path(self.tmp.name).resolve()
+        self.assertEqual(Path(self.server.user_dir).resolve(), owned)
+        self.assertTrue(Path(self.server.cache_dir).resolve().is_relative_to(owned))
         self.tmp.cleanup()
 
     def conn(self):
