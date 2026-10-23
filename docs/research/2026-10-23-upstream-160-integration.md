@@ -74,8 +74,14 @@ All three historical Windows timing failures pass in this run:
 is made. The earlier baseline report remains unchanged.
 
 The [Windows/Linux maintenance workflow](https://github.com/hashk014/BeamNG.Earth/actions/runs/39989395375)
-runs quick, generators, integration, Lua and map math against the source merge.
-Refer to its exact commit when interpreting the CI result.
+passed on both Windows 2025 (7 min 17 s) and Ubuntu 24.04 (4 min 53 s)
+against source merge `6eda732`. On each runner, quick has 55 passes, generators
+has 361 passes, integration has 267 passes and two skips, and all 54 Lua files
+pass 4,975 assertions. The runners skip GPU/CPU equivalence because no usable
+GPU is available and the protocol test requiring an external luajit executable.
+Both checks ran locally, except the external-luajit test. Final follow-up commits
+update documentation and include the evidence in the source archive; those
+archives passed local CRC and content checks.
 
 ## Local installation and rollback
 

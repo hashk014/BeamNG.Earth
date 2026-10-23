@@ -28,7 +28,9 @@ widths stay authoritative. Polygon triangulation no longer shadows the terrain
 quantization argument when the newer mesh follows the terrain lattice.
 
 The maintenance workflow runs quick, generators, integration, all Lua stubs and both
-map-math suites on Windows and Linux. The separate full synthetic server run passes all **43 tests** and the restart
+map-math suites on Windows and Linux. [Both platforms passed at source merge 6eda732](https://github.com/hashk014/BeamNG.Earth/actions/runs/39989395375).
+Each runner has two integration skips: no usable GPU for equivalence and no
+external luajit executable. The GPU equivalence check passes on the local PC. The separate full synthetic server run passes all **43 tests** and the restart
 module passes all **10 tests** (403.4 s and 81.2 s respectively). All three
 historical Windows timing failures named in the 20 October recovery report pass
 in this run after the upstream changes. This is one run, not proof that every

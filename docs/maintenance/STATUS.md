@@ -47,6 +47,8 @@ Priority follow-ups from the new 1.6 reports:
 - LuaJIT engine stubs: **54 files, 4,975 assertions** pass. The scoping test now
   walks bytecode and nested prototypes without Unix `find` or a separate luajit executable.
 - Both JavaScript map-math suites pass. Python compilation passes.
+- [Windows/Linux CI passes at source merge 6eda732](https://github.com/hashk014/BeamNG.Earth/actions/runs/39989395375).
+  Each runner skips GPU equivalence (no GPU) and the separate CLI-LuaJIT check.
 - Integration suite: **268 passed, 1 skipped** (269 run), covering native, OSM,
   process-worker, peer-wire, updater, imagery and protocol checks. The skip needs
   a separate luajit executable; all Lua files run through Lupa. See [VALIDATION.md](VALIDATION.md).
