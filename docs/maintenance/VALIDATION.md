@@ -1,5 +1,37 @@
 # Validation ledger
 
+## Road rendering choice and worker consistency (2026-10-23)
+
+The patch keeps terrain roads as the default, adds a saved startup choice, and
+passes the chosen mode into local and remote workers. Before the fix, focused
+regressions reproduced missing mode validation and helper-pool selection. This
+does not establish the visual symptoms of upstream #179 as fixed.
+
+| Command from the repository Python environment | Windows result | Scope |
+| --- | --- | --- |
+| `python tools/maintenance.py test --suite quick --report dist/road-rendering-quick-validation.json` | 62 passed | Includes seven new preference tests through fresh source/launcher processes and isolated config roots |
+| `python tools/maintenance.py test --suite generators --report dist/road-rendering-generator-validation.json` | 361 passed | Existing terrain/mesh road generation, neighboring geometry and fork regressions |
+| `python tools/maintenance.py test --suite integration --report dist/road-rendering-integration-validation.json` | 275 passed, 1 skipped (276 run) | Includes seven new shared-mode regressions and actual spawned workers with an opposite environment |
+| `python tools/run_lua_tests.py --report dist/road-rendering-lua-validation.json` | 54 files passed | Engine stubs, not gameplay |
+| Both `node mod/tests/test_mapmath.mjs` and `node server/tests/test_mapmath.mjs` | Passed | Map math |
+| `python -m compileall -q server launcher.py start.py tools` | Passed | Syntax/import bytecode compilation |
+
+Total: 698 Python tests passed, one additional check skipped because a separate
+`luajit` executable is unavailable. Existing peer socket tests emit resource
+warnings; there are no test failures. The full slow server/restart suites were
+not repeated for this patch; their earlier results below remain historical.
+
+The focused upstream branch at `99c295b` passes
+[Windows and Linux worker checks](https://github.com/hashk014/BeamNG.Earth/actions/runs/39993299377),
+covering peer work, block-worker parity and road generation against upstream
+`main` at `18f131c`. It is proposed as
+[upstream PR #187](https://github.com/TecnaGamer/BeamNG.Earth/pull/187), independently
+of the fork's preference and maintenance documentation.
+
+This is source validation. No new public executable, original-location gameplay,
+two-player driving, visual quality, physical collision or FPS improvement is
+claimed. The [road-mode guide](ROAD_RENDERING.md) defines the outstanding comparison.
+
 ## Upstream 1.6.0 integration (2026-10-23)
 
 Target: upstream release `v1.6.0-beta` at `b4c478d68795e441eef2ba9fb5981e74c7b11f49`.

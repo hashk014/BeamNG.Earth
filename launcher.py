@@ -32,7 +32,7 @@ import subprocess
 import sys
 import threading
 import time
-from server import storage
+from server import roadconfig, storage
 
 FROZEN = getattr(sys, "frozen", False)
 ROOT = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.abspath(__file__))
@@ -823,6 +823,7 @@ def main():
         return
     ap = argparse.ArgumentParser(description="Start the BeamNG.Earth world server and BeamNG.drive.")
     storage.add_arguments(ap)
+    roadconfig.add_arguments(ap)
     ap.add_argument("--no-game", action="store_true", help="only the server (start the game yourself)")
     ap.add_argument("--quick-play", action="store_true", help="load BeamNG.Earth directly when starting the game")
     ap.add_argument("--no-gcpatch", action="store_true", help="Linux: start the game without the grass patch")
@@ -839,7 +840,9 @@ def main():
     ap.add_argument("--no-terminal", action="store_true", help="Linux: no terminal window (log to a file)")
     ap.add_argument("extra", nargs=argparse.REMAINDER, help="after --: more options for the server")
     args = ap.parse_args()
-    if storage.configure(args, ap):
+    storage_done = storage.configure(args, ap)
+    rendering_done = roadconfig.configure(args, ap)
+    if storage_done or rendering_done:
         return
     if IS_WIN:
         windows_console()
@@ -876,6 +879,7 @@ def run(args):
     import install
     title(f"BeamNG.Earth {install.version()}")
     row("Download cache", storage.cache_dir())
+    row("Road surfaces", roadconfig.mode() + " (change with --road-rendering terrain|mesh; restart required)")
     wine = under_wine()
     build = "native"
     if args.user_dir:

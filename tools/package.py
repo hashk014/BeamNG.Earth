@@ -28,7 +28,7 @@ FILES = ["install.py", "start.py", "launcher.py", "run_server.bat", "run_server.
 TREES = ["mod/beamng_earth", "server"]
 FILES += ["docs/maintenance/" + name for name in
           ("STATUS.md", "ISSUES.md", "issues.json", "VALIDATION.md", "STORAGE.md", "PREFETCH.md", "WATER.md",
-           "INGAME_READY.md")]
+           "INGAME_READY.md", "PLAN_PRODUCTION.md", "ROAD_RENDERING.md")]
 TOOLS = ["tools/reports.py", "tools/render_comparison.py", "tools/prefetch.py"]
 SKIP_DIRS = {"__pycache__", "tests", ".git", "backups", "probes", "research", ".venv", "dist"}
 SKIP_EXT = {".pyc", ".pyo", ".log", ".swp"}

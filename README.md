@@ -19,6 +19,11 @@ See [maintenance status](docs/maintenance/STATUS.md), [issue tracking](docs/main
 and the [geometry comparison](docs/COMPARISON.md). Automated checks are separate
 from BeamNG gameplay, multiplayer and performance validation.
 
+The source candidate also offers a [saved road-surface choice](docs/maintenance/ROAD_RENDERING.md):
+`python start.py --road-rendering mesh` selects the legacy overlays;
+`--road-rendering terrain` keeps the 1.6 default. Restart the server and re-enter
+the level after changing it. This option is not in the old public binary.
+
 ## Features (working today)
 **The world**
 - The whole planet at 1:1 scale on real elevation: national lidar where it exists (Mapterhorn: much of

@@ -1,6 +1,6 @@
 {
   "repository": "TecnaGamer/BeamNG.Earth",
-  "refreshedAt": "2026-10-23T16:59:52.299247+00:00",
+  "refreshedAt": "2026-10-23T17:11:29.664064+00:00",
   "issues": [
     {
       "labels": [],
@@ -2000,10 +2000,10 @@
       "updatedAt": "2026-10-22T21:41:16Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/150",
       "review": {
-        "status": "needs-review",
+        "status": "reporter-retracted",
         "priority": "P2",
-        "notes": "",
-        "validation": "not assessed"
+        "notes": "The reporter edited the body to retract the original wrong-drive claim. Installation and game user directories are distinct; the report does not establish an installer defect.",
+        "validation": "Live issue body read 23 October; upstream issue is still open. Keep folder-selection work tracked under #173."
       }
     },
     {
@@ -2296,10 +2296,10 @@
       "updatedAt": "2026-10-23T11:22:01Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/173",
       "review": {
-        "status": "needs-review",
-        "priority": "P2",
-        "notes": "",
-        "validation": "not assessed"
+        "status": "planned-installation-choice",
+        "priority": "P1",
+        "notes": "Report requests correcting the automatically selected game/user folder. Existing --user-dir is available; a clear persistent selection flow remains planned.",
+        "validation": "Body and empty discussion read 23 October. No installation-path implementation in the road-rendering change."
       }
     },
     {
@@ -2365,13 +2365,13 @@
       "number": 179,
       "state": "OPEN",
       "title": "[Map issue] The 1.6.0 new update make alleys & small streets look awful",
-      "updatedAt": "2026-10-23T16:24:45Z",
+      "updatedAt": "2026-10-23T17:09:03Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/179",
       "review": {
-        "status": "needs-reproduction",
+        "status": "partial-source-choice",
         "priority": "P1",
-        "notes": "New 1.6 report at 25.05901, 121.55196: painted alley surfaces look blurry/bright; a second player confirms small-road appearance.",
-        "validation": "Body and discussion read 23 October. Compare identical camera/settings in 1.5.5 and integrated 1.6; no appearance fix claimed."
+        "notes": "Persistent terrain/mesh startup selection implemented; terrain remains the default. Compute workers now receive the chosen mode, with mismatched shared jobs rejected (upstream PR #187).",
+        "validation": "Launcher persistence, actual spawned-worker overrides, helper pools, cache separation and group rejection are covered automatically. Taipei visual comparison, collisions and performance remain unverified; no public binary update."
       }
     },
     {
@@ -2455,13 +2455,29 @@
       "number": 185,
       "state": "OPEN",
       "title": "[Bug]",
-      "updatedAt": "2026-10-23T16:54:03Z",
+      "updatedAt": "2026-10-23T17:02:54Z",
       "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/185",
       "review": {
         "priority": "P1",
         "status": "needs-reproduction",
         "notes": "MKAD report combines uneven/impassable roads with floating or in-road trees, buildings, signals and boxes.",
         "validation": "The issue body names a long road without exact affected coordinates. Locate individual defects and split their causes before implementation; the production plan adds no fix."
+      }
+    },
+    {
+      "labels": [
+        "enhancement"
+      ],
+      "number": 186,
+      "state": "OPEN",
+      "title": "[Idea / suggestion]",
+      "updatedAt": "2026-10-23T17:09:52Z",
+      "url": "https://github.com/TecnaGamer/BeamNG.Earth/issues/186",
+      "review": {
+        "status": "planned-content",
+        "priority": "P2",
+        "notes": "Requests country-appropriate fences, bus stops, shops, gas stations and signs. Existing roadmap covers related content; no implementation in this batch.",
+        "validation": "Body read 23 October. Requires source data and focused content work after release stability."
       }
     }
   ]

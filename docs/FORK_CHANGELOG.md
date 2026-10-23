@@ -2,6 +2,12 @@
 
 ## 1.6.0-europe-preview.2-dev (unreleased source, 23 October 2026)
 
+- Adds a persistent startup choice of terrain or legacy mesh road surfaces, with
+  the 1.6 terrain mode retained as the default. See [the guide](maintenance/ROAD_RENDERING.md).
+- Carries the selected road mode into local workers and compute helpers, separates
+  helper pools/cache entries by mode and rejects mismatched group jobs.
+- Small-road appearance still requires the documented game comparison; no visual
+  or performance improvement is claimed from the new automated checks.
 - Integrates upstream v1.6.0-beta through a merge, preserving published history.
 - Keeps the fork's complex buildings, narrow streets, Decathlon crossing, bounded
   water, cache location, rock/prop controls and resumable area-prefetch work.

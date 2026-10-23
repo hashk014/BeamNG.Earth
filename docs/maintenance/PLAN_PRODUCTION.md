@@ -217,6 +217,20 @@ Le développeur produit le patch et les preuves automatiques. Le responsable de 
 
 ## 10. Le prochain travail, concrètement
 
+### Avancement du 23 octobre : choix du rendu des routes
+
+Le [choix persistant terrain/mesh](ROAD_RENDERING.md) est implémenté dans les
+lanceurs source. Le mode terrain reste le défaut. Le mode choisi est transmis
+aux workers locaux et distants ; les participants incompatibles ne partagent
+pas leurs résultats. Le correctif de partage est proposé à upstream dans la
+[PR #187](https://github.com/TecnaGamer/BeamNG.Earth/pull/187).
+
+Les tests de persistance et de processus séparés sont automatisés. Ce travail
+prépare la comparaison de #179 ; il ne valide ni l'apparence, ni les collisions,
+ni une amélioration de performances. La recette en jeu reste à effectuer et
+les portes de sortie de la section 7 restent ouvertes. Le binaire public est
+toujours Preview 1 ; voir [VALIDATION.md](VALIDATION.md) pour les preuves source.
+
 1. Nommer le responsable du lot 1 et figer le périmètre de la prochaine release publique.
 2. Qualifier le candidat 1.6 existant sur les parcours critiques et capturer les mesures de chargement.
 3. Pour le premier chantier visuel, traiter #179 avec une comparaison des deux modes existants. Garder le correctif petit et démontrable.
