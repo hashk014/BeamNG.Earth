@@ -50,8 +50,11 @@ Priority follow-ups from the new 1.6 reports:
 - Integration suite: **268 passed, 1 skipped** (269 run), covering native, OSM,
   process-worker, peer-wire, updater, imagery and protocol checks. The skip needs
   a separate luajit executable; all Lua files run through Lupa. See [VALIDATION.md](VALIDATION.md).
-- Full synthetic server/restart checks are recorded separately from the earlier
-  Windows timing baseline in [the recovery report](../research/2026-10-20-session-file-recovery.md).
+- All **43 synthetic server tests** and **10 restart tests** pass, including the
+  three historical Windows timing failures. The old baseline remains recorded
+  in [the recovery report](../research/2026-10-20-session-file-recovery.md).
+- The frozen 1.6 local runtime passes its isolated real-server handshake, and its
+  installed mod matches the prepared source tree. Source/BeamMP ZIP CRC checks pass.
 - Native `earthfast` is now required by upstream. Historical Python-only fallback
   totals from 1.5.3 are not validation of this 1.6 candidate.
 - No BeamNG gameplay, multiplayer session, physical Steam Deck run, FPS gain,

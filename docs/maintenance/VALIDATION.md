@@ -28,8 +28,17 @@ widths stay authoritative. Polygon triangulation no longer shadows the terrain
 quantization argument when the newer mesh follows the terrain lattice.
 
 The maintenance workflow runs quick, generators, integration, all Lua stubs and both
-map-math suites on Windows and Linux. CI results and the separate full synthetic
-server/restart run are recorded in the accompanying integration report when complete.
+map-math suites on Windows and Linux. The separate full synthetic server run passes all **43 tests** and the restart
+module passes all **10 tests** (403.4 s and 81.2 s respectively). All three
+historical Windows timing failures named in the 20 October recovery report pass
+in this run after the upstream changes. This is one run, not proof that every
+Windows scheduler/filesystem condition is resolved.
+
+The frozen runtime passes a real protocol 4 / format 4 handshake in isolated
+user/cache directories and reports the correct fork version. Its installed mod
+matches the frozen mod tree. The source and BeamMP ZIP archives pass CRC checks.
+See [the integration report](../research/2026-10-23-upstream-160-integration.md)
+for the CI reference and the local handoff.
 
 These are automated source checks. They do not establish BeamNG rendering, physical
 collision, multiplayer interoperability, FPS or real loading-time gains. The new
