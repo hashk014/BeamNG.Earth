@@ -255,16 +255,10 @@ def _confluences(rivers):
                 continue
             a, b = big["centre"][:-1], big["centre"][1:]
             hw = (big["width"][:-1] + big["width"][1:]) / 4.0
-            if fast._ef is not None and hasattr(fast._ef, "points_near_segments") and len(rv["centre"]):
+            if len(rv["centre"]):
+                fast.require(1, "points_near_segments")
                 f64 = lambda x: np.ascontiguousarray(x, np.float64)     # noqa: E731
                 rv["into"] |= fast._ef.points_near_segments(f64(rv["centre"]), f64(a), f64(b), f64(hw))
-                continue
-            p = rv["centre"][:, None, :]
-            ab = (b - a)[None, :, :]
-            L2 = np.maximum((ab ** 2).sum(-1), 1e-9)
-            t = np.clip(((p - a[None]) * ab).sum(-1) / L2, 0.0, 1.0)
-            d = np.hypot(*(p - (a[None] + t[..., None] * ab)).transpose(2, 0, 1))
-            rv["into"] |= (d < hw[None, :]).any(axis=1)
 
 
 def _nodes(frame, ids, kind, pts, water_at, dem_at, outline_at, level_at=None, road_clear=None):
@@ -342,13 +336,17 @@ def _widths(frame, kind, pts, outline_at):
     nrm = np.stack([-t[:, 1], t[:, 0]], -1)
     steps = np.arange(WIDTH_STEP_M / 2, WIDTH_MAX_M / 2, WIDTH_STEP_M)
     here = np.asarray(outline_at(*_lalo(frame, pts)), bool)
+    hi = np.flatnonzero(here)           # (the probes across only from the nodes in an outline: 0 elsewhere)
     side = []
     for sgn in (1.0, -1.0):
-        q = pts[:, None, :] + sgn * nrm[:, None, :] * steps[None, :, None]       # [n, s, 2]
-        inside = np.asarray(outline_at(*_lalo(frame, q.reshape(-1, 2))), bool).reshape(len(pts), len(steps))
-        # the distance to the first sample outside the outline
-        first_out = np.where(inside.all(axis=1), len(steps) - 1, np.argmin(inside, axis=1))
-        side.append(np.where(here, steps[first_out], 0.0))
+        s = np.zeros(len(pts))
+        if len(hi):
+            q = pts[hi, None, :] + sgn * nrm[hi, None, :] * steps[None, :, None]       # [n, s, 2]
+            inside = np.asarray(outline_at(*_lalo(frame, q.reshape(-1, 2))), bool).reshape(len(hi), len(steps))
+            # the distance to the first sample outside the outline
+            first_out = np.where(inside.all(axis=1), len(steps) - 1, np.argmin(inside, axis=1))
+            s[hi] = steps[first_out]
+        side.append(s)
     left, right = side
     measured = left + right
     w = np.where(here & (measured > 0), np.maximum(measured, WIDTH_M[kind] / 2), w)

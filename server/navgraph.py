@@ -115,13 +115,16 @@ def driving_width(spec):
     w = roads.STYLE.get(spec.cls, roads.STYLE["unknown"])[0]
     if spec.oneway and spec.cls in roads.ONEWAY_STYLE:
         w = roads.ONEWAY_STYLE[spec.cls]
+    if roads.rural_motorway(spec):      # two lanes between the shoulders (a ramp: one, roads.motorway_shoulder)
+        w = min(roads.MOTORWAY_RURAL_M, spec.width - 2 * roads.motorway_shoulder(spec))
     return float(min(spec.width, w))
 
 
-def _lanes(width, oneway):
-    """Lanes (with the direction, against it) of a road whose driving lanes are `width` wide: the same number
-    each way on a two-way road (a lopsided split put the AI's centre line off the road's)."""
-    n = max(1, int(round(width / LANE_W_M)))
+def _lanes(width, oneway, known=None):
+    """Lanes (with the direction, against it) of a road whose driving lanes are `width` wide (known: OpenStreetMap's
+    lane count, both directions, osmtags.py): the same number each way on a two-way road (a lopsided split put the AI's
+    centre line off the road's)."""
+    n = int(known) if known else max(1, int(round(width / LANE_W_M)))
     if oneway:
         return n, 0
     k = max(1, n // 2)
@@ -156,6 +159,7 @@ def build(frame, feats_list, elev, centre, urban_fn=None, window=WINDOW_M, decks
     measured street widths (roadwidth.py), so the AI's lanes are on the carriageway the road mesh draws."""
     cx, cy = centre
     nodes, edges, edge_fids, seen = {}, [], [], set()
+    carriage = []           # (half width, centreline (k, 2)) of every road and bridge here (the signal heads keep off them)
     prop_arms = {}          # connector name -> [(fid, spec, unit vector away, point, end, length)] (the props' view)
     ring_cands = []         # the roads the road tiles draw (fid, spec, pts, None): roundabout rings (islands.ring_fids)
     approaches = {}         # (connector, fid, end) -> (graph node next to it, traffic comes in)
@@ -195,6 +199,7 @@ def build(frame, feats_list, elev, centre, urban_fn=None, window=WINDOW_M, decks
             L = float(s[-1])
             if L < 1.0:
                 continue
+            carriage.append((spec.width / 2, p))     # (the signal heads keep off every carriageway, decks too)
             # the junction arms as the road tiles' props see them (every road they draw: service roads, driveways
             # and tracks too, no bridge-only roads), so furniture.junction_controls decides the same there and here
             if rspecs[i] is not None and con is not None:
@@ -260,7 +265,7 @@ def build(frame, feats_list, elev, centre, urban_fn=None, window=WINDOW_M, decks
                         direction = int(ow.value[r])
             if direction == 0 and spec.oneway and spec.dir:     # a divided road's carriageway (roads.dual_carriageways)
                 direction = int(spec.dir)
-            lo, li = _lanes(w, direction != 0)
+            lo, li = _lanes(w, direction != 0, spec.lanes)
             profile = _speed_profile(xy, w, direction != 0)
             # this road's approaches at its two ends (the graph node next to the junction, whether traffic comes in)
             for end in (0, -1):
@@ -321,7 +326,7 @@ def build(frame, feats_list, elev, centre, urban_fn=None, window=WINDOW_M, decks
                 radius[nm] = max(radius.get(nm, 0.0), e[7])
         for nm, x, y, z in zip(used, X, Y, Z):
             nodes[nm] = [round(float(x), 2), round(float(y), 2), round(float(z), 2), radius[nm]]
-    signals = _signals(prop_arms, approaches, nodes, left_hand, set(ring))
+    signals = _signals(prop_arms, approaches, nodes, left_hand, set(ring), carriage)
     # one edge per node pair (two segments joining the same connectors: keep the first)
     uniq, pairs = [], set()
     for e in edges:
@@ -339,7 +344,7 @@ STOP_BACK_M = 2.0           # the stop point: this far before the junction's wid
 SHORT_APPROACH_M = 15.0
 
 
-def _signals(arms, approaches, nodes, left_hand=False, ring=None):
+def _signals(arms, approaches, nodes, left_hand=False, ring=None, lines=()):
     """[{"j": junction node, "kind": "signal" | "stop", "app": [[approach node, x, y, z, dir x, dir y, phase, prop x,
     prop y, prop z, prop yaw]]}] of the urban junctions furniture.junction_controls controls, decided on the arms
     the road tiles' props see (arms) and built for the graph's approaches into them (approaches): per incoming
@@ -376,12 +381,13 @@ def _signals(arms, approaches, nodes, left_hand=False, ring=None):
             right = np.array([inc[1], -inc[0]]) * (-1 if left_hand else 1)     # the side traffic keeps to
             q = np.array([jx, jy]) + u * (wide + STOP_BACK_M) + right * (spec.width / 4)
             phase = 0 if abs(float(u @ axis)) > 0.7 else 1
-            # the head's prop where furniture.junction_props stands it (the switchable stock boom replaces it)
-            pp = np.array([jx, jy]) + u * (wide + 2.5) + right * (spec.width / 2 + 1.0)
+            # the head's prop where furniture.junction_props stands it (the switchable stock boom replaces it); none
+            # where no spot is clear of the carriageways (no prop there either)
+            pp = furniture.signal_spot(np.array([jx, jy]), u, right, wide, spec.width / 2, lines)
+            head = [None] * 4 if pp is None else [round(float(pp[0]), 2), round(float(pp[1]), 2), round(jz + 0.15, 2),
+                                                  round(furniture._yaw(right[0], right[1]), 1)]
             app.append([nb, round(float(q[0]), 2), round(float(q[1]), 2), round(jz, 2),
-                        round(float(inc[0]), 4), round(float(inc[1]), 4), phase,
-                        round(float(pp[0]), 2), round(float(pp[1]), 2), round(jz + 0.15, 2),
-                        round(furniture._yaw(right[0], right[1]), 1)])
+                        round(float(inc[0]), 4), round(float(inc[1]), 4), phase] + head)
         if app:
             out.append({"j": name, "kind": kind, "app": app})
     return out

@@ -69,8 +69,11 @@ from collections import OrderedDict
 
 import numpy as np
 
+import mercator
+
 import fast
 import pacer
+import staging
 from PIL import Image
 
 import cache as cachemod
@@ -135,20 +138,13 @@ _LUT16 = to_srgb(np.arange(65536) / 65535.0)     # linear (16 bit) -> sRGB
 def _rf_pass(X, cut_prev, a):
     """In place recursive filter along axis 1 of X [rows, cols, ch], forward and backward;
     cut_prev[r, c] True = no link between c - 1 and c."""
-    if fast._ef is not None and hasattr(fast._ef, "rf_pass") and X.dtype == np.float32 and X.flags.c_contiguous \
-            and X.flags.writeable and X.ndim == 3:
-        pacer.pace()
-        fast._ef.rf_pass(X, np.ascontiguousarray(cut_prev, bool), float(a))   # the same float32 steps (Rust)
-        pacer.pace()
-        return
-    n = X.shape[1]
-    f = np.where(cut_prev, 0.0, a).astype(np.float32)[..., None]
-    for c in range(1, n):
-        pacer.pace()
-        X[:, c] += f[:, c] * (X[:, c - 1] - X[:, c])
-    for c in range(n - 2, -1, -1):
-        pacer.pace()
-        X[:, c] += f[:, c + 1] * (X[:, c + 1] - X[:, c])
+    fast.require(1, "rf_pass")
+    Y = X if X.dtype == np.float32 and X.flags.c_contiguous and X.flags.writeable else np.ascontiguousarray(X, np.float32)
+    pacer.pace()
+    fast._ef.rf_pass(Y, np.ascontiguousarray(cut_prev, bool), float(a))     # (Rust)
+    pacer.pace()
+    if Y is not X:
+        X[...] = Y
 
 
 def dt_blur(X, sigma, cut=None, iters=3):
@@ -272,97 +268,33 @@ def normals(ang):
     return -np.sin(ang), np.cos(ang)
 
 
-_NET5 = ((0, 1), (3, 4), (2, 4), (2, 3), (0, 3), (0, 2), (1, 4), (1, 3), (1, 2))    # sorts 5 values
-
-
-def _vmedian(X, ok, n):
-    """Lower median over axis 0 of X [K, h, w] of the entries with ok, 0 where there are none
-    (K = 5: a sorting network of element-wise min / max instead of np.sort along a short axis)."""
-    if fast._ef is not None and hasattr(fast._ef, "vmedian") and np.ndim(X) == 3:
-        X = np.ascontiguousarray(X, np.float32)
-        okb = np.ascontiguousarray(np.broadcast_to(ok, X.shape), bool)
-        nn = np.ascontiguousarray(np.broadcast_to(np.asarray(n, np.int64), X.shape[1:]))
-        return fast._ef.vmedian(X, okb, nn)
-    Y = np.where(ok, X, np.float32(np.inf))
-    if len(Y) == 5:
-        s = list(Y)
-        for i, j in _NET5:
-            lo = np.minimum(s[i], s[j])
-            s[j] = np.maximum(s[i], s[j])
-            s[i] = lo
-    else:
-        s = list(np.sort(Y, 0))
-    idx = np.maximum((n - 1) // 2, 0)
-    m = s[0]
-    for k in range(1, (len(s) - 1) // 2 + 1):
-        m = np.where(idx == k, s[k], m)
-    return np.where(np.isfinite(m), m, 0).astype(np.float32)
-
-
-def _norm3(a, b, c):
-    return np.sqrt(a * a + b * b + c * c)
-
-
-def _shift(a, o):
-    out = np.zeros_like(a)
-    W = a.shape[1]
-    if o >= 0:
-        out[:, :W - o] = a[:, o:]
-    else:
-        out[:, -o:] = a[:, :W + o]
-    return out
-
-
 def _seam_pass(arrs, half, depth, offs, nseg, gate):
     """detect_seams' step test for one rotation: arrs = rotated [w, w*L_0 .. w*L_5] (float32 [H, W]); returns
-    (score [H, W] float32, [Dm_0, Dm_1, Dm_2]). Rust (earthfast.seam_pass, bit for bit) when built."""
+    (score [H, W] float32, [Dm_0, Dm_1, Dm_2]) (Rust: earthfast.seam_pass)."""
     full = 0.3 * depth * (2 * half + 1)
-    if fast._ef is not None and hasattr(fast._ef, "seam_pass"):
-        score, Dm = fast._ef.seam_pass(np.ascontiguousarray(np.stack(arrs), np.float32), half, depth,
-                                       [int(o) for o in offs], full, gate, AGREE, max(2, nseg - 2))
-        return score, list(Dm)
-    return _seam_pass_np(arrs, half, depth, offs, nseg, gate)
+    fast.require(1, "seam_pass")
+    score, Dm = fast._ef.seam_pass(np.ascontiguousarray(np.stack(arrs), np.float32), half, depth,
+                                   [int(o) for o in offs], full, gate, AGREE, max(2, nseg - 2))
+    return score, list(Dm)
+
+def _seams_gpu(w, Lw, n_ang, half, depth, offs, nseg, gate):
+    """detect_seams' angle loop on the GPU (earthfast.seam_detect_gpu: the same rotations, sums, medians and gate in
+    float32; the CPU path's sums are float64, so a few borderline cells differ), or None: no GPU (or BNGE_GPU=0),
+    or it failed (logged once; the CPU path then)."""
+    global _GPU_FAILED
+    if _GPU_FAILED or not fast.gpu():
+        return None
+    try:
+        src = np.ascontiguousarray(np.concatenate([w[None], np.moveaxis(Lw, -1, 0)]), np.float32)
+        return fast._ef.seam_detect_gpu(src, n_ang, half, depth, [int(o) for o in offs],
+                                        0.3 * depth * (2 * half + 1), gate, AGREE, max(2, nseg - 2))
+    except Exception as e:
+        _GPU_FAILED = True
+        log.warning("colormatch: GPU seam detection failed (%s); the CPU from now on", e)
+        return None
 
 
-def _seam_pass_np(arrs, half, depth, offs, nseg, gate):
-    wr = arrs[0]
-    H, W = wr.shape
-    i, j = np.arange(W), np.arange(H)
-    hi_x, lo_x = np.clip(i + half + 1, 0, W), np.clip(i - half, 0, W)
-    b1, b0 = np.clip(j + depth + 1, 0, H), np.clip(j + 1, 0, H)
-    a1, a0 = np.clip(j, 0, H), np.clip(j - depth, 0, H)
-    sums = []
-    for arr in arrs:
-        pacer.pace()
-        c = np.zeros((H, W + 1))
-        np.cumsum(arr, 1, out=c[:, 1:])
-        s = c[:, hi_x] - c[:, lo_x]
-        cy = np.zeros((H + 1, W))
-        np.cumsum(s, 0, out=cy[1:])
-        sums.append((cy[b1] - cy[b0], cy[a1] - cy[a0]))
-    wb, wa = sums[0]
-    ib, ia = 1 / np.maximum(wb, 1e-3), 1 / np.maximum(wa, 1e-3)
-    Dseg = [((b * ib) - (a * ia)).astype(np.float32) for b, a in sums[1:]]     # per channel, segment at x
-    full = 0.3 * depth * (2 * half + 1)
-    ok = (wb > full) & (wa > full)
-    pacer.pace()
-    oks = np.stack([_shift(ok, o) for o in offs], 0)        # [K, H, W]
-    DL = [np.stack([_shift(Dseg[c] - Dseg[c + 3], o) for o in offs], 0) for c in range(3)]
-    nvalid = oks.sum(0)
-    pacer.pace()
-    Dm = [_vmedian(DL[c], oks, nvalid) for c in range(3)]
-    pacer.pace()
-    Dsm = [_vmedian(np.stack([_shift(Dseg[c + 3], o) for o in offs], 0), oks, nvalid) for c in range(3)]
-    pacer.pace()
-    nm = _norm3(*Dm)
-    nk = _norm3(*DL)
-    cos = (DL[0] * Dm[0] + DL[1] * Dm[1] + DL[2] * Dm[2]) / np.maximum(nk * nm, 1e-6)
-    agree = ((cos > 0.7) & (nk > 0.5 * nm) & oks).sum(0)
-    cons = (nvalid >= max(2, nseg - 2)) & (agree >= AGREE * nvalid)
-    # a natural edge with a different contrast in the two images: |D_usgs - D_s2| <= |b - 1| |D_s2|;
-    # a survey seam has |D_usgs - D_s2| >> |D_s2| (S2 only has texture noise there)
-    g = np.clip(1 - np.maximum(_norm3(*Dsm) - 0.03, 0) / (gate * nm + 1e-3), 0, 1)
-    return (nm * cons * g).astype(np.float32), Dm
+_GPU_FAILED = False
 
 
 def detect_seams(Lu, Ls, w, seg=16, nseg=NSEG, depth=3, n_ang=N_ANG, thr=THR, gate=GATE, min_len=100):
@@ -380,7 +312,10 @@ def detect_seams(Lu, Ls, w, seg=16, nseg=NSEG, depth=3, n_ang=N_ANG, thr=THR, ga
     half = seg // 2
     offs = [int(round((k - (nseg - 1) / 2) * seg)) for k in range(nseg)]
     Lw = L * w[..., None]
-    for k in range(n_ang):
+    gpu = _seams_gpu(w, Lw, n_ang, half, depth, offs, nseg, gate)
+    if gpu is not None:                 # every angle at once on the GPU (~0.2 s, the CPU path ~13 s a region)
+        best, ang, Dbest = gpu
+    for k in range(n_ang if gpu is None else 0):
         pacer.pace()
         deg = 180.0 * k / n_ang
         arrs = [_rot(w, deg)]
@@ -958,7 +893,7 @@ def _atomic_write(path, write):
     tmp = f"{path}.{threading.get_ident()}.tmp"
     with open(tmp, "wb") as f:
         write(f)
-    os.replace(tmp, path)
+    staging.replace_cached(tmp, path)
 
 
 class ColorMatch:
@@ -1128,14 +1063,16 @@ class ColorMatch:
     def prepare(self, lat, lon, radius=PREP_M):
         """Anchor set: queue the fields of the regions within radius, nearest first."""
         n = 2 ** self.rz
-        x = (lon / 360.0 + 0.5) * n * TILE
-        y = (0.5 - math.asinh(math.tan(math.radians(lat))) / (2 * math.pi)) * n * TILE
-        rpx = radius / (EARTH_CIRC * math.cos(math.radians(lat)) / (TILE * n))
         with self._lock:
             self._center = (lat, lon)
             self._queue = sorted((self._distance(rk), s, rk) for _, s, rk in self._queue)
-        for ry in range(int((y - rpx) // TILE), int((y + rpx) // TILE) + 1):
-            for rx in range(int((x - rpx) // TILE), int((x + rpx) // TILE) + 1):
+        if abs(lat) >= mercator.MAX_LAT:        # no Web-Mercator imagery to match (the poles)
+            return
+        x = (lon / 360.0 + 0.5) * n * TILE
+        y = (0.5 - math.asinh(math.tan(math.radians(lat))) / (2 * math.pi)) * n * TILE
+        rpx = radius / (EARTH_CIRC * math.cos(math.radians(lat)) / (TILE * n))
+        for ry in range(max(0, int((y - rpx) // TILE)), min(n - 1, int((y + rpx) // TILE)) + 1):
+            for rx in mercator.columns(x, rpx, TILE, n):
                 rk = (rx % n, ry)
                 if 0 <= ry < n and self._distance(rk) <= radius + 6000 and not self._peek(rk):
                     with self._lock:

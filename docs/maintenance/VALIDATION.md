@@ -1,5 +1,41 @@
 # Validation ledger
 
+## Upstream 1.6.0 integration (2026-10-23)
+
+Target: upstream release `v1.6.0-beta` at `b4c478d68795e441eef2ba9fb5981e74c7b11f49`.
+Fork version: `1.6.0-europe-preview.2-dev`. Native `earthfast` version 60 is included
+from upstream; its newer native-required pipeline supersedes the older fallback totals below.
+
+| Check | Local Windows result | Evidence scope |
+| --- | --- | --- |
+| `python tools/maintenance.py test --suite quick --report dist/160-quick-validation.json` | 55 passed | Saved storage, quick-play compatibility, bounded water, prefetch and isolated session-file recovery |
+| `python tools/maintenance.py test --suite generators --report dist/160-generator-validation.json` | 361 passed | Combined upstream/fork geometry, materials, traffic, tunnels, Decathlon and lake bounds |
+| `python tools/maintenance.py test --suite integration --report dist/160-integration-validation.json` | 268 passed, 1 skipped (269 run) | Worker parity, native kernels, approach ramps, OSM widths, peer wire, checked updater, imagery, polar DEM and synthetic protocol |
+| `python tools/run_lua_tests.py --report dist/160-lua-validation.json` | 54 files, 4,975 assertions passed | Engine stubs, including BeamMP, terrain swap, saved World settings and bytecode scoping |
+| `node mod/tests/test_mapmath.mjs` and `node server/tests/test_mapmath.mjs` | Both passed | Map math |
+| `python -m compileall -q server launcher.py start.py tools` | Passed | Python compilation |
+
+The one protocol test requiring an external `luajit` executable skips on this PC;
+Lupa runs all 54 separate Lua files successfully. The new scoping check reads
+LuaJIT bytecode via `jit.util`, including nested prototypes, and receives a file
+inventory from the Python runner. It does not depend on Unix `find` or a CLI LuaJIT.
+
+The integration fixes retain the captured Decathlon regression within its original
+2 cm comparison tolerance and keep the 3 percent local profile-step bound. Repaired
+upper-road pieces use the same grading kernel without yielding to each other's
+road IDs; ordinary road grading retains upstream's level separation. Narrow measured
+widths stay authoritative. Polygon triangulation no longer shadows the terrain
+quantization argument when the newer mesh follows the terrain lattice.
+
+The maintenance workflow runs quick, generators, integration, all Lua stubs and both
+map-math suites on Windows and Linux. CI results and the separate full synthetic
+server/restart run are recorded in the accompanying integration report when complete.
+
+These are automated source checks. They do not establish BeamNG rendering, physical
+collision, multiplayer interoperability, FPS or real loading-time gains. The new
+1.6 performance, autodrive, small-road appearance and Melbourne flooding reports
+remain open in the issue inventory. No new public executable is claimed.
+
 ## Reproduction commands
 
 Use the repository's Python environment, for example `.venv/Scripts/python.exe`

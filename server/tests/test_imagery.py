@@ -546,6 +546,28 @@ class ExportImageryTest(unittest.TestCase):
             time.sleep(0.02)
         return left
 
+    def test_warm_with_children_evicted(self):
+        # the cache cap evicted a parent's last child but not its first: warming read the first one in a loop (it
+        # was on disk, the key never done: 170 s of the server's CPU in a drive, 2026-10-20). Now the parent is
+        # fetched again and the thread rests.
+        im = self.make()
+        self.assertEqual(self.warm(im, [(128.0, 128.0)]), [])
+        n = len([r for r in self.requests if r[0] == "naip"])
+        keys = list(im._warm_want)
+        for src, z, x, y in keys:
+            last = (1 << src.export) - 1
+            path, _ = im._paths(src, z, x | last, y | last)
+            os.remove(path)
+        self.assertTrue(keys and all(not im._warm_done(k) for k in keys))
+        im._warm_want = []
+        self.assertEqual(self.warm(im, [(128.0, 128.0)]), [])
+        self.assertEqual(len([r for r in self.requests if r[0] == "naip"]), n + len(keys), "each parent once more")
+        reads = []
+        orig = im.disk.read
+        im.disk.read = lambda path: reads.append(path) or orig(path)
+        time.sleep(0.3)
+        self.assertEqual(reads, [], "the warm thread rests")
+
     def test_lazy_then_split_tiles(self):
         im = self.make()
         # 1 m texels: z17 (0.93 m pixels here), NAIP's zoom
@@ -804,18 +826,10 @@ class DdsTest(unittest.TestCase):
             self.assertTrue(caps & imagery.DDSCAPS_MIPMAP and caps & imagery.DDSCAPS_COMPLEX)
             with Image.open(path) as im:                                    # a standard reader accepts it
                 self.assertEqual(im.size, (n, n))
-            # level k is the BC1 encoding of mip_arrays' level k (linear light, sharpened): the Rust encoder's, or
-            # Pillow's without the module ...
+            # level k is the BC1 encoding of mip_arrays' level k (linear light, sharpened) ...
             off = imagery.DDS_HEADER
-            ef = imagery._ef if imagery._ef is not None and hasattr(imagery._ef, "bc1_encode") else None
             for k, (sz, lv) in enumerate(zip(sizes, imagery.mip_arrays(rgb))):
-                if ef is not None:
-                    want = ef.bc1_encode(np.ascontiguousarray(lv))
-                else:
-                    b = io.BytesIO()
-                    Image.fromarray(lv, "RGB").save(b, "DDS", pixel_format="DXT1")
-                    want = b.getvalue()[imagery.DDS_HEADER:]
-                self.assertEqual(data[off:off + sz], want, k)
+                self.assertEqual(data[off:off + sz], imagery.fast._ef.bc1_encode(np.ascontiguousarray(lv)), k)
                 off += sz
             # ... and decodes to the image (row 0 first, as the source image)
             got = bc1_decode(data[imagery.DDS_HEADER:imagery.DDS_HEADER + sizes[0]], n, n)
@@ -857,6 +871,17 @@ class NetworkImageryTest(unittest.TestCase):
         self.assertEqual(set(used), {"eox2016"})       # uniform deep blue from both EOX layers
         self.assertLess(rgb.reshape(-1, 3).std(0).max(), 2)
         self.assertGreater(int(rgb[..., 2].mean()), int(rgb[..., 0].mean()))
+
+
+class LatLonBboxTest(unittest.TestCase):
+    def test_wms_4326_box(self):
+        """A WMS without Web Mercator gets the tile's extent as south,west,north,east in degrees (WMS 1.3.0)."""
+        s, w, n, e = map(float, imagery.lat_lon_bbox(imagery.mercator_bbox(15, 18296, 10771)).split(","))
+        self.assertLess(s, n)
+        self.assertLess(w, e)
+        self.assertAlmostEqual(w, 18296 / 2 ** 15 * 360 - 180, places=6)
+        self.assertTrue(52.0 < s < 52.5 and 20.9 < w < 21.1, "Warsaw")
+        self.assertIn("{bbox4326}", imagery.SOURCES["poland"].url)
 
 
 if __name__ == "__main__":

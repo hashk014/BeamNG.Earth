@@ -22,6 +22,20 @@ TILE_MAX = 8192.0
 SPLIT_K = 0.75              # a square closer to the player than SPLIT_K * its size is split (<= 34 tiles)
 RADIUS_M = 8192.0           # tiles within this of the player; beyond, the far tiles' photo
 SAMPLES = 64                # sea_at is asked on a SAMPLES x SAMPLES grid per tile (32-128 m apart)
+# Land below the sea (the Netherlands' polders, GitHub #8 / #53: a quarter of the country lies under sea level, and a
+# tile's WaterBlock floods all of its square): a tile more than SEA_FLOOD_SHARE of which is land more than SEA_FLOOD_M
+# under the sea is split, on down to SEA_TILE_FLOOR, where it is kept only when it is mostly sea
+SEA_FLOOD_M = 0.3
+SEA_FLOOD_FAR_M = 2.0           # ... for the tiles placed by the DEM band (> POLY_TILE_MAX, far): the polders are 2-6 m
+                                # under the sea, a coarse DEM's marshes and shores a metre (Manhattan's 28 tiles: 62)
+POLY_TILE_MAX = 2048.0          # (seacarve.POLY_TILE_MAX)
+SEA_TILE_FLOOR = 64.0
+SEA_FLOOR_K = 0.0625            # ... farther away, down to this share of the distance (a 16 km straight shore split to
+                                # 128 m all along was 146 tiles; the far shore's strip of sea goes without)
+SEA_FLOOD_SHARE = 0.05
+SEA_SPLIT_SAMPLES = (16, 64)    # samples per edge of a tile checked for low land: size / 32, within these
+SEA_MAX_TILES = 200             # nearest first
+SEA_E = 0.0                     # m: the sea surface (seacarve.SEA_E)
 EARTH_R = 6371000.0
 COAST_TILE_MIN = 32.0       # mixed tiles over mapped dry, low land refine to this, then stay dry
 COAST_MAX_NODES = 256      # a bounded amount of extra shoreline work per plan
@@ -84,10 +98,17 @@ def squares(x, y, radius=None):
     return out
 
 
-def plan(frame, x, y, sea_at, radius=None, dry_at=None):
+def plan(frame, x, y, sea_at, radius=None, dry_at=None, ground_at=None):
     """The sea tiles around (x, y) in `frame` (a geodesy.EnuFrame). sea_at(lat, lon, size) -> bool array:
     which sample points of a tile of that size are sea. Optional dry_at(lat, lon, size) identifies
     mapped dry land below sea level: a mixed tile must not flood it (issues #8 and #53)."""
+    if ground_at is not None:
+        mapped_dry = dry_at
+        def dry_at(la, lo, size):
+            low = np.asarray(ground_at(la, lo, size), np.float64) < SEA_E - SEA_FLOOD_M
+            if mapped_dry is not None:
+                low |= np.asarray(mapped_dry(la, lo, size), bool)
+            return low
     leaves = squares(x, y, radius)
     if not leaves:
         return []
@@ -153,8 +174,10 @@ LAKE_RADIUS_M = 2000.0      # lake tiles within this of the player (the far tile
 LAKE_TILE_MAX = 512.0
 LAKE_TILE_FLOOR = 16.0      # refine flooded shoreline squares down to this, then omit unsafe squares
 LAKE_SAMPLES = 24           # samples per tile edge when checking a lake tile
-LAKE_FLOOD_M = 1.0          # land inside a lake tile lower than the lake by more than this splits it
-                            # (a valley below a dam; the banks themselves are ~ at the lake's level)
+LAKE_FLOOD_M = 0.3          # land inside a lake tile lower than the lake by more than this splits it
+                            # (a valley below a dam; the banks themselves are ~ at the lake's level). At 1 m the
+                            # tiles of a flat Dutch town's canals flooded its streets 3x the canals' own area
+                            # (Petten: 17 ha of land under 6 ha of water tiles, 1.5 ha at 0.3 m; GitHub #8 / #53)
 LAKE_MAX_TILES = 120        # nearest first (lakes and wide rivers)
 LAKE_DEM_ZOOM = 15
 LEVEL_TOL_M = 0.4            # a tile's water is at most this far from its plane (else it is split)
